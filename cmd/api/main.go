@@ -14,6 +14,7 @@ import (
 
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/mailer"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
 
@@ -59,6 +60,7 @@ func main() {
 	go gracefulShutdown(server, done)
 
 	log.Println("the server is listening on port:" + os.Getenv("PORT"))
+	mailer.SendEmail()
 	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))

@@ -9,6 +9,7 @@ import (
 type Config struct {
 	SYMMETRIC_KEY         string        `mapstructure:"SYMMETRIC_KEY"`
 	ACCESS_TOKEN_DURATION time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	SENDGRID_API_KEY      string        `mapstructure:"SENDGRID_API_KEY"`
 }
 
 func LoadConfig(path string) (*Config, error) {
