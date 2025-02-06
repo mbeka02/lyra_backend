@@ -1,4 +1,4 @@
-# Project lyra_backend
+# PROJECT LYRA
 
 The backend Service for Lyra (A Telemedicine Platform)
 
