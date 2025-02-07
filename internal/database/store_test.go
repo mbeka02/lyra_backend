@@ -48,7 +48,7 @@ func mustStartPostgresContainer() (terminateFunc, error) {
 	}
 
 	connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", dbUser, dbPwd, dbHost, dbPort.Port(), dbName, dbSchema)
-	fmt.Printf("Connection string =>%s", connStr)
+	// fmt.Printf("Connection string =>%s", connStr)
 	return dbContainer.Terminate, err
 }
 
