@@ -30,11 +30,11 @@ func NewGCStorage(projectId, bucketName string) (Storage, error) {
 	}, nil
 }
 
-func (g *GCStorage) Upload(ctx context.Context, fileHeader *multipart.FileHeader) (string, error) {
+func (g *GCStorage) Upload(ctx context.Context, fileHeader *multipart.FileHeader) (*UploadResponse, error) {
 	// open the associated File
 	srcFile, err := fileHeader.Open()
 	if err != nil {
-		return "", fmt.Errorf("unable to open the file:%v", err)
+		return nil, fmt.Errorf("unable to open the file:%v", err)
 	}
 
 	defer srcFile.Close()
@@ -51,11 +51,14 @@ func (g *GCStorage) Upload(ctx context.Context, fileHeader *multipart.FileHeader
 	// Copy the file to the Object
 	_, err = io.Copy(writer, srcFile)
 	if err != nil {
-		return "", fmt.Errorf("unable to copy to storage:%v", err)
+		return nil, fmt.Errorf("unable to copy to storage:%v", err)
 	}
 	defer writer.Close()
-	imageUrl := fmt.Sprintf("https://storage.googleapis.com/%s/%s", g.bucketName, objectHandle.ObjectName())
-	return imageUrl, nil
+	storageUrl := fmt.Sprintf("https://storage.googleapis.com/%s/%s", g.bucketName, fileName)
+	return &UploadResponse{
+		StorageUrl: storageUrl,
+		ObjectName: fileName,
+	}, nil
 }
 
 func (g *GCStorage) Download(ctx context.Context, objName string) ([]byte, error) {
