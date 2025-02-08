@@ -11,22 +11,56 @@ import (
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
+	"github.com/mbeka02/lyra_backend/internal/server/repository"
+	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
 type Server struct {
-	port int
+	port     int
+	db       *database.Store
+	handlers Handlers
+}
+type Handlers struct {
+	User *UserHandler
+}
+type Services struct {
+	User service.UserService
+}
+type Repositories struct {
+	User repository.UserRepository
+}
 
-	db          *database.Store
-	UserHandler *UserHandler
+func initRepositores(store *database.Store) Repositories {
+	return Repositories{
+		User: repository.NewUserRepository(store),
+	}
+}
+
+func initServices(repos Repositories, maker auth.Maker, duration time.Duration) Services {
+	return Services{
+		User: service.NewUserService(repos.User, maker, duration),
+	}
+}
+
+func initHandlers(services Services) Handlers {
+	return Handlers{
+		User: NewUserHandler(services.User),
+	}
 }
 
 func NewServer(maker auth.Maker, duration time.Duration) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	store := database.NewStore()
+	// repository(data access) layer
+	repositories := initRepositores(store)
+	// service layer
+	services := initServices(repositories, maker, duration)
+	// transport layer
+	handlers := initHandlers(services)
 	NewServer := &Server{
-		port:        port,
-		db:          store,
-		UserHandler: &UserHandler{Store: store, AuthMaker: maker, AccessTokenDuration: duration},
+		port:     port,
+		db:       store,
+		handlers: handlers,
 	}
 
 	// Declare Server config
