@@ -14,6 +14,7 @@ import (
 
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/imgstore"
 	"github.com/mbeka02/lyra_backend/internal/mailer"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
@@ -51,7 +52,12 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to setup the auth maker")
 	}
-	server := server.NewServer(maker, conf.ACCESS_TOKEN_DURATION)
+
+	ImageFileStorage, err := imgstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_BUCKET_NAME)
+	if err != nil {
+		log.Fatalf("...unable to setup cloud storage:%v", err)
+	}
+	server := server.NewServer(maker, ImageFileStorage, conf.ACCESS_TOKEN_DURATION)
 
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

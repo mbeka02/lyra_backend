@@ -11,6 +11,7 @@ import (
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
+	"github.com/mbeka02/lyra_backend/internal/imgstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
@@ -36,9 +37,9 @@ func initRepositores(store *database.Store) Repositories {
 	}
 }
 
-func initServices(repos Repositories, maker auth.Maker, duration time.Duration) Services {
+func initServices(repos Repositories, maker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) Services {
 	return Services{
-		User: service.NewUserService(repos.User, maker, duration),
+		User: service.NewUserService(repos.User, maker, imgStorage, duration),
 	}
 }
 
@@ -48,13 +49,13 @@ func initHandlers(services Services) Handlers {
 	}
 }
 
-func NewServer(maker auth.Maker, duration time.Duration) *http.Server {
+func NewServer(maker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) *http.Server {
 	port, _ := strconv.Atoi(os.Getenv("PORT"))
 	store := database.NewStore()
 	// repository(data access) layer
 	repositories := initRepositores(store)
 	// service layer
-	services := initServices(repositories, maker, duration)
+	services := initServices(repositories, maker, imgStorage, duration)
 	// transport layer
 	handlers := initHandlers(services)
 	NewServer := &Server{

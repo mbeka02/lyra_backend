@@ -10,6 +10,8 @@ type Config struct {
 	SYMMETRIC_KEY         string        `mapstructure:"SYMMETRIC_KEY"`
 	ACCESS_TOKEN_DURATION time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
 	SENDGRID_API_KEY      string        `mapstructure:"SENDGRID_API_KEY"`
+	GCLOUD_PROJECT_ID     string        `mapstructure:"GCLOUD_PROJECT_ID"`
+	GCLOUD_BUCKET_NAME    string        `mapstructure:"GCLOUD_BUCKET_NAME"`
 }
 
 func LoadConfig(path string) (*Config, error) {

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/imgstore"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 )
@@ -18,13 +19,15 @@ type UserService interface {
 type userService struct {
 	repo                repository.UserRepository
 	authMaker           auth.Maker
+	imgStorage          imgstore.Storage
 	accessTokenDuration time.Duration
 }
 
-func NewUserService(repo repository.UserRepository, authMaker auth.Maker, duration time.Duration) UserService {
+func NewUserService(repo repository.UserRepository, authMaker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) UserService {
 	return &userService{
 		repo:                repo,
 		authMaker:           authMaker,
+		imgStorage:          imgStorage,
 		accessTokenDuration: duration,
 	}
 }
