@@ -6,15 +6,126 @@ package database
 
 import (
 	"database/sql"
+	"database/sql/driver"
+	"fmt"
 	"time"
 )
+
+type Role string
+
+const (
+	RolePatient    Role = "patient"
+	RoleSpecialist Role = "specialist"
+)
+
+func (e *Role) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Role(s)
+	case string:
+		*e = Role(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Role: %T", src)
+	}
+	return nil
+}
+
+type NullRole struct {
+	Role  Role
+	Valid bool // Valid is true if Role is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.Role, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Role.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Role), nil
+}
+
+type Status string
+
+const (
+	StatusScheduled Status = "scheduled"
+	StatusCompleted Status = "completed"
+	StatusCanceled  Status = "canceled"
+)
+
+func (e *Status) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = Status(s)
+	case string:
+		*e = Status(s)
+	default:
+		return fmt.Errorf("unsupported scan type for Status: %T", src)
+	}
+	return nil
+}
+
+type NullStatus struct {
+	Status Status
+	Valid  bool // Valid is true if Status is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.Status, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.Status.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.Status), nil
+}
+
+type Appointment struct {
+	AppointmentID   int64
+	PatientID       sql.NullInt32
+	SpecialistID    sql.NullInt32
+	CurrentStatus   Status
+	AppointmentDate time.Time
+}
+
+type Patient struct {
+	PatientID   int32
+	UserID      int32
+	DateOfBirth sql.NullTime
+	Allergies   sql.NullString
+}
+
+type Specialist struct {
+	SpecialistID   int64
+	UserID         int32
+	Specialization sql.NullString
+	LicenseNumber  sql.NullString
+}
 
 type User struct {
 	UserID            int64
 	FullName          string
 	Password          string
 	Email             string
+	TelephoneNumber   string
 	CreatedAt         time.Time
+	UserRole          Role
 	VerifiedAt        sql.NullTime
 	PasswordChangedAt time.Time
 }

@@ -7,9 +7,11 @@ import (
 )
 
 type CreateUserParams struct {
-	FullName string
-	Email    string
-	Password string
+	FullName        string
+	Email           string
+	TelephoneNumber string
+	Password        string
+	UserRole        database.Role
 }
 type UserRepository interface {
 	Create(ctx context.Context, params CreateUserParams) (database.User, error)
@@ -28,9 +30,11 @@ func NewUserRepository(store *database.Store) UserRepository {
 
 func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (database.User, error) {
 	return r.store.CreateUser(ctx, database.CreateUserParams{
-		FullName: params.FullName,
-		Email:    params.Email,
-		Password: params.Password,
+		FullName:        params.FullName,
+		Email:           params.Email,
+		TelephoneNumber: params.TelephoneNumber,
+		Password:        params.Password,
+		UserRole:        params.UserRole,
 	})
 }
 
