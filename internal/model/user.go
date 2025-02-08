@@ -1,4 +1,4 @@
-package models
+package model
 
 import "github.com/mbeka02/lyra_backend/internal/database"
 

@@ -29,7 +29,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/", s.HelloWorldHandler)
 
 	r.Get("/health", s.healthHandler)
-
+	r.Route("/user", func(r chi.Router) {
+		r.Post("/register", s.handlers.User.HandleCreateUser)
+		r.Post("/login", s.handlers.User.HandleLogin)
+	})
 	return r
 }
 

@@ -5,16 +5,14 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
-
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
-	"github.com/mbeka02/lyra_backend/internal/mailer"
+	"github.com/mbeka02/lyra_backend/internal/imgstore"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
 
@@ -42,25 +40,43 @@ func gracefulShutdown(apiServer *http.Server, done chan bool) {
 	done <- true
 }
 
-func main() {
+func setupServer() (*http.Server, error) {
 	conf, err := config.LoadConfig(".")
 	if err != nil {
-		log.Fatalf("unable to load config: %v", err)
+		return nil, fmt.Errorf("unable to load config: %v", err)
 	}
+
 	maker, err := auth.NewJWTMaker(conf.SYMMETRIC_KEY)
 	if err != nil {
-		log.Fatal("unable to setup the auth maker")
+		return nil, fmt.Errorf("unable to setup the auth token maker:%v", err)
 	}
-	server := server.NewServer(maker, conf.ACCESS_TOKEN_DURATION)
 
+	ImageFileStorage, err := imgstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_BUCKET_NAME)
+	if err != nil {
+		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
+	}
+	// Configutation Options
+	opts := server.ConfigOptions{
+		Port:                conf.PORT,
+		AccessTokenDuration: conf.ACCESS_TOKEN_DURATION,
+	}
+	server := server.NewServer(opts, maker, ImageFileStorage)
+	return server, nil
+}
+
+func main() {
+	server, err := setupServer()
+	if err != nil {
+		log.Fatalf("fatal error , the server setup process failed : %v", err)
+	}
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 
 	// Run graceful shutdown in a separate goroutine
 	go gracefulShutdown(server, done)
 
-	log.Println("the server is listening on port:" + os.Getenv("PORT"))
-	mailer.SendEmail()
+	log.Println("the server is listening on port" + server.Addr)
+	// mailer.SendEmail()
 	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
