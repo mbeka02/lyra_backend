@@ -3,8 +3,6 @@ package server
 import (
 	"fmt"
 	"net/http"
-	"os"
-	"strconv"
 	"time"
 
 	_ "github.com/joho/godotenv/autoload"
@@ -16,8 +14,12 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
+type ConfigOptions struct {
+	Port                string
+	AccessTokenDuration time.Duration
+}
 type Server struct {
-	port     int
+	opts     ConfigOptions
 	db       *database.Store
 	handlers Handlers
 }
@@ -31,7 +33,7 @@ type Repositories struct {
 	User repository.UserRepository
 }
 
-func initRepositores(store *database.Store) Repositories {
+func initRepositories(store *database.Store) Repositories {
 	return Repositories{
 		User: repository.NewUserRepository(store),
 	}
@@ -49,24 +51,24 @@ func initHandlers(services Services) Handlers {
 	}
 }
 
-func NewServer(maker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) *http.Server {
-	port, _ := strconv.Atoi(os.Getenv("PORT"))
+func NewServer(opts ConfigOptions, maker auth.Maker, imgStorage imgstore.Storage) *http.Server {
 	store := database.NewStore()
 	// repository(data access) layer
-	repositories := initRepositores(store)
+	repositories := initRepositories(store)
 	// service layer
-	services := initServices(repositories, maker, imgStorage, duration)
+	services := initServices(repositories, maker, imgStorage, opts.AccessTokenDuration)
 	// transport layer
 	handlers := initHandlers(services)
+
 	NewServer := &Server{
-		port:     port,
+		opts:     opts,
 		db:       store,
 		handlers: handlers,
 	}
 
 	// Declare Server config
 	server := &http.Server{
-		Addr:         fmt.Sprintf(":%d", NewServer.port),
+		Addr:         fmt.Sprintf(":%s", NewServer.opts.Port),
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
 		ReadTimeout:  10 * time.Second,
