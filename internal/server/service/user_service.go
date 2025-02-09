@@ -6,24 +6,25 @@ import (
 	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
-	"github.com/mbeka02/lyra_backend/internal/imgstore"
 	"github.com/mbeka02/lyra_backend/internal/model"
+	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 )
 
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
 	Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error)
+	UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error
 }
 
 type userService struct {
 	repo                repository.UserRepository
 	authMaker           auth.Maker
-	imgStorage          imgstore.Storage
+	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
 }
 
-func NewUserService(repo repository.UserRepository, authMaker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) UserService {
+func NewUserService(repo repository.UserRepository, authMaker auth.Maker, imgStorage objstore.Storage, duration time.Duration) UserService {
 	return &userService{
 		repo:                repo,
 		authMaker:           authMaker,
@@ -58,6 +59,15 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 		AccessToken: token,
 		User:        userResponse,
 	}, nil
+}
+
+func (s *userService) UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error {
+	return s.repo.Update(ctx, repository.UpdateUserParams{
+		Email:           req.Email,
+		TelephoneNumber: req.TelephoneNumber,
+		FullName:        req.FullName,
+		UserId:          userId,
+	})
 }
 
 func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error) {

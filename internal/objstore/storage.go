@@ -1,4 +1,4 @@
-package imgstore
+package objstore
 
 import (
 	"context"

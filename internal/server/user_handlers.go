@@ -36,6 +36,30 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
+	request := model.UpdateUserRequest{}
+	if err := parseAndValidateRequest(r, &request); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+	// ensure auth payload is present
+	payload, err := getAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	// update the user account
+	err = h.userService.UpdateUser(r.Context(), model.UpdateUserRequest{
+		Email:           request.Email,
+		TelephoneNumber: request.TelephoneNumber,
+		FullName:        request.FullName,
+	}, payload.UserID)
+	if err := respondWithJSON(w, http.StatusCreated, "account updated"); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 	request := model.LoginRequest{}
 	if err := parseAndValidateRequest(r, &request); err != nil {

@@ -13,9 +13,16 @@ type CreateUserParams struct {
 	Password        string
 	UserRole        database.Role
 }
+type UpdateUserParams struct {
+	FullName        string
+	Email           string
+	TelephoneNumber string
+	UserId          int64
+}
 type UserRepository interface {
 	Create(ctx context.Context, params CreateUserParams) (database.User, error)
 	GetByEmail(ctx context.Context, email string) (database.User, error)
+	Update(ctx context.Context, params UpdateUserParams) error
 }
 
 type userRepository struct {
@@ -35,6 +42,15 @@ func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (d
 		TelephoneNumber: params.TelephoneNumber,
 		Password:        params.Password,
 		UserRole:        params.UserRole,
+	})
+}
+
+func (r *userRepository) Update(ctx context.Context, params UpdateUserParams) error {
+	return r.store.UpdateUser(ctx, database.UpdateUserParams{
+		FullName:        params.FullName,
+		Email:           params.Email,
+		TelephoneNumber: params.TelephoneNumber,
+		UserID:          params.UserId,
 	})
 }
 

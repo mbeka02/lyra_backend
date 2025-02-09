@@ -9,6 +9,11 @@ type CreateUserRequest struct {
 	Password        string        `json:"password" validate:"required,min=8"`
 	Role            database.Role `json:"role" validate:"required"`
 }
+type UpdateUserRequest struct {
+	FullName        string `json:"full_name" validate:"required,min=2"`
+	Email           string `json:"email" validate:"required,email"`
+	TelephoneNumber string `json:"telephone_number" validate:"required,max=15"`
+}
 type UserResponse struct {
 	Fullname string `json:"full_name" validate:"required"`
 	Email    string `json:"email" validate:"required,email"`
