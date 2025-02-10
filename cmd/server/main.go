@@ -12,7 +12,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
-	"github.com/mbeka02/lyra_backend/internal/imgstore"
+	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
 
@@ -51,7 +51,7 @@ func setupServer() (*http.Server, error) {
 		return nil, fmt.Errorf("unable to setup the auth token maker:%v", err)
 	}
 
-	ImageFileStorage, err := imgstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_BUCKET_NAME)
+	storage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_BUCKET_NAME)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
 	}
@@ -59,15 +59,17 @@ func setupServer() (*http.Server, error) {
 	opts := server.ConfigOptions{
 		Port:                conf.PORT,
 		AccessTokenDuration: conf.ACCESS_TOKEN_DURATION,
+		AuthMaker:           maker,
+		ObjectStorage:       storage,
 	}
-	server := server.NewServer(opts, maker, ImageFileStorage)
+	server := server.NewServer(opts)
 	return server, nil
 }
 
 func main() {
 	server, err := setupServer()
 	if err != nil {
-		log.Fatalf("fatal error , the server setup process failed : %v", err)
+		log.Fatalf("fatal error,the server setup process failed : %v", err)
 	}
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)

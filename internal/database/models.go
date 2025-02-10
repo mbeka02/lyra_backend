@@ -124,6 +124,7 @@ type User struct {
 	Password          string
 	Email             string
 	TelephoneNumber   string
+	ProfileImageUrl   sql.NullString
 	CreatedAt         time.Time
 	UserRole          Role
 	VerifiedAt        sql.NullTime

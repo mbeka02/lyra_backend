@@ -7,10 +7,11 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users(full_name , password , email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, full_name, password, email, telephone_number, created_at, user_role, verified_at, password_changed_at
+INSERT INTO users(full_name , password , email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at
 `
 
 type CreateUserParams struct {
@@ -36,6 +37,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Password,
 		&i.Email,
 		&i.TelephoneNumber,
+		&i.ProfileImageUrl,
 		&i.CreatedAt,
 		&i.UserRole,
 		&i.VerifiedAt,
@@ -45,7 +47,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT user_id, full_name, password, email, telephone_number, created_at, user_role, verified_at, password_changed_at FROM users WHERE email=$1
+SELECT user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE email=$1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -57,6 +59,29 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.Password,
 		&i.Email,
 		&i.TelephoneNumber,
+		&i.ProfileImageUrl,
+		&i.CreatedAt,
+		&i.UserRole,
+		&i.VerifiedAt,
+		&i.PasswordChangedAt,
+	)
+	return i, err
+}
+
+const getUserById = `-- name: GetUserById :one
+SELECT user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE user_id=$1
+`
+
+func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserById, userID)
+	var i User
+	err := row.Scan(
+		&i.UserID,
+		&i.FullName,
+		&i.Password,
+		&i.Email,
+		&i.TelephoneNumber,
+		&i.ProfileImageUrl,
 		&i.CreatedAt,
 		&i.UserRole,
 		&i.VerifiedAt,
@@ -103,8 +128,22 @@ func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]GetUsersR
 	return items, nil
 }
 
-const updateUser = `-- name: UpdateUser :one
-UPDATE users SET full_name=$1 ,email=$2 , telephone_number=$3 WHERE user_id=$4 RETURNING user_id, full_name, password, email, telephone_number, created_at, user_role, verified_at, password_changed_at
+const updateProfilePicture = `-- name: UpdateProfilePicture :exec
+UPDATE users SET profile_image_url=$1 WHERE user_id=$2
+`
+
+type UpdateProfilePictureParams struct {
+	ProfileImageUrl sql.NullString
+	UserID          int64
+}
+
+func (q *Queries) UpdateProfilePicture(ctx context.Context, arg UpdateProfilePictureParams) error {
+	_, err := q.db.ExecContext(ctx, updateProfilePicture, arg.ProfileImageUrl, arg.UserID)
+	return err
+}
+
+const updateUser = `-- name: UpdateUser :exec
+UPDATE users SET full_name=$1 ,email=$2 , telephone_number=$3 WHERE user_id=$4
 `
 
 type UpdateUserParams struct {
@@ -114,24 +153,12 @@ type UpdateUserParams struct {
 	UserID          int64
 }
 
-func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, updateUser,
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
+	_, err := q.db.ExecContext(ctx, updateUser,
 		arg.FullName,
 		arg.Email,
 		arg.TelephoneNumber,
 		arg.UserID,
 	)
-	var i User
-	err := row.Scan(
-		&i.UserID,
-		&i.FullName,
-		&i.Password,
-		&i.Email,
-		&i.TelephoneNumber,
-		&i.CreatedAt,
-		&i.UserRole,
-		&i.VerifiedAt,
-		&i.PasswordChangedAt,
-	)
-	return i, err
+	return err
 }

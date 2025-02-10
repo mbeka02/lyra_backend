@@ -9,7 +9,7 @@ import (
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
-	"github.com/mbeka02/lyra_backend/internal/imgstore"
+	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
@@ -17,6 +17,8 @@ import (
 type ConfigOptions struct {
 	Port                string
 	AccessTokenDuration time.Duration
+	AuthMaker           auth.Maker
+	ObjectStorage       objstore.Storage
 }
 type Server struct {
 	opts     ConfigOptions
@@ -39,9 +41,9 @@ func initRepositories(store *database.Store) Repositories {
 	}
 }
 
-func initServices(repos Repositories, maker auth.Maker, imgStorage imgstore.Storage, duration time.Duration) Services {
+func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
 	return Services{
-		User: service.NewUserService(repos.User, maker, imgStorage, duration),
+		User: service.NewUserService(repos.User, maker, objStorage, duration),
 	}
 }
 
@@ -51,12 +53,12 @@ func initHandlers(services Services) Handlers {
 	}
 }
 
-func NewServer(opts ConfigOptions, maker auth.Maker, imgStorage imgstore.Storage) *http.Server {
+func NewServer(opts ConfigOptions) *http.Server {
 	store := database.NewStore()
 	// repository(data access) layer
 	repositories := initRepositories(store)
 	// service layer
-	services := initServices(repositories, maker, imgStorage, opts.AccessTokenDuration)
+	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration)
 	// transport layer
 	handlers := initHandlers(services)
 
