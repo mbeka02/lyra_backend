@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
@@ -22,7 +23,9 @@ type UpdateUserParams struct {
 type UserRepository interface {
 	Create(ctx context.Context, params CreateUserParams) (database.User, error)
 	GetByEmail(ctx context.Context, email string) (database.User, error)
+	GetById(ctx context.Context, id int64) (database.User, error)
 	Update(ctx context.Context, params UpdateUserParams) error
+	UpdateProfilePicture(ctx context.Context, profilePictureURL sql.NullString, userId int64) error
 }
 
 type userRepository struct {
@@ -54,6 +57,17 @@ func (r *userRepository) Update(ctx context.Context, params UpdateUserParams) er
 	})
 }
 
+func (r *userRepository) UpdateProfilePicture(ctx context.Context, profilePictureURL sql.NullString, userId int64) error {
+	return r.store.UpdateProfilePicture(ctx, database.UpdateProfilePictureParams{
+		ProfileImageUrl: profilePictureURL,
+		UserID:          userId,
+	})
+}
+
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (database.User, error) {
 	return r.store.GetUserByEmail(ctx, email)
+}
+
+func (r *userRepository) GetById(ctx context.Context, userId int64) (database.User, error) {
+	return r.store.GetUserById(ctx, userId)
 }

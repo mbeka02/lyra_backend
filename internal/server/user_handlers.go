@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -54,7 +55,38 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		TelephoneNumber: request.TelephoneNumber,
 		FullName:        request.FullName,
 	}, payload.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
 	if err := respondWithJSON(w, http.StatusCreated, "account updated"); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
+func (h *UserHandler) HandleProfilePicture(w http.ResponseWriter, r *http.Request) {
+	// get the file
+	_, fileHeader, err := r.FormFile("image")
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("bad request:%v", err))
+		return
+	}
+	// ensure auth payload is present
+	payload, err := getAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	// update the profile picture
+	err = h.userService.UpdateProfilePicture(r.Context(), fileHeader, payload.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := respondWithJSON(w, http.StatusCreated, "profile picture updated"); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}

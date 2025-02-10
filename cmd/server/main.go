@@ -69,7 +69,7 @@ func setupServer() (*http.Server, error) {
 func main() {
 	server, err := setupServer()
 	if err != nil {
-		log.Fatalf("fatal error , the server setup process failed : %v", err)
+		log.Fatalf("fatal error,the server setup process failed : %v", err)
 	}
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
