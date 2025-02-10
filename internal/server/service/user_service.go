@@ -16,6 +16,20 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 )
 
+const maxFileSize = 1024 * 1024 * 10 // 10 MB Limit
+var allowedImageTypes = map[string]bool{
+	"image/jpeg":    true,
+	"image/png":     true,
+	"image/gif":     true,
+	"image/webp":    true,
+	"image/bmp":     true,
+	"image/tiff":    true,
+	"image/svg+xml": true,
+	"image/x-icon":  true, // For .ico files
+	"image/heif":    true,
+	"image/heic":    true,
+}
+
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
 	GetUser(ctx context.Context, userId int64) (model.UserResponse, error)
@@ -86,16 +100,19 @@ func (s *userService) UpdateUser(ctx context.Context, req model.UpdateUserReques
 }
 
 func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *multipart.FileHeader, userId int64) error {
+	err := isValidImageFile(fileHeader)
+	if err != nil {
+		return err
+	}
 	user, err := s.repo.GetById(ctx, userId)
 	if err != nil {
 		return fmt.Errorf("unable to get user details:%v", err)
 	}
-
 	objectName, err := objNameFromURL(user.ProfileImageUrl, fileHeader.Filename)
 	if err != nil {
 		return err
 	}
-	// TODO : validate file type to ensure it's an image
+	// TODO : validate file type to ensure it's a valid image format
 	imageURL, err := s.imgStorage.Upload(ctx, objectName, fileHeader)
 	fmt.Println(StringToNullString(imageURL))
 	if err != nil {
@@ -145,6 +162,17 @@ func objNameFromURL(imageURL sql.NullString, fileName string) (string, error) {
 	// then get "base", the last part
 	fmt.Println("base=>", path.Base(urlPath.Path))
 	return path.Base(urlPath.Path), nil
+}
+
+func isValidImageFile(fileHeader *multipart.FileHeader) error {
+	fileContentType := fileHeader.Header.Get("Content-Type")
+	if fileHeader.Size > maxFileSize {
+		return fmt.Errorf("the image size is too large: %v", fileHeader.Size)
+	}
+	if _, ok := allowedImageTypes[fileContentType]; !ok {
+		return fmt.Errorf("this file format is not supported: %v", fileContentType)
+	}
+	return nil
 }
 
 // Convert a string to sql.NullString
