@@ -43,7 +43,7 @@ func NewUserService(repo repository.UserRepository, authMaker auth.Maker, imgSto
 func (s *userService) CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error) {
 	passwordHash, err := auth.HashPassword(req.Password)
 	if err != nil {
-		return model.AuthResponse{}, errors.New("failed to process password")
+		return model.AuthResponse{}, fmt.Errorf("failed to process password:%v", err)
 	}
 
 	user, err := s.repo.Create(ctx, repository.CreateUserParams{
@@ -53,7 +53,7 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 		UserRole: req.Role,
 	})
 	if err != nil {
-		return model.AuthResponse{}, errors.New("failed to create user")
+		return model.AuthResponse{}, fmt.Errorf("failed to create user:%v", err)
 	}
 
 	userResponse := model.NewUserResponse(user)
@@ -95,7 +95,9 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 	if err != nil {
 		return err
 	}
+	// TODO : validate file type to ensure it's an image
 	imageURL, err := s.imgStorage.Upload(ctx, objectName, fileHeader)
+	fmt.Println(StringToNullString(imageURL))
 	if err != nil {
 		return fmt.Errorf("unable to upload the image:%v", err)
 	}
@@ -109,7 +111,7 @@ func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.
 	}
 
 	if err := auth.ComparePassword(req.Password, user.Password); err != nil {
-		return model.AuthResponse{}, err
+		return model.AuthResponse{}, errors.New("invalid password")
 	}
 
 	userResponse := model.NewUserResponse(user)
@@ -138,9 +140,10 @@ func objNameFromURL(imageURL sql.NullString, fileName string) (string, error) {
 	if err != nil {
 		return "", errors.New("Failed to parse objectName from imageURL")
 	}
-
+	fmt.Println("URL path=>", urlPath)
 	// get "path" of url (everything after domain)
 	// then get "base", the last part
+	fmt.Println("base=>", path.Base(urlPath.Path))
 	return path.Base(urlPath.Path), nil
 }
 
