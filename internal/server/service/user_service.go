@@ -18,6 +18,7 @@ import (
 
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
+	GetUser(ctx context.Context, userId int64) (model.UserResponse, error)
 	Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error)
 	UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error
 	UpdateProfilePicture(ctx context.Context, fileHeader *multipart.FileHeader, userId int64) error
@@ -65,6 +66,14 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 		AccessToken: token,
 		User:        userResponse,
 	}, nil
+}
+
+func (s *userService) GetUser(ctx context.Context, userId int64) (model.UserResponse, error) {
+	user, err := s.repo.GetById(ctx, userId)
+	if err != nil {
+		return model.UserResponse{}, fmt.Errorf("unable to get user details:%v", err)
+	}
+	return model.NewUserResponse(user), nil
 }
 
 func (s *userService) UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error {

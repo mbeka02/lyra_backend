@@ -34,8 +34,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Route("/user", func(r chi.Router) {
 		r.Use(AuthMiddleware(s.opts.AuthMaker))
+		r.Get("/", s.handlers.User.HandleGetUser)
 		r.Patch("/update", s.handlers.User.HandleUpdateUser)
-		r.Post("/profile", s.handlers.User.HandleProfilePicture)
+		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 	})
 	return r
 }

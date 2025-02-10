@@ -37,6 +37,25 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, err := getAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	// update the user account
+	userDetails, err := h.userService.GetUser(r.Context(), payload.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := respondWithJSON(w, http.StatusOK, userDetails); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 	request := model.UpdateUserRequest{}
 	if err := parseAndValidateRequest(r, &request); err != nil {
@@ -60,7 +79,7 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusCreated, "account updated"); err != nil {
+	if err := respondWithJSON(w, http.StatusOK, "account updated"); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -86,7 +105,7 @@ func (h *UserHandler) HandleProfilePicture(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusCreated, "profile picture updated"); err != nil {
+	if err := respondWithJSON(w, http.StatusOK, "profile picture updated"); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
