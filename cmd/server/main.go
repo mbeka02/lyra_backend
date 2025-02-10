@@ -51,7 +51,7 @@ func setupServer() (*http.Server, error) {
 		return nil, fmt.Errorf("unable to setup the auth token maker:%v", err)
 	}
 
-	storage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_BUCKET_NAME)
+	storage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_IMAGE_BUCKET)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
 	}
