@@ -32,6 +32,7 @@ var allowedImageTypes = map[string]bool{
 
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
+	OnboardUser(ctx context.Context)
 	GetUser(ctx context.Context, userId int64) (model.UserResponse, error)
 	Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error)
 	UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error
@@ -39,7 +40,9 @@ type UserService interface {
 }
 
 type userService struct {
-	repo                repository.UserRepository
+	userRepo repository.UserRepository
+	patientRepo
+	specialistRepo
 	authMaker           auth.Maker
 	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
@@ -124,11 +127,11 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error) {
 	user, err := s.repo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return model.AuthResponse{}, errors.New("unable to find user")
+		return model.AuthResponse{}, errors.New("account does not exist")
 	}
 
 	if err := auth.ComparePassword(req.Password, user.Password); err != nil {
-		return model.AuthResponse{}, errors.New("invalid password")
+		return model.AuthResponse{}, errors.New("the password is invalid")
 	}
 
 	userResponse := model.NewUserResponse(user)

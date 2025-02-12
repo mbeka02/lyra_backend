@@ -22,7 +22,6 @@ type UserResponse struct {
 	Fullname        string         `json:"full_name" validate:"required"`
 	Email           string         `json:"email" validate:"required,email"`
 	TelephoneNumber string         `json:"telephone_number" validate:"required,max=15"`
-	Password        string         `json:"password" validate:"required,min=8"`
 	Role            database.Role  `json:"role" validate:"required"`
 	ProfileImageURL sql.NullString `json:"profile_image_url"`
 }

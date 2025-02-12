@@ -2,8 +2,8 @@
 CREATE TYPE status AS ENUM ('scheduled', 'completed', 'canceled');
 CREATE TABLE IF NOT EXISTS appointments(
   appointment_id bigserial PRIMARY KEY,
-  patient_id int REFERENCES patients(patient_id),
-  specialist_id int REFERENCES specialists(specialist_id),
+  patient_id bigint REFERENCES patients(patient_id),
+  specialist_id bigint REFERENCES specialists(specialist_id),
   current_status status NOT NULL DEFAULT ('scheduled'),
   appointment_date timestamptz NOT NULL
 );
