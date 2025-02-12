@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
@@ -32,6 +33,8 @@ var allowedImageTypes = map[string]bool{
 
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
+	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (database.Patient, error)
+	CreateSpecialist(ctx context.Context, req model.CreateSpecialistRequest, userId int64) (database.Specialist, error)
 	GetUser(ctx context.Context, userId int64) (model.UserResponse, error)
 	Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error)
 	UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error
@@ -39,19 +42,47 @@ type UserService interface {
 }
 
 type userService struct {
-	repo                repository.UserRepository
+	userRepo            repository.UserRepository
+	patientRepo         repository.PatientRepository
+	specialistRepo      repository.SpecialistRepository
 	authMaker           auth.Maker
 	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
 }
 
-func NewUserService(repo repository.UserRepository, authMaker auth.Maker, imgStorage objstore.Storage, duration time.Duration) UserService {
+// NewUserService initializes a new UserService.
+func NewUserService(
+	userRepo repository.UserRepository,
+	patientRepo repository.PatientRepository,
+	specialistRepo repository.SpecialistRepository,
+	authMaker auth.Maker,
+	imgStorage objstore.Storage,
+	accessTokenDuration time.Duration,
+) UserService {
 	return &userService{
-		repo:                repo,
+		userRepo:            userRepo,
+		patientRepo:         patientRepo,
+		specialistRepo:      specialistRepo,
 		authMaker:           authMaker,
 		imgStorage:          imgStorage,
-		accessTokenDuration: duration,
+		accessTokenDuration: accessTokenDuration,
 	}
+}
+
+func (s *userService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (database.Patient, error) {
+	return s.patientRepo.Create(ctx, repository.CreatePatientParams{
+		UserID:      userId,
+		Allergies:   req.Allergies,
+		DateOfBirth: req.DateOfBirth,
+	})
+}
+
+func (s *userService) CreateSpecialist(ctx context.Context, req model.CreateSpecialistRequest, userId int64) (database.Specialist, error) {
+	return s.specialistRepo.Create(ctx, repository.CreateSpecialistParams{
+		Specialization: req.Specialization,
+		LicenseNumber:  req.LicenseNumber,
+		UserID:         userId,
+	})
 }
 
 func (s *userService) CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error) {
@@ -60,7 +91,7 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 		return model.AuthResponse{}, fmt.Errorf("failed to process password:%v", err)
 	}
 
-	user, err := s.repo.Create(ctx, repository.CreateUserParams{
+	user, err := s.userRepo.Create(ctx, repository.CreateUserParams{
 		FullName: req.Fullname,
 		Email:    req.Email,
 		Password: passwordHash,
@@ -83,7 +114,7 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 }
 
 func (s *userService) GetUser(ctx context.Context, userId int64) (model.UserResponse, error) {
-	user, err := s.repo.GetById(ctx, userId)
+	user, err := s.userRepo.GetById(ctx, userId)
 	if err != nil {
 		return model.UserResponse{}, fmt.Errorf("unable to get user details:%v", err)
 	}
@@ -91,7 +122,7 @@ func (s *userService) GetUser(ctx context.Context, userId int64) (model.UserResp
 }
 
 func (s *userService) UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error {
-	return s.repo.Update(ctx, repository.UpdateUserParams{
+	return s.userRepo.Update(ctx, repository.UpdateUserParams{
 		Email:           req.Email,
 		TelephoneNumber: req.TelephoneNumber,
 		FullName:        req.FullName,
@@ -104,7 +135,7 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 	if err != nil {
 		return err
 	}
-	user, err := s.repo.GetById(ctx, userId)
+	user, err := s.userRepo.GetById(ctx, userId)
 	if err != nil {
 		return fmt.Errorf("unable to get user details:%v", err)
 	}
@@ -112,23 +143,22 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 	if err != nil {
 		return err
 	}
-	// TODO : validate file type to ensure it's a valid image format
 	imageURL, err := s.imgStorage.Upload(ctx, objectName, fileHeader)
 	fmt.Println(StringToNullString(imageURL))
 	if err != nil {
 		return fmt.Errorf("unable to upload the image:%v", err)
 	}
-	return s.repo.UpdateProfilePicture(ctx, StringToNullString(imageURL), userId)
+	return s.userRepo.UpdateProfilePicture(ctx, StringToNullString(imageURL), userId)
 }
 
 func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error) {
-	user, err := s.repo.GetByEmail(ctx, req.Email)
+	user, err := s.userRepo.GetByEmail(ctx, req.Email)
 	if err != nil {
-		return model.AuthResponse{}, errors.New("unable to find user")
+		return model.AuthResponse{}, errors.New("account does not exist")
 	}
 
 	if err := auth.ComparePassword(req.Password, user.Password); err != nil {
-		return model.AuthResponse{}, errors.New("invalid password")
+		return model.AuthResponse{}, errors.New("the password is invalid")
 	}
 
 	userResponse := model.NewUserResponse(user)
@@ -157,10 +187,10 @@ func objNameFromURL(imageURL sql.NullString, fileName string) (string, error) {
 	if err != nil {
 		return "", errors.New("Failed to parse objectName from imageURL")
 	}
-	fmt.Println("URL path=>", urlPath)
+
 	// get "path" of url (everything after domain)
 	// then get "base", the last part
-	fmt.Println("base=>", path.Base(urlPath.Path))
+
 	return path.Base(urlPath.Path), nil
 }
 
