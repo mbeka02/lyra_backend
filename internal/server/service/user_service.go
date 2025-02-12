@@ -49,23 +49,23 @@ type userService struct {
 	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
 }
-type USConfig struct {
-	userRepo            repository.UserRepository
-	patientRepo         repository.PatientRepository
-	specialistRepo      repository.SpecialistRepository
-	authMaker           auth.Maker
-	imgStorage          objstore.Storage
-	accessTokenDuration time.Duration
-}
 
-func NewUserService(u *USConfig) UserService {
+// NewUserService initializes a new UserService.
+func NewUserService(
+	userRepo repository.UserRepository,
+	patientRepo repository.PatientRepository,
+	specialistRepo repository.SpecialistRepository,
+	authMaker auth.Maker,
+	imgStorage objstore.Storage,
+	accessTokenDuration time.Duration,
+) UserService {
 	return &userService{
-		userRepo:            u.userRepo,
-		patientRepo:         u.patientRepo,
-		specialistRepo:      u.specialistRepo,
-		authMaker:           u.authMaker,
-		imgStorage:          u.imgStorage,
-		accessTokenDuration: u.accessTokenDuration,
+		userRepo:            userRepo,
+		patientRepo:         patientRepo,
+		specialistRepo:      specialistRepo,
+		authMaker:           authMaker,
+		imgStorage:          imgStorage,
+		accessTokenDuration: accessTokenDuration,
 	}
 }
 

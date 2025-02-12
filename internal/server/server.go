@@ -32,7 +32,9 @@ type Services struct {
 	User service.UserService
 }
 type Repositories struct {
-	User repository.UserRepository
+	User       repository.UserRepository
+	Patient    repository.PatientRepository
+	Specialist repository.SpecialistRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
@@ -43,7 +45,7 @@ func initRepositories(store *database.Store) Repositories {
 
 func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
 	return Services{
-		User: service.NewUserService(repos.User, maker, objStorage, duration),
+		User: service.NewUserService(repos.User, repos.Patient, repos.Specialist, maker, objStorage, duration),
 	}
 }
 
