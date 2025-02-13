@@ -39,7 +39,9 @@ type Repositories struct {
 
 func initRepositories(store *database.Store) Repositories {
 	return Repositories{
-		User: repository.NewUserRepository(store),
+		User:       repository.NewUserRepository(store),
+		Patient:    repository.NewPatientRepository(store),
+		Specialist: repository.NewSpecialistRepository(store),
 	}
 }
 
