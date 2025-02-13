@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -133,7 +132,7 @@ UPDATE users SET profile_image_url=$1 WHERE user_id=$2
 `
 
 type UpdateProfilePictureParams struct {
-	ProfileImageUrl sql.NullString
+	ProfileImageUrl string
 	UserID          int64
 }
 

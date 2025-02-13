@@ -1,8 +1,6 @@
 package model
 
 import (
-	"database/sql"
-
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
 
@@ -19,11 +17,11 @@ type UpdateUserRequest struct {
 	TelephoneNumber string `json:"telephone_number" validate:"required,max=15"`
 }
 type UserResponse struct {
-	Fullname        string         `json:"full_name" validate:"required"`
-	Email           string         `json:"email" validate:"required,email"`
-	TelephoneNumber string         `json:"telephone_number" validate:"required,max=15"`
-	Role            database.Role  `json:"role" validate:"required"`
-	ProfileImageURL sql.NullString `json:"profile_image_url"`
+	Fullname        string        `json:"full_name" validate:"required"`
+	Email           string        `json:"email" validate:"required,email"`
+	TelephoneNumber string        `json:"telephone_number" validate:"required"`
+	Role            database.Role `json:"role" validate:"required"`
+	ProfileImageURL string        `json:"profile_image_url"`
 }
 
 type LoginRequest struct {
