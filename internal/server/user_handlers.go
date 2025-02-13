@@ -43,6 +43,7 @@ func (h *UserHandler) HandleCreatePatient(w http.ResponseWriter, r *http.Request
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
+
 	// ensure auth payload is present
 	payload, err := getAuthPayload(r.Context())
 	if err != nil {

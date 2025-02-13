@@ -92,10 +92,11 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 	}
 
 	user, err := s.userRepo.Create(ctx, repository.CreateUserParams{
-		FullName: req.Fullname,
-		Email:    req.Email,
-		Password: passwordHash,
-		UserRole: req.Role,
+		FullName:        req.Fullname,
+		Email:           req.Email,
+		Password:        passwordHash,
+		UserRole:        req.Role,
+		TelephoneNumber: req.TelephoneNumber,
 	})
 	if err != nil {
 		return model.AuthResponse{}, fmt.Errorf("failed to create user:%v", err)
@@ -148,7 +149,7 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 	if err != nil {
 		return fmt.Errorf("unable to upload the image:%v", err)
 	}
-	return s.userRepo.UpdateProfilePicture(ctx, StringToNullString(imageURL), userId)
+	return s.userRepo.UpdateProfilePicture(ctx, imageURL, userId)
 }
 
 func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error) {
@@ -173,17 +174,17 @@ func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.
 	}, nil
 }
 
-func objNameFromURL(imageURL sql.NullString, fileName string) (string, error) {
+func objNameFromURL(imageURL string, fileName string) (string, error) {
 	// if user doesn't have imageURL - create one
 	// otherwise, extract last part of URL to get cloud storage object name
-	if !imageURL.Valid {
+	if imageURL == "" {
 		objectName := fmt.Sprintf("%s_%d", fileName, time.Now().UnixNano())
 
 		return objectName, nil
 	}
 
 	// split off last part of URL, which is the image's storage object ID
-	urlPath, err := url.Parse(imageURL.String)
+	urlPath, err := url.Parse(imageURL)
 	if err != nil {
 		return "", errors.New("Failed to parse objectName from imageURL")
 	}
