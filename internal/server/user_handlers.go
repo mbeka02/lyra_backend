@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -88,10 +89,10 @@ func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, err := getAuthPayload(r.Context())
 	if err != nil {
+		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	// update the user account
 	userDetails, err := h.userService.GetUser(r.Context(), payload.UserID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
