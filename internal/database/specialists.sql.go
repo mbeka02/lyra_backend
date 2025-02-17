@@ -30,3 +30,40 @@ func (q *Queries) CreateSpecialist(ctx context.Context, arg CreateSpecialistPara
 	)
 	return i, err
 }
+
+const getSpecialists = `-- name: GetSpecialists :many
+SELECT specialist_id, user_id, specialization, license_number FROM specialists LIMIT $1 OFFSET $2
+`
+
+type GetSpecialistsParams struct {
+	Limit  int32
+	Offset int32
+}
+
+func (q *Queries) GetSpecialists(ctx context.Context, arg GetSpecialistsParams) ([]Specialist, error) {
+	rows, err := q.db.QueryContext(ctx, getSpecialists, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Specialist
+	for rows.Next() {
+		var i Specialist
+		if err := rows.Scan(
+			&i.SpecialistID,
+			&i.UserID,
+			&i.Specialization,
+			&i.LicenseNumber,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

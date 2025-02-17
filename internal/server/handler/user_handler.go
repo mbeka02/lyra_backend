@@ -1,10 +1,12 @@
-package server
+package handler
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
+	"github.com/mbeka02/lyra_backend/internal/server/middleware"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
@@ -22,6 +24,7 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	request := model.CreateUserRequest{}
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
+
 		return
 	}
 
@@ -45,7 +48,7 @@ func (h *UserHandler) HandleCreatePatient(w http.ResponseWriter, r *http.Request
 	}
 
 	// ensure auth payload is present
-	payload, err := getAuthPayload(r.Context())
+	payload, err := middleware.GetAuthPayload(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
@@ -68,9 +71,10 @@ func (h *UserHandler) HandleCreateSpecialist(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	// ensure auth payload is present
-	payload, err := getAuthPayload(r.Context())
+	payload, err := middleware.GetAuthPayload(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
+
 		return
 	}
 	response, err := h.userService.CreateSpecialist(r.Context(), request, payload.UserID)
@@ -86,12 +90,12 @@ func (h *UserHandler) HandleCreateSpecialist(w http.ResponseWriter, r *http.Requ
 
 func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
-	payload, err := getAuthPayload(r.Context())
+	payload, err := middleware.GetAuthPayload(r.Context())
 	if err != nil {
+		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	// update the user account
 	userDetails, err := h.userService.GetUser(r.Context(), payload.UserID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
@@ -110,7 +114,7 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// ensure auth payload is present
-	payload, err := getAuthPayload(r.Context())
+	payload, err := middleware.GetAuthPayload(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
@@ -140,7 +144,7 @@ func (h *UserHandler) HandleProfilePicture(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	// ensure auth payload is present
-	payload, err := getAuthPayload(r.Context())
+	payload, err := middleware.GetAuthPayload(r.Context())
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return

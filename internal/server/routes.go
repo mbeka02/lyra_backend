@@ -10,6 +10,7 @@ import (
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 	"github.com/go-chi/httprate"
+	m "github.com/mbeka02/lyra_backend/internal/server/middleware"
 )
 
 func (s *Server) RegisterRoutes() http.Handler {
@@ -33,7 +34,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Post("/login", s.handlers.User.HandleLogin)
 
 	r.Route("/user", func(r chi.Router) {
-		r.Use(AuthMiddleware(s.opts.AuthMaker))
+		r.Use(m.AuthMiddleware(s.opts.AuthMaker))
 		r.Get("/", s.handlers.User.HandleGetUser)
 		r.Post("/patient", s.handlers.User.HandleCreatePatient)
 		r.Post("/specialist", s.handlers.User.HandleCreateSpecialist)
