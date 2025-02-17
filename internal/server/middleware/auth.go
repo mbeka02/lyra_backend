@@ -1,7 +1,8 @@
-package server
+package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -10,6 +11,13 @@ import (
 )
 
 type contextKey string
+
+// APIError represents a structured error response
+type APIError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Detail  string `json:"detail,omitempty"`
+}
 
 const (
 	authorizationTypeBearer            = "Bearer"
@@ -23,12 +31,23 @@ var (
 	ErrInvalidPayload  = errors.New("invalid authorization payload")
 )
 
-func getAuthPayload(ctx context.Context) (*auth.Payload, error) {
+func GetAuthPayload(ctx context.Context) (*auth.Payload, error) {
 	payload, ok := ctx.Value(authorizationPayloadKey).(*auth.Payload)
 	if !ok {
 		return nil, ErrInvalidPayload
 	}
 	return payload, nil
+}
+
+func respondWithVerificationError(w http.ResponseWriter, err error) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	apiError := APIError{
+		Status:  http.StatusUnauthorized,
+		Message: http.StatusText(http.StatusUnauthorized),
+		Detail:  err.Error(),
+	}
+	json.NewEncoder(w).Encode(apiError)
 }
 
 func extractAndVerifyToken(r *http.Request, maker auth.Maker) (*auth.Payload, error) {
@@ -55,7 +74,7 @@ func AuthMiddleware(maker auth.Maker) func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			payload, err := extractAndVerifyToken(r, maker)
 			if err != nil {
-				respondWithError(w, http.StatusUnauthorized, err)
+				respondWithVerificationError(w, err)
 				return
 			}
 

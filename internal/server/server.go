@@ -10,6 +10,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
+	"github.com/mbeka02/lyra_backend/internal/server/handler"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
@@ -26,7 +27,7 @@ type Server struct {
 	handlers Handlers
 }
 type Handlers struct {
-	User *UserHandler
+	User *handler.UserHandler
 }
 type Services struct {
 	User service.UserService
@@ -53,7 +54,7 @@ func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Stor
 
 func initHandlers(services Services) Handlers {
 	return Handlers{
-		User: NewUserHandler(services.User),
+		User: handler.NewUserHandler(services.User),
 	}
 }
 
