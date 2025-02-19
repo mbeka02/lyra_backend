@@ -92,7 +92,6 @@ func (g *GCStorage) Upload(ctx context.Context, objName string, fileHeader *mult
 	if err != nil {
 		return "", fmt.Errorf("unable to copy the file to storage:%v", err)
 	}
-	fmt.Println("bucket name=>", g.bucketName)
 	return fmt.Sprintf("https://storage.googleapis.com/%s/%s", g.bucketName, objName), nil
 }
 

@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
-	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
@@ -33,8 +32,6 @@ var allowedImageTypes = map[string]bool{
 
 type UserService interface {
 	CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error)
-	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (database.Patient, error)
-	CreateSpecialist(ctx context.Context, req model.CreateSpecialistRequest, userId int64) (database.Specialist, error)
 	GetUser(ctx context.Context, userId int64) (model.UserResponse, error)
 	Login(ctx context.Context, req model.LoginRequest) (model.AuthResponse, error)
 	UpdateUser(ctx context.Context, req model.UpdateUserRequest, userId int64) error
@@ -43,8 +40,6 @@ type UserService interface {
 
 type userService struct {
 	userRepo            repository.UserRepository
-	patientRepo         repository.PatientRepository
-	specialistRepo      repository.SpecialistRepository
 	authMaker           auth.Maker
 	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
@@ -53,36 +48,16 @@ type userService struct {
 // NewUserService initializes a new UserService.
 func NewUserService(
 	userRepo repository.UserRepository,
-	patientRepo repository.PatientRepository,
-	specialistRepo repository.SpecialistRepository,
 	authMaker auth.Maker,
 	imgStorage objstore.Storage,
 	accessTokenDuration time.Duration,
 ) UserService {
 	return &userService{
 		userRepo:            userRepo,
-		patientRepo:         patientRepo,
-		specialistRepo:      specialistRepo,
 		authMaker:           authMaker,
 		imgStorage:          imgStorage,
 		accessTokenDuration: accessTokenDuration,
 	}
-}
-
-func (s *userService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (database.Patient, error) {
-	return s.patientRepo.Create(ctx, repository.CreatePatientParams{
-		UserID:      userId,
-		Allergies:   req.Allergies,
-		DateOfBirth: req.DateOfBirth,
-	})
-}
-
-func (s *userService) CreateSpecialist(ctx context.Context, req model.CreateSpecialistRequest, userId int64) (database.Specialist, error) {
-	return s.specialistRepo.Create(ctx, repository.CreateSpecialistParams{
-		Specialization: req.Specialization,
-		LicenseNumber:  req.LicenseNumber,
-		UserID:         userId,
-	})
 }
 
 func (s *userService) CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error) {

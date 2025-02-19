@@ -36,8 +36,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Route("/user", func(r chi.Router) {
 		r.Use(m.AuthMiddleware(s.opts.AuthMaker))
 		r.Get("/", s.handlers.User.HandleGetUser)
-		r.Post("/patient", s.handlers.User.HandleCreatePatient)
-		r.Post("/specialist", s.handlers.User.HandleCreateSpecialist)
+		r.Get("/doctor", s.handlers.Doctor.HandleGetDoctors)
+		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
+		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
 		r.Patch("/update", s.handlers.User.HandleUpdateUser)
 		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 	})
