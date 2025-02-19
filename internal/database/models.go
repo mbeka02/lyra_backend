@@ -98,10 +98,25 @@ func (ns NullStatus) Value() (driver.Value, error) {
 
 type Appointment struct {
 	AppointmentID   int64
-	PatientID       sql.NullInt64
-	SpecialistID    sql.NullInt64
+	PatientID       int64
+	DoctorID        int64
 	CurrentStatus   Status
 	AppointmentDate time.Time
+}
+
+type Availability struct {
+	AvailabilityID int64
+	DoctorID       int64
+	StartTime      time.Time
+	EndTime        time.Time
+}
+
+type Doctor struct {
+	DoctorID       int64
+	UserID         int64
+	Description    string
+	Specialization string
+	LicenseNumber  string
 }
 
 type Patient struct {
@@ -109,13 +124,6 @@ type Patient struct {
 	UserID      int64
 	DateOfBirth time.Time
 	Allergies   string
-}
-
-type Specialist struct {
-	SpecialistID   int64
-	UserID         int64
-	Specialization string
-	LicenseNumber  string
 }
 
 type User struct {

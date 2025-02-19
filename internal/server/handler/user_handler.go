@@ -40,54 +40,6 @@ func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (h *UserHandler) HandleCreatePatient(w http.ResponseWriter, r *http.Request) {
-	request := model.CreatePatientRequest{}
-	if err := parseAndValidateRequest(r, &request); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
-		return
-	}
-
-	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-	response, err := h.userService.CreatePatient(r.Context(), request, payload.UserID)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-}
-
-func (h *UserHandler) HandleCreateSpecialist(w http.ResponseWriter, r *http.Request) {
-	request := model.CreateSpecialistRequest{}
-	if err := parseAndValidateRequest(r, &request); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
-		return
-	}
-	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-
-		return
-	}
-	response, err := h.userService.CreateSpecialist(r.Context(), request, payload.UserID)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-}
-
 func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, err := middleware.GetAuthPayload(r.Context())

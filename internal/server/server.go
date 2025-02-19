@@ -27,34 +27,42 @@ type Server struct {
 	handlers Handlers
 }
 type Handlers struct {
-	User *handler.UserHandler
+	User    *handler.UserHandler
+	Patient *handler.PatientHandler
+	Doctor  *handler.DoctorHandler
 }
 type Services struct {
-	User service.UserService
+	User    service.UserService
+	Patient service.PatientService
+	Doctor  service.DoctorService
 }
 type Repositories struct {
-	User       repository.UserRepository
-	Patient    repository.PatientRepository
-	Specialist repository.SpecialistRepository
+	User    repository.UserRepository
+	Patient repository.PatientRepository
+	Doctor  repository.DoctorRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
 	return Repositories{
-		User:       repository.NewUserRepository(store),
-		Patient:    repository.NewPatientRepository(store),
-		Specialist: repository.NewSpecialistRepository(store),
+		User:    repository.NewUserRepository(store),
+		Patient: repository.NewPatientRepository(store),
+		Doctor:  repository.NewDoctorRepository(store),
 	}
 }
 
 func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
 	return Services{
-		User: service.NewUserService(repos.User, repos.Patient, repos.Specialist, maker, objStorage, duration),
+		User:    service.NewUserService(repos.User, maker, objStorage, duration),
+		Patient: service.NewPatientService(repos.Patient),
+		Doctor:  service.NewDoctorService(repos.Doctor),
 	}
 }
 
 func initHandlers(services Services) Handlers {
 	return Handlers{
-		User: handler.NewUserHandler(services.User),
+		User:    handler.NewUserHandler(services.User),
+		Patient: handler.NewPatientHandler(services.Patient),
+		Doctor:  handler.NewDoctorHandler(services.Doctor),
 	}
 }
 

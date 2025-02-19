@@ -7,27 +7,26 @@ package database
 
 import (
 	"context"
-	"database/sql"
 	"time"
 )
 
 const createAppointment = `-- name: CreateAppointment :one
-INSERT INTO appointments(patient_id,specialist_id,appointment_date) VALUES ($1,$2,$3) RETURNING appointment_id, patient_id, specialist_id, current_status, appointment_date
+INSERT INTO appointments(patient_id,doctor_id,appointment_date) VALUES ($1,$2,$3) RETURNING appointment_id, patient_id, doctor_id, current_status, appointment_date
 `
 
 type CreateAppointmentParams struct {
-	PatientID       sql.NullInt64
-	SpecialistID    sql.NullInt64
+	PatientID       int64
+	DoctorID        int64
 	AppointmentDate time.Time
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
-	row := q.db.QueryRowContext(ctx, createAppointment, arg.PatientID, arg.SpecialistID, arg.AppointmentDate)
+	row := q.db.QueryRowContext(ctx, createAppointment, arg.PatientID, arg.DoctorID, arg.AppointmentDate)
 	var i Appointment
 	err := row.Scan(
 		&i.AppointmentID,
 		&i.PatientID,
-		&i.SpecialistID,
+		&i.DoctorID,
 		&i.CurrentStatus,
 		&i.AppointmentDate,
 	)
@@ -35,11 +34,11 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 }
 
 const getPatientAppointments = `-- name: GetPatientAppointments :many
-SELECT appointment_id, patient_id, specialist_id, current_status, appointment_date FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3
+SELECT appointment_id, patient_id, doctor_id, current_status, appointment_date FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3
 `
 
 type GetPatientAppointmentsParams struct {
-	PatientID sql.NullInt64
+	PatientID int64
 	Limit     int32
 	Offset    int32
 }
@@ -56,7 +55,7 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 		if err := rows.Scan(
 			&i.AppointmentID,
 			&i.PatientID,
-			&i.SpecialistID,
+			&i.DoctorID,
 			&i.CurrentStatus,
 			&i.AppointmentDate,
 		); err != nil {
