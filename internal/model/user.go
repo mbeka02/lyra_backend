@@ -17,6 +17,7 @@ type UpdateUserRequest struct {
 	TelephoneNumber string `json:"telephone_number" validate:"required,max=15"`
 }
 type UserResponse struct {
+	UserId          int64         `json:"user_id" validate:"required"`
 	Fullname        string        `json:"full_name" validate:"required"`
 	Email           string        `json:"email" validate:"required,email"`
 	TelephoneNumber string        `json:"telephone_number" validate:"required"`
@@ -36,6 +37,7 @@ type AuthResponse struct {
 
 func NewUserResponse(user database.User) UserResponse {
 	return UserResponse{
+		UserId:          user.UserID,
 		Fullname:        user.FullName,
 		Email:           user.Email,
 		TelephoneNumber: user.TelephoneNumber,
