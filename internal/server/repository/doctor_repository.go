@@ -9,6 +9,7 @@ import (
 type CreateDoctorParams struct {
 	Specialization string
 	LicenseNumber  string
+	Description    string
 	UserID         int64
 }
 type GetDoctorsParams struct {
@@ -35,6 +36,7 @@ func (s *doctorRepository) Create(ctx context.Context, params CreateDoctorParams
 		UserID:         params.UserID,
 		LicenseNumber:  params.LicenseNumber,
 		Specialization: params.Specialization,
+		Description:    params.Description,
 	})
 }
 

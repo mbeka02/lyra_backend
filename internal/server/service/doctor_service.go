@@ -26,6 +26,7 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 	return s.doctorRepo.Create(ctx, repository.CreateDoctorParams{
 		Specialization: req.Specialization,
 		LicenseNumber:  req.LicenseNumber,
+		Description:    req.Description,
 		UserID:         userId,
 	})
 }

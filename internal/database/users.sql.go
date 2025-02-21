@@ -22,7 +22,7 @@ type CreateUserParams struct {
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser,
+	row := q.db.QueryRowContext(ctx, createUser,
 		arg.FullName,
 		arg.Password,
 		arg.Email,
@@ -50,7 +50,7 @@ SELECT user_id, full_name, password, email, telephone_number, profile_image_url,
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.UserID,
@@ -72,7 +72,7 @@ SELECT user_id, full_name, password, email, telephone_number, profile_image_url,
 `
 
 func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
-	row := q.db.QueryRow(ctx, getUserById, userID)
+	row := q.db.QueryRowContext(ctx, getUserById, userID)
 	var i User
 	err := row.Scan(
 		&i.UserID,
@@ -105,7 +105,7 @@ type GetUsersRow struct {
 }
 
 func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]GetUsersRow, error) {
-	rows, err := q.db.Query(ctx, getUsers, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getUsers, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +117,9 @@ func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]GetUsersR
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -134,7 +137,7 @@ type UpdateProfilePictureParams struct {
 }
 
 func (q *Queries) UpdateProfilePicture(ctx context.Context, arg UpdateProfilePictureParams) error {
-	_, err := q.db.Exec(ctx, updateProfilePicture, arg.ProfileImageUrl, arg.UserID)
+	_, err := q.db.ExecContext(ctx, updateProfilePicture, arg.ProfileImageUrl, arg.UserID)
 	return err
 }
 
@@ -150,7 +153,7 @@ type UpdateUserParams struct {
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
-	_, err := q.db.Exec(ctx, updateUser,
+	_, err := q.db.ExecContext(ctx, updateUser,
 		arg.FullName,
 		arg.Email,
 		arg.TelephoneNumber,

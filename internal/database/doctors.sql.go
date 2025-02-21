@@ -10,17 +10,23 @@ import (
 )
 
 const createDoctor = `-- name: CreateDoctor :one
-INSERT INTO doctors(user_id,specialization,license_number) VALUES ($1,$2,$3)RETURNING doctor_id, user_id, description, specialization, license_number, created_at, updated_at
+INSERT INTO doctors(user_id,specialization,license_number,description) VALUES ($1,$2,$3,$4)RETURNING doctor_id, user_id, description, specialization, license_number, created_at, updated_at
 `
 
 type CreateDoctorParams struct {
 	UserID         int64
 	Specialization string
 	LicenseNumber  string
+	Description    string
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
-	row := q.db.QueryRow(ctx, createDoctor, arg.UserID, arg.Specialization, arg.LicenseNumber)
+	row := q.db.QueryRowContext(ctx, createDoctor,
+		arg.UserID,
+		arg.Specialization,
+		arg.LicenseNumber,
+		arg.Description,
+	)
 	var i Doctor
 	err := row.Scan(
 		&i.DoctorID,
@@ -35,7 +41,7 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 }
 
 const getDoctors = `-- name: GetDoctors :many
-SELECT full_name,specialization,doctor_id,profile_image_url FROM doctors INNER JOIN users ON doctors.user_id=users.user_id LIMIT $1 OFFSET $2
+SELECT full_name,specialization,doctor_id,profile_image_url,description FROM doctors INNER JOIN users ON doctors.user_id=users.user_id LIMIT $1 OFFSET $2
 `
 
 type GetDoctorsParams struct {
@@ -48,10 +54,11 @@ type GetDoctorsRow struct {
 	Specialization  string
 	DoctorID        int64
 	ProfileImageUrl string
+	Description     string
 }
 
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
-	rows, err := q.db.Query(ctx, getDoctors, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getDoctors, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -64,10 +71,14 @@ func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDo
 			&i.Specialization,
 			&i.DoctorID,
 			&i.ProfileImageUrl,
+			&i.Description,
 		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

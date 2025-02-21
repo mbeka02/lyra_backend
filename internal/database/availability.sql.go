@@ -7,8 +7,8 @@ package database
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"database/sql"
+	"time"
 )
 
 const createAvailability = `-- name: CreateAvailability :one
@@ -22,14 +22,14 @@ INSERT INTO availability (
 type CreateAvailabilityParams struct {
 	DoctorID     int64
 	DayOfWeek    int32
-	StartTime    pgtype.Time
-	EndTime      pgtype.Time
-	IsRecurring  pgtype.Bool
-	SpecificDate pgtype.Date
+	StartTime    time.Time
+	EndTime      time.Time
+	IsRecurring  sql.NullBool
+	SpecificDate sql.NullTime
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {
-	row := q.db.QueryRow(ctx, createAvailability,
+	row := q.db.QueryRowContext(ctx, createAvailability,
 		arg.DoctorID,
 		arg.DayOfWeek,
 		arg.StartTime,

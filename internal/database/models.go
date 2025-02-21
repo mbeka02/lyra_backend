@@ -5,10 +5,10 @@
 package database
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 type AppointmentStatus string
@@ -102,22 +102,22 @@ type Appointment struct {
 	DoctorID      int64
 	CurrentStatus AppointmentStatus
 	Reason        string
-	Notes         pgtype.Text
-	StartTime     pgtype.Timestamptz
-	EndTime       pgtype.Timestamptz
-	CreatedAt     pgtype.Timestamptz
-	UpdatedAt     pgtype.Timestamptz
+	Notes         sql.NullString
+	StartTime     time.Time
+	EndTime       time.Time
+	CreatedAt     time.Time
+	UpdatedAt     sql.NullTime
 }
 
 type Availability struct {
 	AvailabilityID int64
 	DoctorID       int64
-	StartTime      pgtype.Time
-	EndTime        pgtype.Time
-	IsRecurring    pgtype.Bool
-	SpecificDate   pgtype.Date
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
+	StartTime      time.Time
+	EndTime        time.Time
+	IsRecurring    sql.NullBool
+	SpecificDate   sql.NullTime
+	CreatedAt      time.Time
+	UpdatedAt      sql.NullTime
 	DayOfWeek      int32
 }
 
@@ -127,17 +127,17 @@ type Doctor struct {
 	Description    string
 	Specialization string
 	LicenseNumber  string
-	CreatedAt      pgtype.Timestamptz
-	UpdatedAt      pgtype.Timestamptz
+	CreatedAt      time.Time
+	UpdatedAt      sql.NullTime
 }
 
 type Patient struct {
 	PatientID   int64
 	UserID      int64
-	DateOfBirth pgtype.Date
+	DateOfBirth time.Time
 	Allergies   string
-	CreatedAt   pgtype.Timestamptz
-	UpdatedAt   pgtype.Timestamptz
+	CreatedAt   time.Time
+	UpdatedAt   sql.NullTime
 }
 
 type User struct {
@@ -147,8 +147,8 @@ type User struct {
 	Email             string
 	TelephoneNumber   string
 	ProfileImageUrl   string
-	CreatedAt         pgtype.Timestamptz
+	CreatedAt         time.Time
 	UserRole          Role
-	VerifiedAt        pgtype.Timestamptz
-	PasswordChangedAt pgtype.Timestamptz
+	VerifiedAt        sql.NullTime
+	PasswordChangedAt time.Time
 }

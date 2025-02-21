@@ -7,8 +7,7 @@ package database
 
 import (
 	"context"
-
-	"github.com/jackc/pgx/v5/pgtype"
+	"time"
 )
 
 const createAppointment = `-- name: CreateAppointment :one
@@ -18,12 +17,12 @@ INSERT INTO appointments(patient_id,doctor_id,start_time,end_time) VALUES ($1,$2
 type CreateAppointmentParams struct {
 	PatientID int64
 	DoctorID  int64
-	StartTime pgtype.Timestamptz
-	EndTime   pgtype.Timestamptz
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
-	row := q.db.QueryRow(ctx, createAppointment,
+	row := q.db.QueryRowContext(ctx, createAppointment,
 		arg.PatientID,
 		arg.DoctorID,
 		arg.StartTime,
@@ -50,7 +49,7 @@ DELETE FROM appointments WHERE appointment_id=$1
 `
 
 func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) error {
-	_, err := q.db.Exec(ctx, deleteAppointment, appointmentID)
+	_, err := q.db.ExecContext(ctx, deleteAppointment, appointmentID)
 	return err
 }
 
@@ -65,7 +64,7 @@ type GetPatientAppointmentsParams struct {
 }
 
 func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppointmentsParams) ([]Appointment, error) {
-	rows, err := q.db.Query(ctx, getPatientAppointments, arg.PatientID, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getPatientAppointments, arg.PatientID, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -89,6 +88,9 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 		}
 		items = append(items, i)
 	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
@@ -105,7 +107,7 @@ type UpdateAppointmentStatusParams struct {
 }
 
 func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) (Appointment, error) {
-	row := q.db.QueryRow(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
+	row := q.db.QueryRowContext(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
 	var i Appointment
 	err := row.Scan(
 		&i.AppointmentID,
