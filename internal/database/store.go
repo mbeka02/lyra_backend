@@ -45,6 +45,12 @@ func NewStore() *Store {
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	// Configure connection pool settings
+	// conn.SetMaxOpenConns(50) // Maximum number of open connections
+	// conn.SetMaxIdleConns(10) // Maximum number of idle connections
+	// conn.SetConnMaxLifetime(5 * time.Minute) // Lifetime of each connection
+
 	dbInstance = &Store{
 		db:      conn,
 		Queries: New(conn),

@@ -10,7 +10,7 @@ import (
 )
 
 const createDoctor = `-- name: CreateDoctor :one
-INSERT INTO doctors(user_id,specialization,license_number) VALUES ($1,$2,$3)RETURNING doctor_id, user_id, description, specialization, license_number
+INSERT INTO doctors(user_id,specialization,license_number) VALUES ($1,$2,$3)RETURNING doctor_id, user_id, description, specialization, license_number, created_at, updated_at
 `
 
 type CreateDoctorParams struct {
@@ -20,7 +20,7 @@ type CreateDoctorParams struct {
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
-	row := q.db.QueryRowContext(ctx, createDoctor, arg.UserID, arg.Specialization, arg.LicenseNumber)
+	row := q.db.QueryRow(ctx, createDoctor, arg.UserID, arg.Specialization, arg.LicenseNumber)
 	var i Doctor
 	err := row.Scan(
 		&i.DoctorID,
@@ -28,6 +28,8 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		&i.Description,
 		&i.Specialization,
 		&i.LicenseNumber,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
@@ -49,7 +51,7 @@ type GetDoctorsRow struct {
 }
 
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getDoctors, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, getDoctors, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -66,9 +68,6 @@ func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDo
 			return nil, err
 		}
 		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err

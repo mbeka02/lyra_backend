@@ -7,27 +7,30 @@ package database
 
 import (
 	"context"
-	"time"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const createPatient = `-- name: CreatePatient :one
-INSERT INTO patients(user_id,date_of_birth,allergies) VALUES ($1,$2,$3)RETURNING patient_id, user_id, date_of_birth, allergies
+INSERT INTO patients(user_id,date_of_birth,allergies) VALUES ($1,$2,$3)RETURNING patient_id, user_id, date_of_birth, allergies, created_at, updated_at
 `
 
 type CreatePatientParams struct {
 	UserID      int64
-	DateOfBirth time.Time
+	DateOfBirth pgtype.Date
 	Allergies   string
 }
 
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
-	row := q.db.QueryRowContext(ctx, createPatient, arg.UserID, arg.DateOfBirth, arg.Allergies)
+	row := q.db.QueryRow(ctx, createPatient, arg.UserID, arg.DateOfBirth, arg.Allergies)
 	var i Patient
 	err := row.Scan(
 		&i.PatientID,
 		&i.UserID,
 		&i.DateOfBirth,
 		&i.Allergies,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
