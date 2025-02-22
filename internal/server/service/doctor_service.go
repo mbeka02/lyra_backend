@@ -41,7 +41,7 @@ func (s *doctorService) GetDoctors(ctx context.Context, limit, offset int32) (mo
 		return model.GetDoctorsResponse{}, err
 	}
 	hasMore := false
-	// handle a situation where there's more data
+	// handle a situation where there's still more data
 	if len(rows) > int(limit) {
 		hasMore = true
 		rows = rows[:limit] // remove the extra row
