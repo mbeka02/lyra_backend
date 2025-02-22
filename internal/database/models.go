@@ -11,6 +11,49 @@ import (
 	"time"
 )
 
+type AppointmentStatus string
+
+const (
+	AppointmentStatusScheduled AppointmentStatus = "scheduled"
+	AppointmentStatusCompleted AppointmentStatus = "completed"
+	AppointmentStatusCanceled  AppointmentStatus = "canceled"
+)
+
+func (e *AppointmentStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = AppointmentStatus(s)
+	case string:
+		*e = AppointmentStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for AppointmentStatus: %T", src)
+	}
+	return nil
+}
+
+type NullAppointmentStatus struct {
+	AppointmentStatus AppointmentStatus
+	Valid             bool // Valid is true if AppointmentStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullAppointmentStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.AppointmentStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.AppointmentStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullAppointmentStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.AppointmentStatus), nil
+}
+
 type Role string
 
 const (
@@ -53,55 +96,17 @@ func (ns NullRole) Value() (driver.Value, error) {
 	return string(ns.Role), nil
 }
 
-type Status string
-
-const (
-	StatusScheduled Status = "scheduled"
-	StatusCompleted Status = "completed"
-	StatusCanceled  Status = "canceled"
-)
-
-func (e *Status) Scan(src interface{}) error {
-	switch s := src.(type) {
-	case []byte:
-		*e = Status(s)
-	case string:
-		*e = Status(s)
-	default:
-		return fmt.Errorf("unsupported scan type for Status: %T", src)
-	}
-	return nil
-}
-
-type NullStatus struct {
-	Status Status
-	Valid  bool // Valid is true if Status is not NULL
-}
-
-// Scan implements the Scanner interface.
-func (ns *NullStatus) Scan(value interface{}) error {
-	if value == nil {
-		ns.Status, ns.Valid = "", false
-		return nil
-	}
-	ns.Valid = true
-	return ns.Status.Scan(value)
-}
-
-// Value implements the driver Valuer interface.
-func (ns NullStatus) Value() (driver.Value, error) {
-	if !ns.Valid {
-		return nil, nil
-	}
-	return string(ns.Status), nil
-}
-
 type Appointment struct {
-	AppointmentID   int64
-	PatientID       int64
-	DoctorID        int64
-	CurrentStatus   Status
-	AppointmentDate time.Time
+	AppointmentID int64
+	PatientID     int64
+	DoctorID      int64
+	CurrentStatus AppointmentStatus
+	Reason        string
+	Notes         sql.NullString
+	StartTime     time.Time
+	EndTime       time.Time
+	CreatedAt     time.Time
+	UpdatedAt     sql.NullTime
 }
 
 type Availability struct {
@@ -109,6 +114,11 @@ type Availability struct {
 	DoctorID       int64
 	StartTime      time.Time
 	EndTime        time.Time
+	IsRecurring    sql.NullBool
+	SpecificDate   sql.NullTime
+	CreatedAt      time.Time
+	UpdatedAt      sql.NullTime
+	DayOfWeek      int32
 }
 
 type Doctor struct {
@@ -117,6 +127,8 @@ type Doctor struct {
 	Description    string
 	Specialization string
 	LicenseNumber  string
+	CreatedAt      time.Time
+	UpdatedAt      sql.NullTime
 }
 
 type Patient struct {
@@ -124,6 +136,8 @@ type Patient struct {
 	UserID      int64
 	DateOfBirth time.Time
 	Allergies   string
+	CreatedAt   time.Time
+	UpdatedAt   sql.NullTime
 }
 
 type User struct {

@@ -11,30 +11,50 @@ import (
 )
 
 const createAppointment = `-- name: CreateAppointment :one
-INSERT INTO appointments(patient_id,doctor_id,appointment_date) VALUES ($1,$2,$3) RETURNING appointment_id, patient_id, doctor_id, current_status, appointment_date
+INSERT INTO appointments(patient_id,doctor_id,start_time,end_time) VALUES ($1,$2,$3,$4) RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
 `
 
 type CreateAppointmentParams struct {
-	PatientID       int64
-	DoctorID        int64
-	AppointmentDate time.Time
+	PatientID int64
+	DoctorID  int64
+	StartTime time.Time
+	EndTime   time.Time
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
-	row := q.db.QueryRowContext(ctx, createAppointment, arg.PatientID, arg.DoctorID, arg.AppointmentDate)
+	row := q.db.QueryRowContext(ctx, createAppointment,
+		arg.PatientID,
+		arg.DoctorID,
+		arg.StartTime,
+		arg.EndTime,
+	)
 	var i Appointment
 	err := row.Scan(
 		&i.AppointmentID,
 		&i.PatientID,
 		&i.DoctorID,
 		&i.CurrentStatus,
-		&i.AppointmentDate,
+		&i.Reason,
+		&i.Notes,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
+const deleteAppointment = `-- name: DeleteAppointment :exec
+DELETE FROM appointments WHERE appointment_id=$1
+`
+
+func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) error {
+	_, err := q.db.ExecContext(ctx, deleteAppointment, appointmentID)
+	return err
+}
+
 const getPatientAppointments = `-- name: GetPatientAppointments :many
-SELECT appointment_id, patient_id, doctor_id, current_status, appointment_date FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3
+SELECT appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3
 `
 
 type GetPatientAppointmentsParams struct {
@@ -57,7 +77,12 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 			&i.PatientID,
 			&i.DoctorID,
 			&i.CurrentStatus,
-			&i.AppointmentDate,
+			&i.Reason,
+			&i.Notes,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -72,16 +97,29 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 	return items, nil
 }
 
-const updateAppointmentStatus = `-- name: UpdateAppointmentStatus :exec
-UPDATE appointments SET current_status=$1 WHERE appointment_id=$2
+const updateAppointmentStatus = `-- name: UpdateAppointmentStatus :one
+UPDATE appointments SET current_status=$1 WHERE appointment_id=$2 RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
 `
 
 type UpdateAppointmentStatusParams struct {
-	CurrentStatus Status
+	CurrentStatus AppointmentStatus
 	AppointmentID int64
 }
 
-func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) error {
-	_, err := q.db.ExecContext(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
-	return err
+func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) (Appointment, error) {
+	row := q.db.QueryRowContext(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
+	var i Appointment
+	err := row.Scan(
+		&i.AppointmentID,
+		&i.PatientID,
+		&i.DoctorID,
+		&i.CurrentStatus,
+		&i.Reason,
+		&i.Notes,
+		&i.StartTime,
+		&i.EndTime,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

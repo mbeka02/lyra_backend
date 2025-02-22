@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/server/middleware"
@@ -21,7 +22,15 @@ func NewDoctorHandler(doctorService service.DoctorService) *DoctorHandler {
 }
 
 func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request) {
-	response, err := h.doctorService.GetDoctors(r.Context(), 30, 0)
+	pageStr := r.URL.Query().Get("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 0 {
+		page = 0 // default page
+	}
+	var defaultLimit int32 = 10
+	var Offset int32 = int32(page) * defaultLimit
+
+	response, err := h.doctorService.GetDoctors(r.Context(), defaultLimit, Offset)
 	if err != nil {
 		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, errors.New("unable to get doctor details"))
