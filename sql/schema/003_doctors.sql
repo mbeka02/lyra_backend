@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS doctors(
     -- Maybe normalize this --
     county VARCHAR(30) NOT NULL,
     price_per_hour NUMERIC(10,2) NOT NULL,
-    license_number VARCHAR(50) NOT NULL,
+    license_number VARCHAR(50) UNIQUE NOT NULL,
     created_at timestamptz NOT NULL DEFAULT (now()),
     updated_at timestamptz DEFAULT now()
   );
