@@ -120,7 +120,6 @@ func (s *userService) UpdateProfilePicture(ctx context.Context, fileHeader *mult
 		return err
 	}
 	imageURL, err := s.imgStorage.Upload(ctx, objectName, fileHeader)
-	fmt.Println(StringToNullString(imageURL))
 	if err != nil {
 		return fmt.Errorf("unable to upload the image:%v", err)
 	}

@@ -24,10 +24,13 @@ func NewDoctorService(doctorRepo repository.DoctorRepository) DoctorService {
 
 func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (database.Doctor, error) {
 	return s.doctorRepo.Create(ctx, repository.CreateDoctorParams{
-		Specialization: req.Specialization,
-		LicenseNumber:  req.LicenseNumber,
-		Description:    req.Description,
-		UserID:         userId,
+		Specialization:    req.Specialization,
+		LicenseNumber:     req.LicenseNumber,
+		Description:       req.Description,
+		County:            req.County,
+		PricePerHour:      req.PricePerHour,
+		YearsOfExperience: req.YearsOfExperience,
+		UserID:            userId,
 	})
 }
 
