@@ -62,23 +62,23 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    ($1 = '' OR doctors.county ILIKE $1) -- County filter
+    ($1::text = '' OR doctors.county ILIKE $1::text) -- County filter
 ORDER BY 
     CASE 
-        WHEN $2 = 'price' AND $3 = 'asc' THEN doctors.price_per_hour 
-        WHEN $2 = 'price' AND $3 = 'desc' THEN doctors.price_per_hour * -1
-        WHEN $2 = 'experience' AND $3 = 'asc' THEN doctors.years_of_experience
-        WHEN $2 = 'experience' AND $3 = 'desc' THEN doctors.years_of_experience * -1
+        WHEN $2::text = 'price' AND $3::text = 'asc' THEN doctors.price_per_hour  
+        WHEN $2::text = 'price' AND $3::text = 'desc' THEN doctors.price_per_hour * -1
+        WHEN $2::text = 'experience' AND $3::text = 'asc' THEN doctors.years_of_experience
+        WHEN $2::text = 'experience' AND $3::text = 'desc' THEN doctors.years_of_experience * -1
     END
-LIMIT $4  OFFSET $5
+LIMIT $5::int  OFFSET $4::int
 `
 
 type GetDoctorsParams struct {
-	Column1 interface{}
-	Column2 interface{}
-	Column3 interface{}
-	Limit   int32
-	Offset  int32
+	SetCounty    string
+	SetSortBy    string
+	SetSortOrder string
+	SetOffset    int32
+	SetLimit     int32
 }
 
 type GetDoctorsRow struct {
@@ -94,11 +94,11 @@ type GetDoctorsRow struct {
 
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getDoctors,
-		arg.Column1,
-		arg.Column2,
-		arg.Column3,
-		arg.Limit,
-		arg.Offset,
+		arg.SetCounty,
+		arg.SetSortBy,
+		arg.SetSortOrder,
+		arg.SetOffset,
+		arg.SetLimit,
 	)
 	if err != nil {
 		return nil, err

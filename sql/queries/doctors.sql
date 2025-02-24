@@ -14,12 +14,12 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    ($1 = '' OR doctors.county ILIKE $1) -- County filter
+    (@set_county::text = '' OR doctors.county ILIKE @set_county::text) -- County filter
 ORDER BY 
     CASE 
-        WHEN $2 = 'price' AND $3 = 'asc' THEN doctors.price_per_hour  
-        WHEN $2 = 'price' AND $3 = 'desc' THEN doctors.price_per_hour * -1
-        WHEN $2 = 'experience' AND $3 = 'asc' THEN doctors.years_of_experience
-        WHEN $2 = 'experience' AND $3 = 'desc' THEN doctors.years_of_experience * -1
+        WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'asc' THEN doctors.price_per_hour  
+        WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'desc' THEN doctors.price_per_hour * -1
+        WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'asc' THEN doctors.years_of_experience
+        WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'desc' THEN doctors.years_of_experience * -1
     END
-LIMIT $4  OFFSET $5;
+LIMIT @set_limit::int  OFFSET @set_offset::int;

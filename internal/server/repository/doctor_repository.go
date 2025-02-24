@@ -51,10 +51,10 @@ func (s *doctorRepository) Create(ctx context.Context, params CreateDoctorParams
 
 func (s *doctorRepository) GetAll(ctx context.Context, params GetDoctorsParams) ([]database.GetDoctorsRow, error) {
 	return s.store.GetDoctors(ctx, database.GetDoctorsParams{
-		Column1: params.County,
-		Column2: params.SortBy,
-		Column3: params.SortOrder,
-		Limit:   params.Limit,
-		Offset:  params.Offset,
+		SetCounty:    params.County,
+		SetSortBy:    params.SortBy,
+		SetSortOrder: params.SortOrder,
+		SetLimit:     params.Limit,
+		SetOffset:    params.Offset,
 	})
 }
