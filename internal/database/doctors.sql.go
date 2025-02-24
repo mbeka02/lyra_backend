@@ -10,14 +10,17 @@ import (
 )
 
 const createDoctor = `-- name: CreateDoctor :one
-INSERT INTO doctors(user_id,specialization,license_number,description) VALUES ($1,$2,$3,$4)RETURNING doctor_id, user_id, description, specialization, license_number, created_at, updated_at
+INSERT INTO doctors(user_id,specialization,license_number,description , years_of_experience , county , price_per_hour) VALUES ($1,$2,$3,$4,$5,$6,$7)RETURNING doctor_id, user_id, description, specialization, years_of_experience, county, price_per_hour, license_number, created_at, updated_at
 `
 
 type CreateDoctorParams struct {
-	UserID         int64
-	Specialization string
-	LicenseNumber  string
-	Description    string
+	UserID            int64
+	Specialization    string
+	LicenseNumber     string
+	Description       string
+	YearsOfExperience int32
+	County            string
+	PricePerHour      string
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
@@ -26,6 +29,9 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		arg.Specialization,
 		arg.LicenseNumber,
 		arg.Description,
+		arg.YearsOfExperience,
+		arg.County,
+		arg.PricePerHour,
 	)
 	var i Doctor
 	err := row.Scan(
@@ -33,6 +39,9 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 		&i.UserID,
 		&i.Description,
 		&i.Specialization,
+		&i.YearsOfExperience,
+		&i.County,
+		&i.PricePerHour,
 		&i.LicenseNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
@@ -41,24 +50,56 @@ func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doc
 }
 
 const getDoctors = `-- name: GetDoctors :many
-SELECT full_name,specialization,doctor_id,profile_image_url,description FROM doctors INNER JOIN users ON doctors.user_id=users.user_id LIMIT $1 OFFSET $2
+SELECT 
+    users.full_name, 
+    doctors.specialization, 
+    doctors.doctor_id, 
+    users.profile_image_url, 
+    doctors.description, 
+    doctors.county, 
+    doctors.price_per_hour, 
+    doctors.years_of_experience
+FROM doctors
+INNER JOIN users ON doctors.user_id = users.user_id
+WHERE 
+    ($1::text = '' OR doctors.county ILIKE $1::text) -- County filter
+ORDER BY 
+    CASE 
+        WHEN $2::text = 'price' AND $3::text = 'asc' THEN doctors.price_per_hour  
+        WHEN $2::text = 'price' AND $3::text = 'desc' THEN doctors.price_per_hour * -1
+        WHEN $2::text = 'experience' AND $3::text = 'asc' THEN doctors.years_of_experience
+        WHEN $2::text = 'experience' AND $3::text = 'desc' THEN doctors.years_of_experience * -1
+    END
+LIMIT $5::int  OFFSET $4::int
 `
 
 type GetDoctorsParams struct {
-	Limit  int32
-	Offset int32
+	SetCounty    string
+	SetSortBy    string
+	SetSortOrder string
+	SetOffset    int32
+	SetLimit     int32
 }
 
 type GetDoctorsRow struct {
-	FullName        string
-	Specialization  string
-	DoctorID        int64
-	ProfileImageUrl string
-	Description     string
+	FullName          string
+	Specialization    string
+	DoctorID          int64
+	ProfileImageUrl   string
+	Description       string
+	County            string
+	PricePerHour      string
+	YearsOfExperience int32
 }
 
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getDoctors, arg.Limit, arg.Offset)
+	rows, err := q.db.QueryContext(ctx, getDoctors,
+		arg.SetCounty,
+		arg.SetSortBy,
+		arg.SetSortOrder,
+		arg.SetOffset,
+		arg.SetLimit,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -72,6 +113,9 @@ func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDo
 			&i.DoctorID,
 			&i.ProfileImageUrl,
 			&i.Description,
+			&i.County,
+			&i.PricePerHour,
+			&i.YearsOfExperience,
 		); err != nil {
 			return nil, err
 		}

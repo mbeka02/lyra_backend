@@ -10,7 +10,7 @@ import (
 
 type DoctorService interface {
 	CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (database.Doctor, error)
-	GetDoctors(ctx context.Context, limit int32, offset int32) (model.GetDoctorsResponse, error)
+	GetDoctors(ctx context.Context, county, sortBy, sortOrder string, limit int32, offset int32) (model.GetDoctorsResponse, error)
 }
 type doctorService struct {
 	doctorRepo repository.DoctorRepository
@@ -24,24 +24,30 @@ func NewDoctorService(doctorRepo repository.DoctorRepository) DoctorService {
 
 func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (database.Doctor, error) {
 	return s.doctorRepo.Create(ctx, repository.CreateDoctorParams{
-		Specialization: req.Specialization,
-		LicenseNumber:  req.LicenseNumber,
-		Description:    req.Description,
-		UserID:         userId,
+		Specialization:    req.Specialization,
+		LicenseNumber:     req.LicenseNumber,
+		Description:       req.Description,
+		County:            req.County,
+		PricePerHour:      req.PricePerHour,
+		YearsOfExperience: req.YearsOfExperience,
+		UserID:            userId,
 	})
 }
 
-func (s *doctorService) GetDoctors(ctx context.Context, limit, offset int32) (model.GetDoctorsResponse, error) {
+func (s *doctorService) GetDoctors(ctx context.Context, county, sortBy, sortOrder string, limit int32, offset int32) (model.GetDoctorsResponse, error) {
 	rows, err := s.doctorRepo.GetAll(ctx, repository.GetDoctorsParams{
 		// Fetch the limit+1 to determine if there's more data
-		Limit:  limit + 1,
-		Offset: offset,
+		Limit:     limit + 1,
+		Offset:    offset,
+		County:    county,
+		SortBy:    sortBy,
+		SortOrder: sortOrder,
 	})
 	if err != nil {
 		return model.GetDoctorsResponse{}, err
 	}
 	hasMore := false
-	// handle a situation where there's more data
+	// handle a situation where there's still more data
 	if len(rows) > int(limit) {
 		hasMore = true
 		rows = rows[:limit] // remove the extra row

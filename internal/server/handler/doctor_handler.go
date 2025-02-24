@@ -27,10 +27,13 @@ func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request)
 	if err != nil || page < 0 {
 		page = 0 // default page
 	}
+	// TODO: CLEAN THIS UP
 	var defaultLimit int32 = 10
-	var Offset int32 = int32(page) * defaultLimit
-
-	response, err := h.doctorService.GetDoctors(r.Context(), defaultLimit, Offset)
+	var offset int32 = int32(page) * defaultLimit
+	sortByStr := r.URL.Query().Get("sort")
+	sortOrderStr := r.URL.Query().Get("order")
+	countyStr := r.URL.Query().Get("county")
+	response, err := h.doctorService.GetDoctors(r.Context(), countyStr, sortByStr, sortOrderStr, defaultLimit, offset)
 	if err != nil {
 		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, errors.New("unable to get doctor details"))

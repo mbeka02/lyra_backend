@@ -122,13 +122,16 @@ type Availability struct {
 }
 
 type Doctor struct {
-	DoctorID       int64
-	UserID         int64
-	Description    string
-	Specialization string
-	LicenseNumber  string
-	CreatedAt      time.Time
-	UpdatedAt      sql.NullTime
+	DoctorID          int64
+	UserID            int64
+	Description       string
+	Specialization    string
+	YearsOfExperience int32
+	County            string
+	PricePerHour      string
+	LicenseNumber     string
+	CreatedAt         time.Time
+	UpdatedAt         sql.NullTime
 }
 
 type Patient struct {

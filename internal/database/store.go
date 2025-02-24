@@ -42,6 +42,7 @@ func NewStore() *Store {
 		return dbInstance
 	}
 	conn, err := sql.Open("pgx", connStr)
+	// conn, err := pgx.Connect(context.Background(), connStr)
 	if err != nil {
 		log.Fatal(err)
 	}
