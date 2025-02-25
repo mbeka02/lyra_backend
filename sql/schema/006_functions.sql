@@ -1,7 +1,5 @@
-
 -- +goose Up
 -- Function and trigger for appointment validation
-
 -- +goose StatementBegin
 CREATE OR REPLACE FUNCTION check_appointment_availability()
 RETURNS TRIGGER AS $BODY$
@@ -14,7 +12,7 @@ BEGIN
     SELECT 1 FROM availability
     WHERE doctor_id = NEW.doctor_id
       AND (
-        (is_recurring = true AND EXTRACT(DOW FROM NEW.start_time) = day_of_week)
+        (is_recurring = true AND EXTRACT(DOW FROM NEW.start_time) = EXTRACT(DOW FROM start_time))
         OR
         (is_recurring = false AND specific_date = NEW.start_time::date)
       )

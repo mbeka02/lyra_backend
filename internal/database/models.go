@@ -32,8 +32,8 @@ func (e *AppointmentStatus) Scan(src interface{}) error {
 }
 
 type NullAppointmentStatus struct {
-	AppointmentStatus AppointmentStatus
-	Valid             bool // Valid is true if AppointmentStatus is not NULL
+	AppointmentStatus AppointmentStatus `json:"appointment_status"`
+	Valid             bool              `json:"valid"` // Valid is true if AppointmentStatus is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -74,8 +74,8 @@ func (e *Role) Scan(src interface{}) error {
 }
 
 type NullRole struct {
-	Role  Role
-	Valid bool // Valid is true if Role is not NULL
+	Role  Role `json:"role"`
+	Valid bool `json:"valid"` // Valid is true if Role is not NULL
 }
 
 // Scan implements the Scanner interface.
@@ -97,69 +97,69 @@ func (ns NullRole) Value() (driver.Value, error) {
 }
 
 type Appointment struct {
-	AppointmentID int64
-	PatientID     int64
-	DoctorID      int64
-	CurrentStatus AppointmentStatus
-	Reason        string
-	Notes         sql.NullString
-	StartTime     time.Time
-	EndTime       time.Time
-	CreatedAt     time.Time
-	UpdatedAt     sql.NullTime
+	AppointmentID int64             `json:"appointment_id"`
+	PatientID     int64             `json:"patient_id"`
+	DoctorID      int64             `json:"doctor_id"`
+	CurrentStatus AppointmentStatus `json:"current_status"`
+	Reason        string            `json:"reason"`
+	Notes         sql.NullString    `json:"notes"`
+	StartTime     time.Time         `json:"start_time"`
+	EndTime       time.Time         `json:"end_time"`
+	CreatedAt     time.Time         `json:"created_at"`
+	UpdatedAt     sql.NullTime      `json:"updated_at"`
 }
 
 type Availability struct {
-	AvailabilityID int64
-	DoctorID       int64
-	StartTime      time.Time
-	EndTime        time.Time
-	IsRecurring    sql.NullBool
-	SpecificDate   sql.NullTime
-	CreatedAt      time.Time
-	UpdatedAt      sql.NullTime
-	DayOfWeek      int32
+	AvailabilityID int64        `json:"availability_id"`
+	DoctorID       int64        `json:"doctor_id"`
+	StartTime      time.Time    `json:"start_time"`
+	EndTime        time.Time    `json:"end_time"`
+	IsRecurring    sql.NullBool `json:"is_recurring"`
+	SpecificDate   sql.NullTime `json:"specific_date"`
+	CreatedAt      time.Time    `json:"created_at"`
+	UpdatedAt      sql.NullTime `json:"updated_at"`
+	DayOfWeek      int32        `json:"day_of_week"`
 }
 
 type Doctor struct {
-	DoctorID          int64
-	UserID            int64
-	Description       string
-	Specialization    string
-	YearsOfExperience int32
-	County            string
-	PricePerHour      string
-	LicenseNumber     string
-	CreatedAt         time.Time
-	UpdatedAt         sql.NullTime
+	DoctorID          int64        `json:"doctor_id"`
+	UserID            int64        `json:"user_id"`
+	Description       string       `json:"description"`
+	Specialization    string       `json:"specialization"`
+	YearsOfExperience int32        `json:"years_of_experience"`
+	County            string       `json:"county"`
+	PricePerHour      string       `json:"price_per_hour"`
+	LicenseNumber     string       `json:"license_number"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UpdatedAt         sql.NullTime `json:"updated_at"`
 }
 
 type Patient struct {
-	PatientID             int64
-	UserID                int64
-	Address               string
-	EmergencyContactName  string
-	EmergencyContactPhone string
-	Allergies             string
-	CurrentMedication     string
-	PastMedicalHistory    string
-	FamilyMedicalHistory  string
-	InsuranceProvider     string
-	InsurancePolicyNumber string
-	CreatedAt             time.Time
-	UpdatedAt             sql.NullTime
+	PatientID             int64        `json:"patient_id"`
+	UserID                int64        `json:"user_id"`
+	Address               string       `json:"address"`
+	EmergencyContactName  string       `json:"emergency_contact_name"`
+	EmergencyContactPhone string       `json:"emergency_contact_phone"`
+	Allergies             string       `json:"allergies"`
+	CurrentMedication     string       `json:"current_medication"`
+	PastMedicalHistory    string       `json:"past_medical_history"`
+	FamilyMedicalHistory  string       `json:"family_medical_history"`
+	InsuranceProvider     string       `json:"insurance_provider"`
+	InsurancePolicyNumber string       `json:"insurance_policy_number"`
+	CreatedAt             time.Time    `json:"created_at"`
+	UpdatedAt             sql.NullTime `json:"updated_at"`
 }
 
 type User struct {
-	UserID            int64
-	DateOfBirth       time.Time
-	FullName          string
-	Password          string
-	Email             string
-	TelephoneNumber   string
-	ProfileImageUrl   string
-	CreatedAt         time.Time
-	UserRole          Role
-	VerifiedAt        sql.NullTime
-	PasswordChangedAt time.Time
+	UserID            int64        `json:"user_id"`
+	DateOfBirth       time.Time    `json:"date_of_birth"`
+	FullName          string       `json:"full_name"`
+	Password          string       `json:"password"`
+	Email             string       `json:"email"`
+	TelephoneNumber   string       `json:"telephone_number"`
+	ProfileImageUrl   string       `json:"profile_image_url"`
+	CreatedAt         time.Time    `json:"created_at"`
+	UserRole          Role         `json:"user_role"`
+	VerifiedAt        sql.NullTime `json:"verified_at"`
+	PasswordChangedAt time.Time    `json:"password_changed_at"`
 }

@@ -14,13 +14,13 @@ INSERT INTO doctors(user_id,specialization,license_number,description , years_of
 `
 
 type CreateDoctorParams struct {
-	UserID            int64
-	Specialization    string
-	LicenseNumber     string
-	Description       string
-	YearsOfExperience int32
-	County            string
-	PricePerHour      string
+	UserID            int64  `json:"user_id"`
+	Specialization    string `json:"specialization"`
+	LicenseNumber     string `json:"license_number"`
+	Description       string `json:"description"`
+	YearsOfExperience int32  `json:"years_of_experience"`
+	County            string `json:"county"`
+	PricePerHour      string `json:"price_per_hour"`
 }
 
 func (q *Queries) CreateDoctor(ctx context.Context, arg CreateDoctorParams) (Doctor, error) {
@@ -62,7 +62,7 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    ($1::text = '' OR doctors.county ILIKE $1::text) -- County filter
+    (NULLIF($1::text, '') IS NULL OR doctors.county ILIKE $1::text) -- County filter
 ORDER BY 
     CASE 
         WHEN $2::text = 'price' AND $3::text = 'asc' THEN doctors.price_per_hour  
@@ -70,28 +70,29 @@ ORDER BY
         WHEN $2::text = 'experience' AND $3::text = 'asc' THEN doctors.years_of_experience
         WHEN $2::text = 'experience' AND $3::text = 'desc' THEN doctors.years_of_experience * -1
     END
-LIMIT $5::int  OFFSET $4::int
+LIMIT $5::int OFFSET $4::int
 `
 
 type GetDoctorsParams struct {
-	SetCounty    string
-	SetSortBy    string
-	SetSortOrder string
-	SetOffset    int32
-	SetLimit     int32
+	SetCounty    string `json:"set_county"`
+	SetSortBy    string `json:"set_sort_by"`
+	SetSortOrder string `json:"set_sort_order"`
+	SetOffset    int32  `json:"set_offset"`
+	SetLimit     int32  `json:"set_limit"`
 }
 
 type GetDoctorsRow struct {
-	FullName          string
-	Specialization    string
-	DoctorID          int64
-	ProfileImageUrl   string
-	Description       string
-	County            string
-	PricePerHour      string
-	YearsOfExperience int32
+	FullName          string `json:"full_name"`
+	Specialization    string `json:"specialization"`
+	DoctorID          int64  `json:"doctor_id"`
+	ProfileImageUrl   string `json:"profile_image_url"`
+	Description       string `json:"description"`
+	County            string `json:"county"`
+	PricePerHour      string `json:"price_per_hour"`
+	YearsOfExperience int32  `json:"years_of_experience"`
 }
 
+// FIXME:get this to return all results when county is an empty string or null
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getDoctors,
 		arg.SetCounty,

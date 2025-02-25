@@ -7,8 +7,13 @@ import (
 )
 
 type CreatePatientParams struct {
-	Allergies string
-	UserID    int64
+	Allergies             string
+	UserID                int64
+	CurrentMedication     string
+	PastMedicalHistory    string
+	FamilyMedicalHistory  string
+	InsuranceProvider     string
+	InsurancePolicyNumber string
 }
 type PatientRepository interface {
 	Create(context.Context, CreatePatientParams) (database.Patient, error)
@@ -26,7 +31,12 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 
 func (p *patientRepository) Create(ctx context.Context, params CreatePatientParams) (database.Patient, error) {
 	return p.store.CreatePatient(ctx, database.CreatePatientParams{
-		UserID:    params.UserID,
-		Allergies: params.Allergies,
+		UserID:                params.UserID,
+		Allergies:             params.Allergies,
+		CurrentMedication:     params.CurrentMedication,
+		PastMedicalHistory:    params.PastMedicalHistory,
+		FamilyMedicalHistory:  params.FamilyMedicalHistory,
+		InsurancePolicyNumber: params.InsurancePolicyNumber,
+		InsuranceProvider:     params.InsuranceProvider,
 	})
 }

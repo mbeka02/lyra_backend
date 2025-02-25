@@ -15,12 +15,12 @@ INSERT INTO users(full_name , password ,date_of_birth, email , telephone_number 
 `
 
 type CreateUserParams struct {
-	FullName        string
-	Password        string
-	DateOfBirth     time.Time
-	Email           string
-	TelephoneNumber string
-	UserRole        Role
+	FullName        string    `json:"full_name"`
+	Password        string    `json:"password"`
+	DateOfBirth     time.Time `json:"date_of_birth"`
+	Email           string    `json:"email"`
+	TelephoneNumber string    `json:"telephone_number"`
+	UserRole        Role      `json:"user_role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
@@ -100,14 +100,14 @@ SELECT user_id , full_name , email FROM users LIMIT $1 OFFSET $2
 `
 
 type GetUsersParams struct {
-	Limit  int32
-	Offset int32
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
 }
 
 type GetUsersRow struct {
-	UserID   int64
-	FullName string
-	Email    string
+	UserID   int64  `json:"user_id"`
+	FullName string `json:"full_name"`
+	Email    string `json:"email"`
 }
 
 func (q *Queries) GetUsers(ctx context.Context, arg GetUsersParams) ([]GetUsersRow, error) {
@@ -138,8 +138,8 @@ UPDATE users SET profile_image_url=$1 WHERE user_id=$2
 `
 
 type UpdateProfilePictureParams struct {
-	ProfileImageUrl string
-	UserID          int64
+	ProfileImageUrl string `json:"profile_image_url"`
+	UserID          int64  `json:"user_id"`
 }
 
 func (q *Queries) UpdateProfilePicture(ctx context.Context, arg UpdateProfilePictureParams) error {
@@ -152,10 +152,10 @@ UPDATE users SET full_name=$1 ,email=$2 , telephone_number=$3 WHERE user_id=$4
 `
 
 type UpdateUserParams struct {
-	FullName        string
-	Email           string
-	TelephoneNumber string
-	UserID          int64
+	FullName        string `json:"full_name"`
+	Email           string `json:"email"`
+	TelephoneNumber string `json:"telephone_number"`
+	UserID          int64  `json:"user_id"`
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {

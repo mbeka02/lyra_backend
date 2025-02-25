@@ -15,10 +15,10 @@ INSERT INTO appointments(patient_id,doctor_id,start_time,end_time) VALUES ($1,$2
 `
 
 type CreateAppointmentParams struct {
-	PatientID int64
-	DoctorID  int64
-	StartTime time.Time
-	EndTime   time.Time
+	PatientID int64     `json:"patient_id"`
+	DoctorID  int64     `json:"doctor_id"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
@@ -58,9 +58,9 @@ SELECT appointment_id, patient_id, doctor_id, current_status, reason, notes, sta
 `
 
 type GetPatientAppointmentsParams struct {
-	PatientID int64
-	Limit     int32
-	Offset    int32
+	PatientID int64 `json:"patient_id"`
+	Limit     int32 `json:"limit"`
+	Offset    int32 `json:"offset"`
 }
 
 func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppointmentsParams) ([]Appointment, error) {
@@ -102,8 +102,8 @@ UPDATE appointments SET current_status=$1 WHERE appointment_id=$2 RETURNING appo
 `
 
 type UpdateAppointmentStatusParams struct {
-	CurrentStatus AppointmentStatus
-	AppointmentID int64
+	CurrentStatus AppointmentStatus `json:"current_status"`
+	AppointmentID int64             `json:"appointment_id"`
 }
 
 func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) (Appointment, error) {
