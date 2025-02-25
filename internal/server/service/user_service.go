@@ -72,6 +72,7 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 		Password:        passwordHash,
 		UserRole:        req.Role,
 		TelephoneNumber: req.TelephoneNumber,
+		DateOfBirth:     req.DateOfBirth,
 	})
 	if err != nil {
 		return model.AuthResponse{}, fmt.Errorf("failed to create user:%v", err)

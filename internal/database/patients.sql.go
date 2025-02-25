@@ -7,27 +7,32 @@ package database
 
 import (
 	"context"
-	"time"
 )
 
 const createPatient = `-- name: CreatePatient :one
-INSERT INTO patients(user_id,date_of_birth,allergies) VALUES ($1,$2,$3)RETURNING patient_id, user_id, date_of_birth, allergies, created_at, updated_at
+INSERT INTO patients(user_id,allergies) VALUES ($1,$2)RETURNING patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, created_at, updated_at
 `
 
 type CreatePatientParams struct {
-	UserID      int64
-	DateOfBirth time.Time
-	Allergies   string
+	UserID    int64
+	Allergies string
 }
 
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
-	row := q.db.QueryRowContext(ctx, createPatient, arg.UserID, arg.DateOfBirth, arg.Allergies)
+	row := q.db.QueryRowContext(ctx, createPatient, arg.UserID, arg.Allergies)
 	var i Patient
 	err := row.Scan(
 		&i.PatientID,
 		&i.UserID,
-		&i.DateOfBirth,
+		&i.Address,
+		&i.EmergencyContactName,
+		&i.EmergencyContactPhone,
 		&i.Allergies,
+		&i.CurrentMedication,
+		&i.PastMedicalHistory,
+		&i.FamilyMedicalHistory,
+		&i.InsuranceProvider,
+		&i.InsurancePolicyNumber,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)

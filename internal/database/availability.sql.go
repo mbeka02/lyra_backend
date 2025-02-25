@@ -13,19 +13,18 @@ import (
 
 const createAvailability = `-- name: CreateAvailability :one
 INSERT INTO availability (
-  doctor_id, day_of_week, start_time, end_time, is_recurring, specific_date
+  doctor_id, day_of_week, start_time, end_time, is_recurring
 ) VALUES (
-  $1, $2, $3, $4, $5, $6
+  $1, $2, $3, $4, $5
 ) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week
 `
 
 type CreateAvailabilityParams struct {
-	DoctorID     int64
-	DayOfWeek    int32
-	StartTime    time.Time
-	EndTime      time.Time
-	IsRecurring  sql.NullBool
-	SpecificDate sql.NullTime
+	DoctorID    int64
+	DayOfWeek   int32
+	StartTime   time.Time
+	EndTime     time.Time
+	IsRecurring sql.NullBool
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {
@@ -35,7 +34,6 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		arg.StartTime,
 		arg.EndTime,
 		arg.IsRecurring,
-		arg.SpecificDate,
 	)
 	var i Availability
 	err := row.Scan(

@@ -7,15 +7,17 @@ package database
 
 import (
 	"context"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users(full_name , password , email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5) RETURNING user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at
+INSERT INTO users(full_name , password ,date_of_birth, email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5,$6) RETURNING user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at
 `
 
 type CreateUserParams struct {
 	FullName        string
 	Password        string
+	DateOfBirth     time.Time
 	Email           string
 	TelephoneNumber string
 	UserRole        Role
@@ -25,6 +27,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.FullName,
 		arg.Password,
+		arg.DateOfBirth,
 		arg.Email,
 		arg.TelephoneNumber,
 		arg.UserRole,
@@ -32,6 +35,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	var i User
 	err := row.Scan(
 		&i.UserID,
+		&i.DateOfBirth,
 		&i.FullName,
 		&i.Password,
 		&i.Email,
@@ -46,7 +50,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE email=$1
+SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE email=$1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -54,6 +58,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	var i User
 	err := row.Scan(
 		&i.UserID,
+		&i.DateOfBirth,
 		&i.FullName,
 		&i.Password,
 		&i.Email,
@@ -68,7 +73,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT user_id, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE user_id=$1
+SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE user_id=$1
 `
 
 func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
@@ -76,6 +81,7 @@ func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
 	var i User
 	err := row.Scan(
 		&i.UserID,
+		&i.DateOfBirth,
 		&i.FullName,
 		&i.Password,
 		&i.Email,
