@@ -24,8 +24,7 @@ func NewPatientService(patientRepo repository.PatientRepository) PatientService 
 
 func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (database.Patient, error) {
 	return s.patientRepo.Create(ctx, repository.CreatePatientParams{
-		UserID:      userId,
-		Allergies:   req.Allergies,
-		DateOfBirth: req.DateOfBirth,
+		UserID:    userId,
+		Allergies: req.Allergies,
 	})
 }

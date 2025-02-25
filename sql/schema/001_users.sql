@@ -2,6 +2,7 @@
 CREATE TYPE role AS ENUM ('patient', 'specialist');
 CREATE TABLE IF NOT EXISTS users (
 user_id  bigserial PRIMARY KEY,
+date_of_birth DATE NOT NULL,
 full_name varchar(256) NOT NULL,
 password varchar NOT NULL,
 email varchar UNIQUE NOT NULL,

@@ -135,16 +135,24 @@ type Doctor struct {
 }
 
 type Patient struct {
-	PatientID   int64
-	UserID      int64
-	DateOfBirth time.Time
-	Allergies   string
-	CreatedAt   time.Time
-	UpdatedAt   sql.NullTime
+	PatientID             int64
+	UserID                int64
+	Address               string
+	EmergencyContactName  string
+	EmergencyContactPhone string
+	Allergies             string
+	CurrentMedication     string
+	PastMedicalHistory    string
+	FamilyMedicalHistory  string
+	InsuranceProvider     string
+	InsurancePolicyNumber string
+	CreatedAt             time.Time
+	UpdatedAt             sql.NullTime
 }
 
 type User struct {
 	UserID            int64
+	DateOfBirth       time.Time
 	FullName          string
 	Password          string
 	Email             string

@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
@@ -11,7 +12,9 @@ type CreateUserParams struct {
 	Email           string
 	TelephoneNumber string
 	Password        string
-	UserRole        database.Role
+	DateOfBirth     time.Time
+
+	UserRole database.Role
 }
 type UpdateUserParams struct {
 	FullName        string
@@ -44,6 +47,7 @@ func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (d
 		TelephoneNumber: params.TelephoneNumber,
 		Password:        params.Password,
 		UserRole:        params.UserRole,
+		DateOfBirth:     params.DateOfBirth,
 	})
 }
 

@@ -1,6 +1,8 @@
 package model
 
 import (
+	"time"
+
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
 
@@ -10,6 +12,7 @@ type CreateUserRequest struct {
 	TelephoneNumber string        `json:"telephone_number" validate:"required,max=15"`
 	Password        string        `json:"password" validate:"required,min=8"`
 	Role            database.Role `json:"role" validate:"required"`
+	DateOfBirth     time.Time     `json:"date_of_birth" validate:"required"`
 }
 type UpdateUserRequest struct {
 	FullName        string `json:"full_name" validate:"required,min=2"`
