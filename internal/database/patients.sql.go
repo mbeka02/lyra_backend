@@ -10,16 +10,29 @@ import (
 )
 
 const createPatient = `-- name: CreatePatient :one
-INSERT INTO patients(user_id,allergies) VALUES ($1,$2)RETURNING patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, created_at, updated_at
+INSERT INTO patients(user_id,allergies,current_medication,past_medical_history,family_medical_history,insurance_provider,insurance_policy_number) VALUES ($1,$2,$3,$4,$5,$6,$7)RETURNING patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, created_at, updated_at
 `
 
 type CreatePatientParams struct {
-	UserID    int64
-	Allergies string
+	UserID                int64  `json:"user_id"`
+	Allergies             string `json:"allergies"`
+	CurrentMedication     string `json:"current_medication"`
+	PastMedicalHistory    string `json:"past_medical_history"`
+	FamilyMedicalHistory  string `json:"family_medical_history"`
+	InsuranceProvider     string `json:"insurance_provider"`
+	InsurancePolicyNumber string `json:"insurance_policy_number"`
 }
 
 func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (Patient, error) {
-	row := q.db.QueryRowContext(ctx, createPatient, arg.UserID, arg.Allergies)
+	row := q.db.QueryRowContext(ctx, createPatient,
+		arg.UserID,
+		arg.Allergies,
+		arg.CurrentMedication,
+		arg.PastMedicalHistory,
+		arg.FamilyMedicalHistory,
+		arg.InsuranceProvider,
+		arg.InsurancePolicyNumber,
+	)
 	var i Patient
 	err := row.Scan(
 		&i.PatientID,

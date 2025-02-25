@@ -20,11 +20,11 @@ INSERT INTO availability (
 `
 
 type CreateAvailabilityParams struct {
-	DoctorID    int64
-	DayOfWeek   int32
-	StartTime   time.Time
-	EndTime     time.Time
-	IsRecurring sql.NullBool
+	DoctorID    int64        `json:"doctor_id"`
+	DayOfWeek   int32        `json:"day_of_week"`
+	StartTime   time.Time    `json:"start_time"`
+	EndTime     time.Time    `json:"end_time"`
+	IsRecurring sql.NullBool `json:"is_recurring"`
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {

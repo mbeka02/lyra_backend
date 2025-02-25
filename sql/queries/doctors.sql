@@ -14,7 +14,8 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    (@set_county::text = '' OR doctors.county ILIKE @set_county::text) -- County filter
+--FIXME:get this to return all results when county is an empty string or null
+    (NULLIF(@set_county::text, '') IS NULL OR doctors.county ILIKE @set_county::text) -- County filter
 ORDER BY 
     CASE 
         WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'asc' THEN doctors.price_per_hour  
@@ -22,4 +23,4 @@ ORDER BY
         WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'asc' THEN doctors.years_of_experience
         WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'desc' THEN doctors.years_of_experience * -1
     END
-LIMIT @set_limit::int  OFFSET @set_offset::int;
+LIMIT @set_limit::int OFFSET @set_offset::int;
