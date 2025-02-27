@@ -16,8 +16,14 @@ type CreateDoctorParams struct {
 	UserID            int64
 }
 type GetDoctorsParams struct {
-	Offset    int32
-	Limit     int32
+	Offset         int32
+	Limit          int32
+	Specialization string
+	MinPrice       string
+	MaxPrice       string
+	MinExperience  int32
+	MaxExperience  int32
+
 	County    string // Optional county filter
 	SortBy    string // Sorting field (price, experience)
 	SortOrder string // Sorting order (asc, desc)
@@ -51,10 +57,18 @@ func (s *doctorRepository) Create(ctx context.Context, params CreateDoctorParams
 
 func (s *doctorRepository) GetAll(ctx context.Context, params GetDoctorsParams) ([]database.GetDoctorsRow, error) {
 	return s.store.GetDoctors(ctx, database.GetDoctorsParams{
-		SetCounty:    params.County,
+		// filters
+		SetCounty:         params.County,
+		SetSpecialization: params.Specialization,
+		SetMinPrice:       params.MinPrice,
+		SetMaxPrice:       params.MaxPrice,
+		SetMinExperience:  params.MinExperience,
+		SetMaxExperience:  params.MaxExperience,
+		// ordering
 		SetSortBy:    params.SortBy,
 		SetSortOrder: params.SortOrder,
-		SetLimit:     params.Limit,
-		SetOffset:    params.Offset,
+		// pagination
+		SetLimit:  params.Limit,
+		SetOffset: params.Offset,
 	})
 }

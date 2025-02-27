@@ -2,9 +2,7 @@ package handler
 
 import (
 	"errors"
-	"log"
 	"net/http"
-	"strconv"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/server/middleware"
@@ -22,20 +20,13 @@ func NewDoctorHandler(doctorService service.DoctorService) *DoctorHandler {
 }
 
 func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request) {
-	pageStr := r.URL.Query().Get("page")
-	page, err := strconv.Atoi(pageStr)
-	if err != nil || page < 0 {
-		page = 0 // default page
-	}
-	// TODO: CLEAN THIS UP
-	var defaultLimit int32 = 10
-	var offset int32 = int32(page) * defaultLimit
-	sortByStr := r.URL.Query().Get("sort")
-	sortOrderStr := r.URL.Query().Get("order")
-	countyStr := r.URL.Query().Get("county")
-	response, err := h.doctorService.GetDoctors(r.Context(), countyStr, sortByStr, sortOrderStr, defaultLimit, offset)
+	params := NewQueryParamExtractor(r)
+	page := params.GetInt("page", 0)
+	pageSize := int32(10)
+	offset := int32(page) * pageSize
+
+	response, err := h.doctorService.GetDoctors(r.Context(), params.GetString("county"), params.GetString("specialization"), params.GetString("minPrice"), params.GetString("maxPrice"), params.GetString("sort"), params.GetString("order"), params.GetInt32("minExperience", 0), params.GetInt32("maxExperience", 50), pageSize, offset)
 	if err != nil {
-		log.Println(err)
 		respondWithError(w, http.StatusInternalServerError, errors.New("unable to get doctor details"))
 	}
 

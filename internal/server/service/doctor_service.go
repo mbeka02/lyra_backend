@@ -10,7 +10,7 @@ import (
 
 type DoctorService interface {
 	CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (database.Doctor, error)
-	GetDoctors(ctx context.Context, county, sortBy, sortOrder string, limit int32, offset int32) (model.GetDoctorsResponse, error)
+	GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error)
 }
 type doctorService struct {
 	doctorRepo repository.DoctorRepository
@@ -34,14 +34,19 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 	})
 }
 
-func (s *doctorService) GetDoctors(ctx context.Context, county, sortBy, sortOrder string, limit int32, offset int32) (model.GetDoctorsResponse, error) {
+func (s *doctorService) GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error) {
 	rows, err := s.doctorRepo.GetAll(ctx, repository.GetDoctorsParams{
 		// Fetch the limit+1 to determine if there's more data
-		Limit:     limit + 1,
-		Offset:    offset,
-		County:    county,
-		SortBy:    sortBy,
-		SortOrder: sortOrder,
+		Limit:          limit + 1,
+		Offset:         offset,
+		County:         county,
+		Specialization: specialization,
+		MinPrice:       minPrice,
+		MaxPrice:       maxPrice,
+		MinExperience:  minExperience,
+		MaxExperience:  maxExpreinece,
+		SortBy:         sortBy,
+		SortOrder:      sortOrder,
 	})
 	if err != nil {
 		return model.GetDoctorsResponse{}, err
