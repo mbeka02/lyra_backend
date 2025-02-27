@@ -25,7 +25,7 @@ func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request)
 	pageSize := int32(10)
 	offset := int32(page) * pageSize
 
-	response, err := h.doctorService.GetDoctors(r.Context(), params.GetString("county"), params.GetString("specialization"), params.GetString("minPrice"), params.GetString("maxPrice"), params.GetString("sort"), params.GetString("order"), params.GetInt32("minExperience", 0), params.GetInt32("maxExperience", 50), pageSize, offset)
+	response, err := h.doctorService.GetDoctors(r.Context(), params.GetString("county"), params.GetString("specialization"), params.GetString("minPrice"), params.GetString("maxPrice"), params.GetString("sort"), params.GetString("order"), params.GetInt32("minExperience", 0), params.GetInt32("maxExperience", 10000), pageSize, offset)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, errors.New("unable to get doctor details"))
 	}

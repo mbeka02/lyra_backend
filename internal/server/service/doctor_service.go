@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"log"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -35,6 +36,9 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 }
 
 func (s *doctorService) GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error) {
+	// fmt.Println("min exp=>", minExperience)
+	// fmt.Println("max exp=>", maxExpreinece)
+	// fmt.Println("max price=>", reflect.TypeOf(maxPrice))
 	rows, err := s.doctorRepo.GetAll(ctx, repository.GetDoctorsParams{
 		// Fetch the limit+1 to determine if there's more data
 		Limit:          limit + 1,
@@ -49,6 +53,7 @@ func (s *doctorService) GetDoctors(ctx context.Context, county, specialization, 
 		SortOrder:      sortOrder,
 	})
 	if err != nil {
+		log.Println(err)
 		return model.GetDoctorsResponse{}, err
 	}
 	hasMore := false
