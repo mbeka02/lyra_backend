@@ -62,11 +62,11 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    -- I want the county filter to return all results when empty
+    -- Filter for county - returns all results when empty
     (TRIM($1::text) = '' OR doctors.county ILIKE '%' || $1::text || '%')
     AND (TRIM($2::text) = '' OR doctors.specialization ILIKE '%' || $2::text || '%')
-    AND ($3::numeric IS NULL OR doctors.price_per_hour >= $3::numeric)
-    AND ($4::numeric IS NULL OR doctors.price_per_hour <= $4::numeric)
+AND (NULLIF($3::text, '')::numeric IS NULL OR doctors.price_per_hour >= NULLIF($3::text, '')::numeric)
+    AND (NULLIF($4::text, '')::numeric IS NULL OR doctors.price_per_hour <= NULLIF($4::text, '')::numeric)
     AND ($5::int IS NULL OR doctors.years_of_experience >= $5::int)
     AND ($6::int IS NULL OR doctors.years_of_experience <= $6::int)
 ORDER BY 
@@ -75,10 +75,13 @@ ORDER BY
         WHEN $7::text = 'price' AND $8::text = 'desc' THEN doctors.price_per_hour * -1
         WHEN $7::text = 'experience' AND $8::text = 'asc' THEN doctors.years_of_experience
         WHEN $7::text = 'experience' AND $8::text = 'desc' THEN doctors.years_of_experience * -1
+        ELSE NULL
+    END,
+    CASE 
         WHEN $7::text = 'newest' AND $8::text = 'asc' THEN doctors.created_at
-        WHEN $7::text = 'newest' AND $8::text = 'desc' THEN doctors.created_at * -1
-        ELSE doctors.created_at
-    END
+        WHEN $7::text = 'newest' AND $8::text = 'desc' OR $7::text NOT IN ('price', 'experience', 'newest') THEN doctors.created_at
+        ELSE NULL
+    END DESC
 LIMIT $10::int OFFSET $9::int
 `
 
