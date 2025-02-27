@@ -14,13 +14,21 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
---FIXME:get this to return all results when county is an empty string or null
-    (NULLIF(@set_county::text, '') IS NULL OR doctors.county ILIKE @set_county::text) -- County filter
+    -- I want the county filter to return all results when empty
+    (TRIM(@set_county::text) = '' OR doctors.county ILIKE '%' || @set_county::text || '%')
+    AND (TRIM(@set_specialization::text) = '' OR doctors.specialization ILIKE '%' || @set_specialization::text || '%')
+    AND (@set_min_price::numeric IS NULL OR doctors.price_per_hour >= @set_min_price::numeric)
+    AND (@set_max_price::numeric IS NULL OR doctors.price_per_hour <= @set_max_price::numeric)
+    AND (@set_min_experience::int IS NULL OR doctors.years_of_experience >= @set_min_experience::int)
+    AND (@set_max_experience::int IS NULL OR doctors.years_of_experience <= @set_max_experience::int)
 ORDER BY 
     CASE 
-        WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'asc' THEN doctors.price_per_hour  
+        WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'asc' THEN doctors.price_per_hour
         WHEN @set_sort_by::text = 'price' AND @set_sort_order::text = 'desc' THEN doctors.price_per_hour * -1
         WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'asc' THEN doctors.years_of_experience
         WHEN @set_sort_by::text = 'experience' AND @set_sort_order::text = 'desc' THEN doctors.years_of_experience * -1
+        WHEN @set_sort_by::text = 'newest' AND @set_sort_order::text = 'asc' THEN doctors.created_at
+        WHEN @set_sort_by::text = 'newest' AND @set_sort_order::text = 'desc' THEN doctors.created_at * -1
+        ELSE doctors.created_at
     END
 LIMIT @set_limit::int OFFSET @set_offset::int;

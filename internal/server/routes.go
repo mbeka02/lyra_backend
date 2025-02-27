@@ -27,7 +27,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 	r.Use(middleware.Logger)
 
-	r.Get("/", s.HelloWorldHandler)
+	r.Get("/", s.TestHandler)
 
 	r.Get("/health", s.healthHandler)
 	r.Post("/register", s.handlers.User.HandleCreateUser)
@@ -46,9 +46,9 @@ func (s *Server) RegisterRoutes() http.Handler {
 	return r
 }
 
-func (s *Server) HelloWorldHandler(w http.ResponseWriter, r *http.Request) {
+func (s *Server) TestHandler(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]string)
-	resp["message"] = "Hello World"
+	resp["message"] = "Lyra API"
 
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {

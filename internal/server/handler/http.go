@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -29,6 +31,83 @@ type APIResponse struct {
 type ValidationError struct {
 	Field   string `json:"field"`
 	Message string `json:"message"`
+}
+
+// QueryParamExtractor provides a generic way to extract and parse query parameters
+type QueryParamExtractor struct {
+	query url.Values
+}
+
+// NewQueryParamExtractor creates a new extractor from an HTTP request
+func NewQueryParamExtractor(r *http.Request) *QueryParamExtractor {
+	return &QueryParamExtractor{
+		query: r.URL.Query(),
+	}
+}
+
+// Extract a  string parameter with an optional default value
+func (q *QueryParamExtractor) GetString(key string, defaultVal ...string) string {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return value
+}
+
+// GetInt extracts an integer parameter with an optional default value
+func (q *QueryParamExtractor) GetInt(key string, defaultVal ...int) int {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+
+	result, err := strconv.Atoi(value)
+	if err != nil && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return result
+}
+
+// GetInt32 extracts an int32 parameter with an optional default value
+func (q *QueryParamExtractor) GetInt32(key string, defaultVal ...int32) int32 {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+
+	result, err := strconv.ParseInt(value, 10, 32)
+	if err != nil && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return int32(result)
+}
+
+// GetFloat64 extracts a float64 parameter with an optional default value
+func (q *QueryParamExtractor) GetFloat64(key string, defaultVal ...float64) float64 {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+
+	result, err := strconv.ParseFloat(value, 64)
+	if err != nil && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return result
+}
+
+// GetBool extracts a boolean parameter with an optional default value
+func (q *QueryParamExtractor) GetBool(key string, defaultVal ...bool) bool {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+
+	result, err := strconv.ParseBool(value)
+	if err != nil && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return result
 }
 
 var ErrInvalidJSON = errors.New("invalid JSON payload")

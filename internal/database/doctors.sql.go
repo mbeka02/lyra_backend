@@ -62,23 +62,37 @@ SELECT
 FROM doctors
 INNER JOIN users ON doctors.user_id = users.user_id
 WHERE 
-    (NULLIF($1::text, '') IS NULL OR doctors.county ILIKE $1::text) -- County filter
+    -- I want the county filter to return all results when empty
+    (TRIM($1::text) = '' OR doctors.county ILIKE '%' || $1::text || '%')
+    AND (TRIM($2::text) = '' OR doctors.specialization ILIKE '%' || $2::text || '%')
+    AND ($3::numeric IS NULL OR doctors.price_per_hour >= $3::numeric)
+    AND ($4::numeric IS NULL OR doctors.price_per_hour <= $4::numeric)
+    AND ($5::int IS NULL OR doctors.years_of_experience >= $5::int)
+    AND ($6::int IS NULL OR doctors.years_of_experience <= $6::int)
 ORDER BY 
     CASE 
-        WHEN $2::text = 'price' AND $3::text = 'asc' THEN doctors.price_per_hour  
-        WHEN $2::text = 'price' AND $3::text = 'desc' THEN doctors.price_per_hour * -1
-        WHEN $2::text = 'experience' AND $3::text = 'asc' THEN doctors.years_of_experience
-        WHEN $2::text = 'experience' AND $3::text = 'desc' THEN doctors.years_of_experience * -1
+        WHEN $7::text = 'price' AND $8::text = 'asc' THEN doctors.price_per_hour
+        WHEN $7::text = 'price' AND $8::text = 'desc' THEN doctors.price_per_hour * -1
+        WHEN $7::text = 'experience' AND $8::text = 'asc' THEN doctors.years_of_experience
+        WHEN $7::text = 'experience' AND $8::text = 'desc' THEN doctors.years_of_experience * -1
+        WHEN $7::text = 'newest' AND $8::text = 'asc' THEN doctors.created_at
+        WHEN $7::text = 'newest' AND $8::text = 'desc' THEN doctors.created_at * -1
+        ELSE doctors.created_at
     END
-LIMIT $5::int OFFSET $4::int
+LIMIT $10::int OFFSET $9::int
 `
 
 type GetDoctorsParams struct {
-	SetCounty    string `json:"set_county"`
-	SetSortBy    string `json:"set_sort_by"`
-	SetSortOrder string `json:"set_sort_order"`
-	SetOffset    int32  `json:"set_offset"`
-	SetLimit     int32  `json:"set_limit"`
+	SetCounty         string `json:"set_county"`
+	SetSpecialization string `json:"set_specialization"`
+	SetMinPrice       string `json:"set_min_price"`
+	SetMaxPrice       string `json:"set_max_price"`
+	SetMinExperience  int32  `json:"set_min_experience"`
+	SetMaxExperience  int32  `json:"set_max_experience"`
+	SetSortBy         string `json:"set_sort_by"`
+	SetSortOrder      string `json:"set_sort_order"`
+	SetOffset         int32  `json:"set_offset"`
+	SetLimit          int32  `json:"set_limit"`
 }
 
 type GetDoctorsRow struct {
@@ -92,10 +106,14 @@ type GetDoctorsRow struct {
 	YearsOfExperience int32  `json:"years_of_experience"`
 }
 
-// FIXME:get this to return all results when county is an empty string or null
 func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDoctorsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getDoctors,
 		arg.SetCounty,
+		arg.SetSpecialization,
+		arg.SetMinPrice,
+		arg.SetMaxPrice,
+		arg.SetMinExperience,
+		arg.SetMaxExperience,
 		arg.SetSortBy,
 		arg.SetSortOrder,
 		arg.SetOffset,
