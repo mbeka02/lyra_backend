@@ -4,5 +4,5 @@ INSERT INTO availability (
 ) VALUES (
   $1, $2, $3, $4, $5
 ) RETURNING *;
--- GetAvailabilityByDocctor :one
-SELECT * FROM availability WHERE doctor_id=$1;
+-- GetAvailabilityByDay :one
+SELECT * FROM availability WHERE doctor_id=$1 AND day_of_week=$2;
