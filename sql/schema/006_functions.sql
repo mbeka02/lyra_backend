@@ -14,17 +14,13 @@ BEGIN
   -- Extract the time and date components from appointment timestamptz
   appt_start_time := NEW.start_time::time;
   appt_end_time := NEW.end_time::time;
-  appt_date := NEW.start_time::date;
   appt_dow := EXTRACT(DOW FROM NEW.start_time); -- This is coming from the appointments table
   -- Check if the time slot exists in doctor's availability
   SELECT EXISTS (
     SELECT 1 FROM availability
     WHERE doctor_id = NEW.doctor_id
-      AND (
-        (is_recurring = true AND day_of_week=appt_dow)
-        OR
-        (is_recurring = false AND specific_date = appt_date)
-      )
+      AND 
+      (is_recurring = true AND day_of_week=appt_dow)
       AND start_time <= appt_start_time
       AND end_time >= appt_end_time
   ) INTO slot_available;

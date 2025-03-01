@@ -2,7 +2,6 @@ package repository
 
 import (
 	"context"
-	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
@@ -10,8 +9,8 @@ import (
 type CreateAvailabilityParams struct {
 	DoctorID        int64
 	DayOfWeek       int32
-	StartTime       time.Time
-	EndTime         time.Time
+	StartTime       string
+	EndTime         string
 	IntervalMinutes int32
 
 	// IsRecurring bool      `json:"is_recurring"`
