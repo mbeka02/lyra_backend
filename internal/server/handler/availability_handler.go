@@ -41,3 +41,21 @@ func (h *AvailabilityHandler) HandleCreateAvailability(w http.ResponseWriter, r 
 		return
 	}
 }
+
+func (h *AvailabilityHandler) HandleGetAvailabilityByDoctor(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, err := middleware.GetAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	response, err := h.availabilityService.GetAvailabilityByDoctor(r.Context(), payload.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}

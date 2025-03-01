@@ -12,18 +12,19 @@ import (
 
 const createAvailability = `-- name: CreateAvailability :one
 INSERT INTO availability (
-  doctor_id, day_of_week, start_time, end_time, is_recurring
+  doctor_id, day_of_week, start_time, end_time, is_recurring,interval_minutes
 ) VALUES (
-  $1, $2, $3, $4, $5
-) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week
+  $1, $2, $3, $4, $5,$6
+) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes
 `
 
 type CreateAvailabilityParams struct {
-	DoctorID    int64     `json:"doctor_id"`
-	DayOfWeek   int32     `json:"day_of_week"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
-	IsRecurring bool      `json:"is_recurring"`
+	DoctorID        int64     `json:"doctor_id"`
+	DayOfWeek       int32     `json:"day_of_week"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	IsRecurring     bool      `json:"is_recurring"`
+	IntervalMinutes int32     `json:"interval_minutes"`
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {
@@ -33,6 +34,7 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		arg.StartTime,
 		arg.EndTime,
 		arg.IsRecurring,
+		arg.IntervalMinutes,
 	)
 	var i Availability
 	err := row.Scan(
@@ -45,6 +47,98 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DayOfWeek,
+		&i.IntervalMinutes,
 	)
 	return i, err
+}
+
+const getAvailabilityByDoctor = `-- name: GetAvailabilityByDoctor :many
+SELECT doctor_id , day_of_week, start_time , end_time , is_recurring , interval_minutes FROM availability WHERE doctor_id=$1
+`
+
+type GetAvailabilityByDoctorRow struct {
+	DoctorID        int64     `json:"doctor_id"`
+	DayOfWeek       int32     `json:"day_of_week"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	IsRecurring     bool      `json:"is_recurring"`
+	IntervalMinutes int32     `json:"interval_minutes"`
+}
+
+func (q *Queries) GetAvailabilityByDoctor(ctx context.Context, doctorID int64) ([]GetAvailabilityByDoctorRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAvailabilityByDoctor, doctorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAvailabilityByDoctorRow
+	for rows.Next() {
+		var i GetAvailabilityByDoctorRow
+		if err := rows.Scan(
+			&i.DoctorID,
+			&i.DayOfWeek,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsRecurring,
+			&i.IntervalMinutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAvailabilityByDoctorAndDay = `-- name: GetAvailabilityByDoctorAndDay :many
+SELECT doctor_id , day_of_week, start_time , end_time , is_recurring , interval_minutes FROM availability WHERE doctor_id=$1 AND day_of_week=$2
+`
+
+type GetAvailabilityByDoctorAndDayParams struct {
+	DoctorID  int64 `json:"doctor_id"`
+	DayOfWeek int32 `json:"day_of_week"`
+}
+
+type GetAvailabilityByDoctorAndDayRow struct {
+	DoctorID        int64     `json:"doctor_id"`
+	DayOfWeek       int32     `json:"day_of_week"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	IsRecurring     bool      `json:"is_recurring"`
+	IntervalMinutes int32     `json:"interval_minutes"`
+}
+
+func (q *Queries) GetAvailabilityByDoctorAndDay(ctx context.Context, arg GetAvailabilityByDoctorAndDayParams) ([]GetAvailabilityByDoctorAndDayRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAvailabilityByDoctorAndDay, arg.DoctorID, arg.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAvailabilityByDoctorAndDayRow
+	for rows.Next() {
+		var i GetAvailabilityByDoctorAndDayRow
+		if err := rows.Scan(
+			&i.DoctorID,
+			&i.DayOfWeek,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsRecurring,
+			&i.IntervalMinutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

@@ -16,6 +16,7 @@ type availabilityService struct {
 
 type AvailabilityService interface {
 	CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (database.Availability, error)
+	GetAvailabilityByDoctor(ctx context.Context, userId int64) ([]database.GetAvailabilityByDoctorRow, error)
 }
 
 func NewAvailabilityService(availabilityRepo repository.AvailabilityRepository, doctorRepo repository.DoctorRepository) AvailabilityService {
@@ -28,12 +29,22 @@ func NewAvailabilityService(availabilityRepo repository.AvailabilityRepository, 
 func (s *availabilityService) CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (database.Availability, error) {
 	doctorId, err := s.doctorRepo.GetDoctorIdByUserId(ctx, userId)
 	if err != nil {
-		return database.Availability{}, errors.New("unable to get the details of this account")
+		return database.Availability{}, errors.New("unable to get the user details of this account")
 	}
 	return s.availabilityRepo.Create(ctx, repository.CreateAvailabilityParams{
-		DoctorID:  doctorId,
-		StartTime: req.StartTime,
-		EndTime:   req.EndTime,
-		DayOfWeek: req.DayOfWeek,
+		DoctorID:        doctorId,
+		StartTime:       req.StartTime,
+		EndTime:         req.EndTime,
+		DayOfWeek:       req.DayOfWeek,
+		IntervalMinutes: req.IntervalMinutes,
 	})
+}
+
+func (s *availabilityService) GetAvailabilityByDoctor(ctx context.Context, userId int64) ([]database.GetAvailabilityByDoctorRow, error) {
+	doctorId, err := s.doctorRepo.GetDoctorIdByUserId(ctx, userId)
+	if err != nil {
+		return nil, errors.New("unable to get the details of this account")
+	}
+
+	return s.availabilityRepo.GetByDoctor(ctx, doctorId)
 }
