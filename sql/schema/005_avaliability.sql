@@ -10,6 +10,7 @@ created_at timestamptz NOT NULL DEFAULT (now()),
 --TODO: Add a trigger to update this before update
 updated_at timestamptz DEFAULT (now()),
 day_of_week integer NOT NULL CHECK (day_of_week between 0 AND 6),
+interval_minutes integer NOT NULL DEFAULT 60,
 CONSTRAINT valid_time_range CHECK (start_time<end_time),
 CONSTRAINT specific_or_recurring CHECK (
 (is_recurring = true AND specific_date IS NULL) OR

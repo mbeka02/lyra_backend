@@ -110,15 +110,16 @@ type Appointment struct {
 }
 
 type Availability struct {
-	AvailabilityID int64        `json:"availability_id"`
-	DoctorID       int64        `json:"doctor_id"`
-	StartTime      time.Time    `json:"start_time"`
-	EndTime        time.Time    `json:"end_time"`
-	IsRecurring    bool         `json:"is_recurring"`
-	SpecificDate   sql.NullTime `json:"specific_date"`
-	CreatedAt      time.Time    `json:"created_at"`
-	UpdatedAt      sql.NullTime `json:"updated_at"`
-	DayOfWeek      int32        `json:"day_of_week"`
+	AvailabilityID  int64        `json:"availability_id"`
+	DoctorID        int64        `json:"doctor_id"`
+	StartTime       time.Time    `json:"start_time"`
+	EndTime         time.Time    `json:"end_time"`
+	IsRecurring     bool         `json:"is_recurring"`
+	SpecificDate    sql.NullTime `json:"specific_date"`
+	CreatedAt       time.Time    `json:"created_at"`
+	UpdatedAt       sql.NullTime `json:"updated_at"`
+	DayOfWeek       int32        `json:"day_of_week"`
+	IntervalMinutes int32        `json:"interval_minutes"`
 }
 
 type Doctor struct {

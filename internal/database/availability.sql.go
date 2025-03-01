@@ -12,18 +12,19 @@ import (
 
 const createAvailability = `-- name: CreateAvailability :one
 INSERT INTO availability (
-  doctor_id, day_of_week, start_time, end_time, is_recurring
+  doctor_id, day_of_week, start_time, end_time, is_recurring,interval_minutes
 ) VALUES (
-  $1, $2, $3, $4, $5
-) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week
+  $1, $2, $3, $4, $5,$6
+) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes
 `
 
 type CreateAvailabilityParams struct {
-	DoctorID    int64     `json:"doctor_id"`
-	DayOfWeek   int32     `json:"day_of_week"`
-	StartTime   time.Time `json:"start_time"`
-	EndTime     time.Time `json:"end_time"`
-	IsRecurring bool      `json:"is_recurring"`
+	DoctorID        int64     `json:"doctor_id"`
+	DayOfWeek       int32     `json:"day_of_week"`
+	StartTime       time.Time `json:"start_time"`
+	EndTime         time.Time `json:"end_time"`
+	IsRecurring     bool      `json:"is_recurring"`
+	IntervalMinutes int32     `json:"interval_minutes"`
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {
@@ -33,6 +34,7 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		arg.StartTime,
 		arg.EndTime,
 		arg.IsRecurring,
+		arg.IntervalMinutes,
 	)
 	var i Availability
 	err := row.Scan(
@@ -45,6 +47,116 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DayOfWeek,
+		&i.IntervalMinutes,
 	)
 	return i, err
+}
+
+const deleteAvailabityByDay = `-- name: DeleteAvailabityByDay :exec
+DELETE  FROM availability WHERE day_of_week=$1 AND doctor_id=$2
+`
+
+type DeleteAvailabityByDayParams struct {
+	DayOfWeek int32 `json:"day_of_week"`
+	DoctorID  int64 `json:"doctor_id"`
+}
+
+func (q *Queries) DeleteAvailabityByDay(ctx context.Context, arg DeleteAvailabityByDayParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAvailabityByDay, arg.DayOfWeek, arg.DoctorID)
+	return err
+}
+
+const deleteAvailabityById = `-- name: DeleteAvailabityById :exec
+DELETE FROM availability WHERE availability_id=$1 AND doctor_id=$2
+`
+
+type DeleteAvailabityByIdParams struct {
+	AvailabilityID int64 `json:"availability_id"`
+	DoctorID       int64 `json:"doctor_id"`
+}
+
+func (q *Queries) DeleteAvailabityById(ctx context.Context, arg DeleteAvailabityByIdParams) error {
+	_, err := q.db.ExecContext(ctx, deleteAvailabityById, arg.AvailabilityID, arg.DoctorID)
+	return err
+}
+
+const getAvailabilityByDoctor = `-- name: GetAvailabilityByDoctor :many
+SELECT availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1
+`
+
+func (q *Queries) GetAvailabilityByDoctor(ctx context.Context, doctorID int64) ([]Availability, error) {
+	rows, err := q.db.QueryContext(ctx, getAvailabilityByDoctor, doctorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Availability
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.AvailabilityID,
+			&i.DoctorID,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsRecurring,
+			&i.SpecificDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DayOfWeek,
+			&i.IntervalMinutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAvailabilityByDoctorAndDay = `-- name: GetAvailabilityByDoctorAndDay :many
+SELECT availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1 AND day_of_week=$2
+`
+
+type GetAvailabilityByDoctorAndDayParams struct {
+	DoctorID  int64 `json:"doctor_id"`
+	DayOfWeek int32 `json:"day_of_week"`
+}
+
+func (q *Queries) GetAvailabilityByDoctorAndDay(ctx context.Context, arg GetAvailabilityByDoctorAndDayParams) ([]Availability, error) {
+	rows, err := q.db.QueryContext(ctx, getAvailabilityByDoctorAndDay, arg.DoctorID, arg.DayOfWeek)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Availability
+	for rows.Next() {
+		var i Availability
+		if err := rows.Scan(
+			&i.AvailabilityID,
+			&i.DoctorID,
+			&i.StartTime,
+			&i.EndTime,
+			&i.IsRecurring,
+			&i.SpecificDate,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DayOfWeek,
+			&i.IntervalMinutes,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }

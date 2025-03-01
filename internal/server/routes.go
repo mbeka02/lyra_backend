@@ -32,18 +32,22 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Get("/health", s.healthHandler)
 	r.Post("/register", s.handlers.User.HandleCreateUser)
 	r.Post("/login", s.handlers.User.HandleLogin)
-
+	// TODO: Restructure this
 	r.Route("/user", func(r chi.Router) {
 		r.Use(m.AuthMiddleware(s.opts.AuthMaker))
 		r.Get("/", s.handlers.User.HandleGetUser)
 		r.Patch("/", s.handlers.User.HandleUpdateUser)
+		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
+
+		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
 
 		r.Get("/doctor", s.handlers.Doctor.HandleGetDoctors)
-		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
+		r.Get("/doctor/availability", s.handlers.Availability.HandleGetAvailabilityByDoctor)
 		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
 		r.Post("/doctor/availability", s.handlers.Availability.HandleCreateAvailability)
-		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 	})
+	r.Delete("/doctor/availability/id/{availabilityId}", s.handlers.Availability.HandleDeleteById)
+	r.Delete("/doctor/availability/day/{dayOfWeek}", s.handlers.Availability.HandleDeleteByDay)
 	return r
 }
 

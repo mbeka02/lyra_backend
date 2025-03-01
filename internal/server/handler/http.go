@@ -9,6 +9,8 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/server/middleware"
 )
 
 var validate *validator.Validate
@@ -174,6 +176,18 @@ func parseAndValidateRequest(r *http.Request, v interface{}) error {
 		return fmt.Errorf("Validation failed : %v", validationErrors)
 	}
 	return nil
+}
+
+// getAuthPayload extracts the auth payload from the request context.
+// If extraction fails, it writes an error response and returns false.
+// this is a wrapper function for the GetAuthPayload() method for the middleware package
+func getAuthPayload(w http.ResponseWriter, r *http.Request) (*auth.Payload, bool) {
+	payload, err := middleware.GetAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return nil, false
+	}
+	return payload, true
 }
 
 func init() {
