@@ -1,6 +1,7 @@
 -- name: CreateDoctor :one
 INSERT INTO doctors(user_id,specialization,license_number,description , years_of_experience , county , price_per_hour) VALUES ($1,$2,$3,$4,$5,$6,$7)RETURNING *;
-
+-- name: GetDoctorIdByUserId :one
+SELECT doctor_id FROM doctors WHERE user_id=$1;
 -- name: GetDoctors :many
 SELECT 
     users.full_name, 

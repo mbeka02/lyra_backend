@@ -114,7 +114,7 @@ type Availability struct {
 	DoctorID       int64        `json:"doctor_id"`
 	StartTime      time.Time    `json:"start_time"`
 	EndTime        time.Time    `json:"end_time"`
-	IsRecurring    sql.NullBool `json:"is_recurring"`
+	IsRecurring    bool         `json:"is_recurring"`
 	SpecificDate   sql.NullTime `json:"specific_date"`
 	CreatedAt      time.Time    `json:"created_at"`
 	UpdatedAt      sql.NullTime `json:"updated_at"`

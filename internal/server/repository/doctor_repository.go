@@ -28,9 +28,11 @@ type GetDoctorsParams struct {
 	SortBy    string // Sorting field (price, experience)
 	SortOrder string // Sorting order (asc, desc)
 }
+
 type DoctorRepository interface {
 	Create(context.Context, CreateDoctorParams) (database.Doctor, error)
-	GetAll(context.Context, GetDoctorsParams) ([]database.GetDoctorsRow, error)
+	GetAllDoctors(context.Context, GetDoctorsParams) ([]database.GetDoctorsRow, error)
+	GetDoctorIdByUserId(context.Context, int64) (int64, error)
 }
 
 type doctorRepository struct {
@@ -43,8 +45,8 @@ func NewDoctorRepository(store *database.Store) DoctorRepository {
 	}
 }
 
-func (s *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (database.Doctor, error) {
-	return s.store.CreateDoctor(ctx, database.CreateDoctorParams{
+func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (database.Doctor, error) {
+	return r.store.CreateDoctor(ctx, database.CreateDoctorParams{
 		UserID:            params.UserID,
 		LicenseNumber:     params.LicenseNumber,
 		Specialization:    params.Specialization,
@@ -55,8 +57,12 @@ func (s *doctorRepository) Create(ctx context.Context, params CreateDoctorParams
 	})
 }
 
-func (s *doctorRepository) GetAll(ctx context.Context, params GetDoctorsParams) ([]database.GetDoctorsRow, error) {
-	return s.store.GetDoctors(ctx, database.GetDoctorsParams{
+func (r *doctorRepository) GetDoctorIdByUserId(ctx context.Context, UserID int64) (int64, error) {
+	return r.store.GetDoctorIdByUserId(ctx, UserID)
+}
+
+func (r *doctorRepository) GetAllDoctors(ctx context.Context, params GetDoctorsParams) ([]database.GetDoctorsRow, error) {
+	return r.store.GetDoctors(ctx, database.GetDoctorsParams{
 		// filters
 		SetCounty:         params.County,
 		SetSpecialization: params.Specialization,

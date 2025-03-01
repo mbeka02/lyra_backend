@@ -27,42 +27,48 @@ type Server struct {
 	handlers Handlers
 }
 type Handlers struct {
-	User    *handler.UserHandler
-	Patient *handler.PatientHandler
-	Doctor  *handler.DoctorHandler
+	User         *handler.UserHandler
+	Patient      *handler.PatientHandler
+	Doctor       *handler.DoctorHandler
+	Availability *handler.AvailabilityHandler
 }
 type Services struct {
-	User    service.UserService
-	Patient service.PatientService
-	Doctor  service.DoctorService
+	User         service.UserService
+	Patient      service.PatientService
+	Doctor       service.DoctorService
+	Availability service.AvailabilityService
 }
 type Repositories struct {
-	User    repository.UserRepository
-	Patient repository.PatientRepository
-	Doctor  repository.DoctorRepository
+	User         repository.UserRepository
+	Patient      repository.PatientRepository
+	Doctor       repository.DoctorRepository
+	Availability repository.AvailabilityRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
 	return Repositories{
-		User:    repository.NewUserRepository(store),
-		Patient: repository.NewPatientRepository(store),
-		Doctor:  repository.NewDoctorRepository(store),
+		User:         repository.NewUserRepository(store),
+		Patient:      repository.NewPatientRepository(store),
+		Doctor:       repository.NewDoctorRepository(store),
+		Availability: repository.NewAvailabilityRepository(store),
 	}
 }
 
 func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
 	return Services{
-		User:    service.NewUserService(repos.User, maker, objStorage, duration),
-		Patient: service.NewPatientService(repos.Patient),
-		Doctor:  service.NewDoctorService(repos.Doctor),
+		User:         service.NewUserService(repos.User, maker, objStorage, duration),
+		Patient:      service.NewPatientService(repos.Patient),
+		Doctor:       service.NewDoctorService(repos.Doctor),
+		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
 	}
 }
 
 func initHandlers(services Services) Handlers {
 	return Handlers{
-		User:    handler.NewUserHandler(services.User),
-		Patient: handler.NewPatientHandler(services.Patient),
-		Doctor:  handler.NewDoctorHandler(services.Doctor),
+		User:         handler.NewUserHandler(services.User),
+		Patient:      handler.NewPatientHandler(services.Patient),
+		Doctor:       handler.NewDoctorHandler(services.Doctor),
+		Availability: handler.NewAvailabilityHandler(services.Availability),
 	}
 }
 

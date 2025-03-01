@@ -36,7 +36,7 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 }
 
 func (s *doctorService) GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error) {
-	rows, err := s.doctorRepo.GetAll(ctx, repository.GetDoctorsParams{
+	rows, err := s.doctorRepo.GetAllDoctors(ctx, repository.GetDoctorsParams{
 		// Fetch the limit+1 to determine if there's more data
 		Limit:          limit + 1,
 		Offset:         offset,

@@ -41,6 +41,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Get("/doctor", s.handlers.Doctor.HandleGetDoctors)
 		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
 		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
+		r.Post("/doctor/availability", s.handlers.Availability.HandleCreateAvailability)
 		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 	})
 	return r
