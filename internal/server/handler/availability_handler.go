@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/mbeka02/lyra_backend/internal/model"
-	"github.com/mbeka02/lyra_backend/internal/server/middleware"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
@@ -28,9 +27,8 @@ func (h *AvailabilityHandler) HandleCreateAvailability(w http.ResponseWriter, r 
 	}
 
 	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
 		return
 	}
 	response, err := h.availabilityService.CreateAvailability(r.Context(), request, payload.UserID)
@@ -52,9 +50,8 @@ func (h *AvailabilityHandler) HandleDeleteById(w http.ResponseWriter, r *http.Re
 		return
 	}
 	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
 		return
 	}
 	err = h.availabilityService.DeleteById(r.Context(), availabilityId, payload.UserID)
@@ -76,9 +73,8 @@ func (h *AvailabilityHandler) HandleDeleteByDay(w http.ResponseWriter, r *http.R
 		return
 	}
 	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
 		return
 	}
 	err = h.availabilityService.DeleteByDay(r.Context(), int32(dayOfWeek), payload.UserID)
@@ -94,9 +90,8 @@ func (h *AvailabilityHandler) HandleDeleteByDay(w http.ResponseWriter, r *http.R
 
 func (h *AvailabilityHandler) HandleGetAvailabilityByDoctor(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
 		return
 	}
 	response, err := h.availabilityService.GetAvailabilityByDoctor(r.Context(), payload.UserID)
@@ -104,7 +99,7 @@ func (h *AvailabilityHandler) HandleGetAvailabilityByDoctor(w http.ResponseWrite
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
+	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}

@@ -46,8 +46,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
 		r.Post("/doctor/availability", s.handlers.Availability.HandleCreateAvailability)
 	})
-	r.Delete("/doctor/availability/{availabilityId}", s.handlers.Availability.HandleDeleteById)
-	r.Delete("/doctor/availability/{dayOfWeek}", s.handlers.Availability.HandleDeleteByDay)
+	r.Delete("/doctor/availability/id/{availabilityId}", s.handlers.Availability.HandleDeleteById)
+	r.Delete("/doctor/availability/day/{dayOfWeek}", s.handlers.Availability.HandleDeleteByDay)
 	return r
 }
 
