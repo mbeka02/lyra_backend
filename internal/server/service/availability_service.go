@@ -49,6 +49,16 @@ func (s *availabilityService) CreateAvailability(ctx context.Context, req model.
 	if err != nil {
 		return database.Availability{}, errors.New("unable to get the user details of this account")
 	}
+	// // parse the time
+	// startTime, err := util.ParseTimeFromString(req.StartTime)
+	// if err != nil {
+	// 	return database.Availability{}, errors.New("invalid time format.")
+	// }
+	// endTime, err := util.ParseTimeFromString(req.EndTime)
+	// if err != nil {
+	// 	return database.Availability{}, errors.New("invalid time format.")
+	// }
+	// log.Println(startTime, endTime)
 	return s.availabilityRepo.Create(ctx, repository.CreateAvailabilityParams{
 		DoctorID:        doctorId,
 		StartTime:       req.StartTime,

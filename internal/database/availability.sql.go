@@ -7,7 +7,6 @@ package database
 
 import (
 	"context"
-	"time"
 )
 
 const createAvailability = `-- name: CreateAvailability :one
@@ -15,16 +14,16 @@ INSERT INTO availability (
   doctor_id, day_of_week, start_time, end_time, is_recurring,interval_minutes
 ) VALUES (
   $1, $2, $3, $4, $5,$6
-) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes
+) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, created_at, updated_at, day_of_week, interval_minutes
 `
 
 type CreateAvailabilityParams struct {
-	DoctorID        int64     `json:"doctor_id"`
-	DayOfWeek       int32     `json:"day_of_week"`
-	StartTime       time.Time `json:"start_time"`
-	EndTime         time.Time `json:"end_time"`
-	IsRecurring     bool      `json:"is_recurring"`
-	IntervalMinutes int32     `json:"interval_minutes"`
+	DoctorID        int64  `json:"doctor_id"`
+	DayOfWeek       int32  `json:"day_of_week"`
+	StartTime       string `json:"start_time"`
+	EndTime         string `json:"end_time"`
+	IsRecurring     bool   `json:"is_recurring"`
+	IntervalMinutes int32  `json:"interval_minutes"`
 }
 
 func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailabilityParams) (Availability, error) {
@@ -43,7 +42,6 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		&i.StartTime,
 		&i.EndTime,
 		&i.IsRecurring,
-		&i.SpecificDate,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DayOfWeek,
@@ -81,7 +79,7 @@ func (q *Queries) DeleteAvailabityById(ctx context.Context, arg DeleteAvailabity
 }
 
 const getAvailabilityByDoctor = `-- name: GetAvailabilityByDoctor :many
-SELECT availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1
+SELECT availability_id, doctor_id, start_time, end_time, is_recurring, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1
 `
 
 func (q *Queries) GetAvailabilityByDoctor(ctx context.Context, doctorID int64) ([]Availability, error) {
@@ -99,7 +97,6 @@ func (q *Queries) GetAvailabilityByDoctor(ctx context.Context, doctorID int64) (
 			&i.StartTime,
 			&i.EndTime,
 			&i.IsRecurring,
-			&i.SpecificDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DayOfWeek,
@@ -119,7 +116,7 @@ func (q *Queries) GetAvailabilityByDoctor(ctx context.Context, doctorID int64) (
 }
 
 const getAvailabilityByDoctorAndDay = `-- name: GetAvailabilityByDoctorAndDay :many
-SELECT availability_id, doctor_id, start_time, end_time, is_recurring, specific_date, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1 AND day_of_week=$2
+SELECT availability_id, doctor_id, start_time, end_time, is_recurring, created_at, updated_at, day_of_week, interval_minutes FROM availability WHERE doctor_id=$1 AND day_of_week=$2
 `
 
 type GetAvailabilityByDoctorAndDayParams struct {
@@ -142,7 +139,6 @@ func (q *Queries) GetAvailabilityByDoctorAndDay(ctx context.Context, arg GetAvai
 			&i.StartTime,
 			&i.EndTime,
 			&i.IsRecurring,
-			&i.SpecificDate,
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.DayOfWeek,
