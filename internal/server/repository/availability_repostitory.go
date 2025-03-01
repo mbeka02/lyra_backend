@@ -19,7 +19,9 @@ type CreateAvailabilityParams struct {
 
 type AvailabilityRepository interface {
 	Create(context.Context, CreateAvailabilityParams) (database.Availability, error)
-	GetByDoctor(context.Context, int64) ([]database.GetAvailabilityByDoctorRow, error)
+	GetByDoctor(ctx context.Context, doctorId int64) ([]database.Availability, error)
+	DeleteById(ctx context.Context, availabilityId int64, doctorId int64) error
+	DeleteByDay(ctx context.Context, dayOfWeek int32, doctorId int64) error
 }
 
 type availabilityRepository struct {
@@ -42,6 +44,20 @@ func (r *availabilityRepository) Create(ctx context.Context, params CreateAvaila
 	})
 }
 
-func (r *availabilityRepository) GetByDoctor(ctx context.Context, DoctorID int64) ([]database.GetAvailabilityByDoctorRow, error) {
+func (r *availabilityRepository) GetByDoctor(ctx context.Context, DoctorID int64) ([]database.Availability, error) {
 	return r.store.GetAvailabilityByDoctor(ctx, DoctorID)
+}
+
+func (r *availabilityRepository) DeleteById(ctx context.Context, availabilityId int64, doctorId int64) error {
+	return r.store.DeleteAvailabityById(ctx, database.DeleteAvailabityByIdParams{
+		AvailabilityID: availabilityId,
+		DoctorID:       doctorId,
+	})
+}
+
+func (r *availabilityRepository) DeleteByDay(ctx context.Context, dayOfWeek int32, doctorId int64) error {
+	return r.store.DeleteAvailabityByDay(ctx, database.DeleteAvailabityByDayParams{
+		DayOfWeek: dayOfWeek,
+		DoctorID:  doctorId,
+	})
 }
