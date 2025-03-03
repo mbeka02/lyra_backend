@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 )
 
 const createAvailability = `-- name: CreateAvailability :one
@@ -76,6 +77,77 @@ type DeleteAvailabityByIdParams struct {
 func (q *Queries) DeleteAvailabityById(ctx context.Context, arg DeleteAvailabityByIdParams) error {
 	_, err := q.db.ExecContext(ctx, deleteAvailabityById, arg.AvailabilityID, arg.DoctorID)
 	return err
+}
+
+const getAppointmentSlots = `-- name: GetAppointmentSlots :many
+WITH aggregated_availability AS (
+  SELECT
+    a.doctor_id,
+    a.start_time, 
+    a.end_time, 
+    a.interval_minutes 
+  FROM availability a
+  WHERE a.doctor_id = $1
+  AND a.day_of_week = $2
+),
+doctor_slots AS (
+  SELECT 
+    slot_timestamp AS slot_start_time,
+    slot_timestamp + (aa.interval_minutes * interval '1 minute') AS slot_end_time,
+    aa.doctor_id
+  FROM aggregated_availability aa,
+  LATERAL generate_series(
+    ($3::date + aa.start_time)::timestamp,
+    ($3::date + aa.end_time - (aa.interval_minutes * interval '1 minute'))::timestamp,
+    (aa.interval_minutes * interval '1 minute')
+  ) AS slot_timestamp
+)
+SELECT
+  ds.slot_start_time::time AS slot_start_time, 
+  ds.slot_end_time::time AS slot_end_time, 
+  CASE 
+    WHEN appt.appointment_id IS NOT NULL THEN 'booked'
+    ELSE 'available'
+  END AS slot_status
+FROM doctor_slots ds
+LEFT JOIN appointments appt
+  ON appt.doctor_id = ds.doctor_id
+  AND appt.start_time = ds.slot_start_time
+`
+
+type GetAppointmentSlotsParams struct {
+	DoctorID  int64     `json:"doctor_id"`
+	DayOfWeek int32     `json:"day_of_week"`
+	Column3   time.Time `json:"column_3"`
+}
+
+type GetAppointmentSlotsRow struct {
+	SlotStartTime string `json:"slot_start_time"`
+	SlotEndTime   string `json:"slot_end_time"`
+	SlotStatus    string `json:"slot_status"`
+}
+
+func (q *Queries) GetAppointmentSlots(ctx context.Context, arg GetAppointmentSlotsParams) ([]GetAppointmentSlotsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getAppointmentSlots, arg.DoctorID, arg.DayOfWeek, arg.Column3)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAppointmentSlotsRow
+	for rows.Next() {
+		var i GetAppointmentSlotsRow
+		if err := rows.Scan(&i.SlotStartTime, &i.SlotEndTime, &i.SlotStatus); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getAvailabilityByDoctor = `-- name: GetAvailabilityByDoctor :many

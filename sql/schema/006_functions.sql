@@ -14,7 +14,7 @@ BEGIN
   -- Extract the time and date components from appointment timestamptz
   appt_start_time := NEW.start_time::time;
   appt_end_time := NEW.end_time::time;
-  appt_dow := EXTRACT(DOW FROM NEW.start_time); -- This is coming from the appointments table
+  appt_dow := EXTRACT(DOW FROM NEW.start_time);
   -- Check if the time slot exists in doctor's availability
   SELECT EXISTS (
     SELECT 1 FROM availability
@@ -34,6 +34,7 @@ BEGIN
     SELECT 1 FROM appointments
     WHERE doctor_id = NEW.doctor_id
       AND current_status = 'scheduled'
+      --might be pointless since NEW.appointment_id is NULL at this point
       AND appointment_id != NEW.appointment_id
       AND (start_time, end_time) OVERLAPS (NEW.start_time, NEW.end_time)
   ) INTO has_overlap;
