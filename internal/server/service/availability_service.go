@@ -59,6 +59,7 @@ func (s *availabilityService) CreateAvailability(ctx context.Context, req model.
 	// 	return database.Availability{}, errors.New("invalid time format.")
 	// }
 	// log.Println(startTime, endTime)
+
 	return s.availabilityRepo.Create(ctx, repository.CreateAvailabilityParams{
 		DoctorID:        doctorId,
 		StartTime:       req.StartTime,
