@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 )
@@ -15,10 +16,15 @@ type CreateAvailabilityParams struct {
 
 	// IsRecurring bool      `json:"is_recurring"`
 }
-
+type GetSlotsParams struct {
+	DoctorID  int64
+	DayOfWeek int32
+	SlotDate  time.Time
+}
 type AvailabilityRepository interface {
-	Create(context.Context, CreateAvailabilityParams) (database.Availability, error)
+	Create(ctx context.Context, params CreateAvailabilityParams) (database.Availability, error)
 	GetByDoctor(ctx context.Context, doctorId int64) ([]database.Availability, error)
+	GetSlots(ctx context.Context, params GetSlotsParams) ([]database.GetAppointmentSlotsRow, error)
 	DeleteById(ctx context.Context, availabilityId int64, doctorId int64) error
 	DeleteByDay(ctx context.Context, dayOfWeek int32, doctorId int64) error
 }
@@ -31,6 +37,14 @@ func NewAvailabilityRepository(store *database.Store) AvailabilityRepository {
 	return &availabilityRepository{
 		store,
 	}
+}
+
+func (r *availabilityRepository) GetSlots(ctx context.Context, params GetSlotsParams) ([]database.GetAppointmentSlotsRow, error) {
+	return r.store.GetAppointmentSlots(ctx, database.GetAppointmentSlotsParams{
+		DoctorID:  params.DoctorID,
+		DayOfWeek: params.DayOfWeek,
+		Column3:   params.SlotDate,
+	})
 }
 
 func (r *availabilityRepository) Create(ctx context.Context, params CreateAvailabilityParams) (database.Availability, error) {

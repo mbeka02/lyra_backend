@@ -17,8 +17,17 @@ type availabilityService struct {
 type AvailabilityService interface {
 	CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (database.Availability, error)
 	GetAvailabilityByDoctor(ctx context.Context, userId int64) ([]database.Availability, error)
+	GetSlots(ctx context.Context, req model.GetSlotsRequest) ([]database.GetAppointmentSlotsRow, error)
 	DeleteById(ctx context.Context, avavailabilityId int64, userId int64) error
 	DeleteByDay(ctx context.Context, dayOfWeek int32, userId int64) error
+}
+
+func (s *availabilityService) GetSlots(ctx context.Context, req model.GetSlotsRequest) ([]database.GetAppointmentSlotsRow, error) {
+	return s.availabilityRepo.GetSlots(ctx, repository.GetSlotsParams{
+		DoctorID:  req.DoctorID,
+		DayOfWeek: req.DayOfWeek,
+		SlotDate:  req.SlotDate,
+	})
 }
 
 func (s *availabilityService) DeleteById(ctx context.Context, avavailabilityId int64, userId int64) error {

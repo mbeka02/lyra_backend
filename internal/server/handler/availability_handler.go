@@ -19,6 +19,23 @@ func NewAvailabilityHandler(availabilityService service.AvailabilityService) *Av
 	}
 }
 
+func (h *AvailabilityHandler) HandleGetSlots(w http.ResponseWriter, r *http.Request) {
+	request := model.GetSlotsRequest{}
+	if err := parseAndValidateRequest(r, &request); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+	response, err := h.availabilityService.GetSlots(r.Context(), request)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *AvailabilityHandler) HandleCreateAvailability(w http.ResponseWriter, r *http.Request) {
 	request := model.CreateAvailabilityRequest{}
 	if err := parseAndValidateRequest(r, &request); err != nil {
