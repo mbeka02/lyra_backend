@@ -14,6 +14,9 @@ type CreatePatientParams struct {
 	FamilyMedicalHistory  string
 	InsuranceProvider     string
 	InsurancePolicyNumber string
+	Address               string
+	EmergencyContactName  string
+	EmergencyContactPhone string
 }
 type PatientRepository interface {
 	Create(context.Context, CreatePatientParams) (database.Patient, error)
@@ -38,5 +41,8 @@ func (p *patientRepository) Create(ctx context.Context, params CreatePatientPara
 		FamilyMedicalHistory:  params.FamilyMedicalHistory,
 		InsurancePolicyNumber: params.InsurancePolicyNumber,
 		InsuranceProvider:     params.InsuranceProvider,
+		Address:               params.Address,
+		EmergencyContactName:  params.EmergencyContactName,
+		EmergencyContactPhone: params.EmergencyContactPhone,
 	})
 }
