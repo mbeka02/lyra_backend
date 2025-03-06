@@ -31,5 +31,8 @@ func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePati
 		FamilyMedicalHistory:  req.FamilyMedicalHistory,
 		InsurancePolicyNumber: req.InsurancePolicyNumber,
 		InsuranceProvider:     req.InsuranceProvider,
+		Address:               req.Address,
+		EmergencyContactName:  req.EmergencyContactName,
+		EmergencyContactPhone: req.EmergencyContactPhone,
 	})
 }

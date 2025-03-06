@@ -2,7 +2,7 @@
 CREATE TABLE patients (
     patient_id BIGSERIAL PRIMARY KEY,
     user_id BIGINT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-   -- Demographics
+   -- Contact Info
     address TEXT NOT NULL DEFAULT '',
     emergency_contact_name VARCHAR(255) NOT NULL DEFAULT '',
     emergency_contact_phone VARCHAR(20) NOT NULL DEFAULT '',
@@ -17,6 +17,8 @@ CREATE TABLE patients (
     -- Insurance Information
     insurance_provider VARCHAR(255) NOT NULL DEFAULT '',
     insurance_policy_number VARCHAR(255) NOT NULL DEFAULT '',
+
+    --TODO:Identification and Verification
 
     created_at timestamptz NOT NULL DEFAULT (now()),
     updated_at timestamptz DEFAULT now()
