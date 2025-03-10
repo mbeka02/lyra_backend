@@ -29,7 +29,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	r.Get("/", s.TestHandler)
 	// TODO: move this to the right place
-	r.Post("/test", s.handlers.Availability.HandleGetSlots)
 
 	r.Get("/health", s.healthHandler)
 	r.Post("/register", s.handlers.User.HandleCreateUser)
@@ -42,9 +41,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 
 		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
-
+		r.Post("/appointment", s.handlers.Appointment.HandleCreateAppointment)
 		r.Get("/doctor", s.handlers.Doctor.HandleGetDoctors)
 		r.Get("/doctor/availability", s.handlers.Availability.HandleGetAvailabilityByDoctor)
+		r.Post("/doctor/slots", s.handlers.Availability.HandleGetSlots)
+
 		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
 		r.Post("/doctor/availability", s.handlers.Availability.HandleCreateAvailability)
 		r.Delete("/doctor/availability/id/{availabilityId}", s.handlers.Availability.HandleDeleteById)

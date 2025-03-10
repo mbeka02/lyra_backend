@@ -57,3 +57,14 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 	)
 	return i, err
 }
+
+const getPatientIdByUserId = `-- name: GetPatientIdByUserId :one
+SELECT patient_id FROM patients WHERE user_id=$1
+`
+
+func (q *Queries) GetPatientIdByUserId(ctx context.Context, userID int64) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getPatientIdByUserId, userID)
+	var patient_id int64
+	err := row.Scan(&patient_id)
+	return patient_id, err
+}

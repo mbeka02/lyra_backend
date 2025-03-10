@@ -20,6 +20,7 @@ type CreatePatientParams struct {
 }
 type PatientRepository interface {
 	Create(context.Context, CreatePatientParams) (database.Patient, error)
+	GetPatientIdByUserId(context.Context, int64) (int64, error)
 }
 
 type patientRepository struct {
@@ -32,8 +33,8 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 	}
 }
 
-func (p *patientRepository) Create(ctx context.Context, params CreatePatientParams) (database.Patient, error) {
-	return p.store.CreatePatient(ctx, database.CreatePatientParams{
+func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (database.Patient, error) {
+	return r.store.CreatePatient(ctx, database.CreatePatientParams{
 		UserID:                params.UserID,
 		Allergies:             params.Allergies,
 		CurrentMedication:     params.CurrentMedication,
@@ -45,4 +46,8 @@ func (p *patientRepository) Create(ctx context.Context, params CreatePatientPara
 		EmergencyContactName:  params.EmergencyContactName,
 		EmergencyContactPhone: params.EmergencyContactPhone,
 	})
+}
+
+func (r *patientRepository) GetPatientIdByUserId(ctx context.Context, UserID int64) (int64, error) {
+	return r.store.GetPatientIdByUserId(ctx, UserID)
 }
