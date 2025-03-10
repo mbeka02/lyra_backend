@@ -25,11 +25,13 @@ func (h *AvailabilityHandler) HandleGetSlots(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
+	// log.Println("request=>", request)
 	response, err := h.availabilityService.GetSlots(r.Context(), request)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
+	// log.Println("response=>", response)
 	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return

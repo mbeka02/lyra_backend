@@ -11,7 +11,7 @@ import (
 )
 
 const createAppointment = `-- name: CreateAppointment :one
-INSERT INTO appointments(patient_id,doctor_id,start_time,end_time) VALUES ($1,$2,$3,$4) RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
+INSERT INTO appointments(patient_id,doctor_id,start_time,end_time, reason) VALUES ($1,$2,$3,$4,$5) RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
 `
 
 type CreateAppointmentParams struct {
@@ -19,6 +19,7 @@ type CreateAppointmentParams struct {
 	DoctorID  int64     `json:"doctor_id"`
 	StartTime time.Time `json:"start_time"`
 	EndTime   time.Time `json:"end_time"`
+	Reason    string    `json:"reason"`
 }
 
 func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentParams) (Appointment, error) {
@@ -27,6 +28,7 @@ func (q *Queries) CreateAppointment(ctx context.Context, arg CreateAppointmentPa
 		arg.DoctorID,
 		arg.StartTime,
 		arg.EndTime,
+		arg.Reason,
 	)
 	var i Appointment
 	err := row.Scan(

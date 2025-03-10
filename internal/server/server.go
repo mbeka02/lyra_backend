@@ -31,18 +31,21 @@ type Handlers struct {
 	Patient      *handler.PatientHandler
 	Doctor       *handler.DoctorHandler
 	Availability *handler.AvailabilityHandler
+	Appointment  *handler.AppointmentHandler
 }
 type Services struct {
 	User         service.UserService
 	Patient      service.PatientService
 	Doctor       service.DoctorService
 	Availability service.AvailabilityService
+	Appointment  service.AppointmentService
 }
 type Repositories struct {
 	User         repository.UserRepository
 	Patient      repository.PatientRepository
 	Doctor       repository.DoctorRepository
 	Availability repository.AvailabilityRepository
+	Appointment  repository.AppointmentRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
@@ -51,6 +54,7 @@ func initRepositories(store *database.Store) Repositories {
 		Patient:      repository.NewPatientRepository(store),
 		Doctor:       repository.NewDoctorRepository(store),
 		Availability: repository.NewAvailabilityRepository(store),
+		Appointment:  repository.NewAppointmentRepository(store),
 	}
 }
 
@@ -60,6 +64,7 @@ func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Stor
 		Patient:      service.NewPatientService(repos.Patient),
 		Doctor:       service.NewDoctorService(repos.Doctor),
 		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
+		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient),
 	}
 }
 
@@ -69,6 +74,7 @@ func initHandlers(services Services) Handlers {
 		Patient:      handler.NewPatientHandler(services.Patient),
 		Doctor:       handler.NewDoctorHandler(services.Doctor),
 		Availability: handler.NewAvailabilityHandler(services.Availability),
+		Appointment:  handler.NewAppointmentHandler(services.Appointment),
 	}
 }
 
