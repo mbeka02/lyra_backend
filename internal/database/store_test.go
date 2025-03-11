@@ -14,16 +14,16 @@ import (
 
 type terminateFunc func(context.Context, ...testcontainers.TerminateOption) error
 
-func mustStartPostgresContainer() (terminateFunc, error) {
+func setupPostgres(ctx context.Context) (testcontainers.Container, string, error) {
 	var (
-		dbName   = "database"
+		dbName   = "testdb"
 		dbPwd    = "password"
 		dbUser   = "user"
 		dbSchema = "public"
 	)
 
-	dbContainer, err := postgres.Run(
-		context.Background(),
+	pgContainer, err := postgres.Run(
+		ctx,
 		"postgres:latest",
 		postgres.WithDatabase(dbName),
 		postgres.WithUsername(dbUser),
@@ -34,22 +34,32 @@ func mustStartPostgresContainer() (terminateFunc, error) {
 				WithStartupTimeout(5*time.Second)),
 	)
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	dbHost, err := dbContainer.Host(context.Background())
+	dbHost, err := pgContainer.Host(ctx)
 	if err != nil {
-		return dbContainer.Terminate, err
+		return pgContainer, "", err
 	}
 
-	dbPort, err := dbContainer.MappedPort(context.Background(), "5432/tcp")
+	dbPort, err := pgContainer.MappedPort(ctx, "5432/tcp")
 	if err != nil {
-		return dbContainer.Terminate, err
+		return pgContainer, "", err
 	}
 
-	connStr = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s", dbUser, dbPwd, dbHost, dbPort.Port(), dbName, dbSchema)
-	// fmt.Printf("Connection string =>%s", connStr)
-	return dbContainer.Terminate, err
+	connString := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable&search_path=%s",
+		dbUser, dbPwd, dbHost, dbPort.Port(), dbName, dbSchema)
+
+	return pgContainer, connString, nil
+}
+
+func mustStartPostgresContainer() (terminateFunc, error) {
+	pgContainer, connString, err := setupPostgres(context.Background())
+	if err != nil {
+		log.Fatalf("unable to setup postgres")
+	}
+	SetConnectionString(connString)
+	return pgContainer.Terminate, err
 }
 
 func TestMain(m *testing.M) {

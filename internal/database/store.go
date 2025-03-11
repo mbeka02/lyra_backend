@@ -118,3 +118,13 @@ func (s *Store) Close() error {
 	log.Println("Disconnected from the db")
 	return s.db.Close()
 }
+
+// overrides the default connection string
+func SetConnectionString(str string) {
+	connStr = str
+}
+
+// expose the db instance for migration
+func (s *Store) DB() *sql.DB {
+	return s.db
+}
