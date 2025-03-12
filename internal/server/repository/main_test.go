@@ -62,8 +62,8 @@ func TestMain(m *testing.M) {
 }
 
 func runTests(m *testing.M) int {
-	// setup postgres test container
 	ctx := context.Background()
+	// setup postgres test container
 	pgContainer, connString, err := setupPostgres(ctx)
 	if err != nil {
 		log.Fatalf("unable to setup the test container:%v", err)
