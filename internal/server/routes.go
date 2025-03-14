@@ -28,7 +28,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(middleware.Logger)
 
 	r.Get("/", s.TestHandler)
-	// TODO: move this to the right place
 
 	r.Get("/health", s.healthHandler)
 	r.Post("/register", s.handlers.User.HandleCreateUser)
