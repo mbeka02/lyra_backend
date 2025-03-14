@@ -1,8 +1,8 @@
 -- name: CreateAvailability :one
 INSERT INTO availability (
-  doctor_id, day_of_week, start_time, end_time, is_recurring,interval_minutes
+  doctor_id, day_of_week, start_time, end_time,interval_minutes
 ) VALUES (
-  $1, $2, $3, $4, $5,$6
+  $1, $2, $3, $4, $5
 ) RETURNING *;
 -- name: GetAvailabilityByDoctor :many
 SELECT * FROM availability WHERE doctor_id=$1;

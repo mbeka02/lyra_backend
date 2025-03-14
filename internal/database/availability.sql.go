@@ -12,9 +12,9 @@ import (
 
 const createAvailability = `-- name: CreateAvailability :one
 INSERT INTO availability (
-  doctor_id, day_of_week, start_time, end_time, is_recurring,interval_minutes
+  doctor_id, day_of_week, start_time, end_time,interval_minutes
 ) VALUES (
-  $1, $2, $3, $4, $5,$6
+  $1, $2, $3, $4, $5
 ) RETURNING availability_id, doctor_id, start_time, end_time, is_recurring, created_at, updated_at, day_of_week, interval_minutes
 `
 
@@ -23,7 +23,6 @@ type CreateAvailabilityParams struct {
 	DayOfWeek       int32  `json:"day_of_week"`
 	StartTime       string `json:"start_time"`
 	EndTime         string `json:"end_time"`
-	IsRecurring     bool   `json:"is_recurring"`
 	IntervalMinutes int32  `json:"interval_minutes"`
 }
 
@@ -33,7 +32,6 @@ func (q *Queries) CreateAvailability(ctx context.Context, arg CreateAvailability
 		arg.DayOfWeek,
 		arg.StartTime,
 		arg.EndTime,
-		arg.IsRecurring,
 		arg.IntervalMinutes,
 	)
 	var i Availability
