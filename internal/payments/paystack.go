@@ -5,36 +5,48 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"github.com/mbeka02/lyra_backend/internal/model"
 )
+
+var baseURL = "https://api.paystack.co/transaction/initialize"
 
 type paymentsProcessor struct {
 	apiKey string
 	client *http.Client
 }
 
-type InitializePaymentRequest struct {
-	Amount float64 `json:"amount"`
-	Email  string  `json:"email"`
-}
-
-type InitializePaymentResponse struct {
-	Status  bool   `json:"status"`
-	Message string `json:"message"`
-	Data    struct {
-		AuthorizationURL string `json:"authorization_url"`
-		AccessCode       string `json:"access_code"`
-		Reference        string `json:"reference"`
-	} `json:"data"`
-}
-
 func NewPaymentsProcessor(apiKey string) *paymentsProcessor {
 	return &paymentsProcessor{apiKey, &http.Client{}}
 }
 
-func (p *paymentsProcessor) InitializePayment(request InitializePaymentRequest) (InitializePaymentResponse, error) {
+func (p *paymentsProcessor) VerifyTransaction() (model.VerifyTransactionResponse, error) {
+	req, err := http.NewRequest(http.MethodGet, baseURL, nil)
+	// Add content type header
+	req.Header.Add("Content-Type", "application/json")
+	// Add Authorization Header
+	req.Header.Add("Authorization", "Bearer "+p.apiKey)
+	// send request
+	resp, err := p.client.Do(req)
+	if err != nil {
+		return model.VerifyTransactionResponse{}, err
+	}
+	defer resp.Body.Close()
+
+	var respBody model.VerifyTransactionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return model.VerifyTransactionResponse{}, err
+	}
+	if !respBody.Status {
+		return model.VerifyTransactionResponse{}, fmt.Errorf("paystack error:%s", respBody.Message)
+	}
+	return respBody, nil
+}
+
+func (p *paymentsProcessor) InitializeTransaction(request model.InitializeTransactionRequest) (model.InitializeTransactionResponse, error) {
 	buff, err := json.Marshal(request)
 	if err != nil {
-		return InitializePaymentResponse{}, err
+		return model.InitializeTransactionResponse{}, err
 	}
 	req, err := http.NewRequest(http.MethodPost, "https://api.paystack.co/transaction/initialize", bytes.NewBuffer(buff))
 	// Add content type header
@@ -42,18 +54,18 @@ func (p *paymentsProcessor) InitializePayment(request InitializePaymentRequest) 
 	// Add Authorization Header
 	req.Header.Add("Authorization", "Bearer "+p.apiKey)
 	// send request
-	res, err := p.client.Do(req)
+	resp, err := p.client.Do(req)
 	if err != nil {
-		return InitializePaymentResponse{}, err
+		return model.InitializeTransactionResponse{}, err
 	}
-	defer res.Body.Close()
+	defer resp.Body.Close()
 
-	var body InitializePaymentResponse
-	if err := json.NewDecoder(res.Body).Decode(&body); err != nil {
-		return InitializePaymentResponse{}, err
+	var respBody model.InitializeTransactionResponse
+	if err := json.NewDecoder(resp.Body).Decode(&respBody); err != nil {
+		return model.InitializeTransactionResponse{}, err
 	}
-	if !body.Status {
-		return InitializePaymentResponse{}, fmt.Errorf("paystack error:%s", body.Message)
+	if !respBody.Status {
+		return model.InitializeTransactionResponse{}, fmt.Errorf("paystack error:%s", respBody.Message)
 	}
-	return body, nil
+	return respBody, nil
 }
