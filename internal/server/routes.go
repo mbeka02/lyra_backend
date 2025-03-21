@@ -2,7 +2,6 @@ package server
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 func (s *Server) RegisterRoutes() http.Handler {
 	r := chi.NewRouter()
 
+	// Apply global middleware
 	r.Use(httprate.LimitByIP(100, time.Minute))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
@@ -25,47 +25,82 @@ func (s *Server) RegisterRoutes() http.Handler {
 		AllowCredentials: false,
 		MaxAge:           300,
 	}))
+	// logs requests
 	r.Use(middleware.Logger)
-
+	// catches paincs in the handlers and returns a 500 instead of crashing the server
+	r.Use(middleware.Recoverer)
+	// extracts the real client IP from the headers even when behind a proxy
+	r.Use(middleware.RealIP)
+	// add a unique request ID for each endpoint
+	r.Use(middleware.RequestID)
+	// request timeout
+	r.Use(middleware.Timeout(30 * time.Second))
+	// Public routes that don't require authentication
 	r.Get("/", s.TestHandler)
-
 	r.Get("/health", s.healthHandler)
 	r.Post("/register", s.handlers.User.HandleCreateUser)
 	r.Post("/login", s.handlers.User.HandleLogin)
-	// TODO: Restructure this
-	r.Route("/user", func(r chi.Router) {
-		r.Use(m.AuthMiddleware(s.opts.AuthMaker))
-		r.Get("/", s.handlers.User.HandleGetUser)
-		r.Patch("/", s.handlers.User.HandleUpdateUser)
-		r.Patch("/profilePicture", s.handlers.User.HandleProfilePicture)
 
-		r.Post("/patient", s.handlers.Patient.HandleCreatePatient)
-		r.Post("/appointment", s.handlers.Appointment.HandleCreateAppointment)
-		r.Get("/doctor", s.handlers.Doctor.HandleGetDoctors)
-		r.Get("/doctor/availability", s.handlers.Availability.HandleGetAvailabilityByDoctor)
-		r.Post("/doctor/slots", s.handlers.Availability.HandleGetSlots)
+	// API versioning - all API endpoints under /api/v1
+	r.Route("/api/v1", func(r chi.Router) {
+		// Protected routes
+		r.Group(func(r chi.Router) {
+			// Apply authentication middleware to all routes in this group
+			r.Use(m.AuthMiddleware(s.opts.AuthMaker))
 
-		r.Post("/doctor", s.handlers.Doctor.HandleCreateDoctor)
-		r.Post("/doctor/availability", s.handlers.Availability.HandleCreateAvailability)
-		r.Delete("/doctor/availability/id/{availabilityId}", s.handlers.Availability.HandleDeleteById)
-		r.Delete("/doctor/availability/day/{dayOfWeek}", s.handlers.Availability.HandleDeleteByDay)
+			// User endpoints
+			r.Route("/users", func(r chi.Router) {
+				r.Get("/me", s.handlers.User.HandleGetUser)
+				r.Patch("/me", s.handlers.User.HandleUpdateUser)
+				r.Patch("/me/profile-picture", s.handlers.User.HandleProfilePicture)
+			})
+
+			// Patient endpoints
+			r.Route("/patients", func(r chi.Router) {
+				r.Post("/", s.handlers.Patient.HandleCreatePatient)
+			})
+
+			// Doctor endpoints
+			r.Route("/doctors", func(r chi.Router) {
+				r.Get("/", s.handlers.Doctor.HandleGetDoctors)
+				r.Post("/", s.handlers.Doctor.HandleCreateDoctor)
+
+				// Doctor availability endpoints
+				r.Route("/availability", func(r chi.Router) {
+					r.Get("/", s.handlers.Availability.HandleGetAvailabilityByDoctor)
+					r.Post("/", s.handlers.Availability.HandleCreateAvailability)
+					r.Post("/slots", s.handlers.Availability.HandleGetSlots)
+					r.Delete("/id/{availabilityId}", s.handlers.Availability.HandleDeleteById)
+					r.Delete("/day/{dayOfWeek}", s.handlers.Availability.HandleDeleteByDay)
+				})
+			})
+
+			// Appointment endpoints
+			r.Route("/appointments", func(r chi.Router) {
+				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
+			})
+		})
 	})
+
 	return r
 }
 
 func (s *Server) TestHandler(w http.ResponseWriter, r *http.Request) {
 	resp := make(map[string]string)
 	resp["message"] = "Lyra API"
-
 	jsonResp, err := json.Marshal(resp)
 	if err != nil {
-		log.Fatalf("error handling JSON marshal. Err: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
 	}
-
-	_, _ = w.Write(jsonResp)
+	w.Write(jsonResp)
 }
 
 func (s *Server) healthHandler(w http.ResponseWriter, r *http.Request) {
-	jsonResp, _ := json.Marshal(s.db.Health())
-	_, _ = w.Write(jsonResp)
+	jsonResp, err := json.Marshal(s.db.Health())
+	if err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+		return
+	}
+	w.Write(jsonResp)
 }
