@@ -9,14 +9,17 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"time"
+
+	"github.com/sqlc-dev/pqtype"
 )
 
 type AppointmentStatus string
 
 const (
-	AppointmentStatusScheduled AppointmentStatus = "scheduled"
-	AppointmentStatusCompleted AppointmentStatus = "completed"
-	AppointmentStatusCanceled  AppointmentStatus = "canceled"
+	AppointmentStatusPendingPayment AppointmentStatus = "pending_payment"
+	AppointmentStatusScheduled      AppointmentStatus = "scheduled"
+	AppointmentStatusCompleted      AppointmentStatus = "completed"
+	AppointmentStatusCanceled       AppointmentStatus = "canceled"
 )
 
 func (e *AppointmentStatus) Scan(src interface{}) error {
@@ -52,6 +55,49 @@ func (ns NullAppointmentStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.AppointmentStatus), nil
+}
+
+type PaymentStatus string
+
+const (
+	PaymentStatusPending   PaymentStatus = "pending"
+	PaymentStatusCompleted PaymentStatus = "completed"
+	PaymentStatusFailed    PaymentStatus = "failed"
+)
+
+func (e *PaymentStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentStatus(s)
+	case string:
+		*e = PaymentStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentStatus: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentStatus struct {
+	PaymentStatus PaymentStatus `json:"payment_status"`
+	Valid         bool          `json:"valid"` // Valid is true if PaymentStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentStatus), nil
 }
 
 type Role string
@@ -148,6 +194,22 @@ type Patient struct {
 	InsurancePolicyNumber string       `json:"insurance_policy_number"`
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             sql.NullTime `json:"updated_at"`
+}
+
+type Payment struct {
+	PaymentID     int64                 `json:"payment_id"`
+	Reference     string                `json:"reference"`
+	CurrentStatus PaymentStatus         `json:"current_status"`
+	Amount        string                `json:"amount"`
+	Metadata      pqtype.NullRawMessage `json:"metadata"`
+	PaymentMethod sql.NullString        `json:"payment_method"`
+	Currency      string                `json:"currency"`
+	AppointmentID int64                 `json:"appointment_id"`
+	PatientID     int64                 `json:"patient_id"`
+	DoctorID      int64                 `json:"doctor_id"`
+	CreatedAt     time.Time             `json:"created_at"`
+	UpdatedAt     sql.NullTime          `json:"updated_at"`
+	CompletedAt   sql.NullTime          `json:"completed_at"`
 }
 
 type User struct {

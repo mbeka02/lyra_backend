@@ -10,6 +10,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
+	payment "github.com/mbeka02/lyra_backend/internal/payments"
 	"github.com/mbeka02/lyra_backend/internal/server/handler"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
@@ -20,6 +21,7 @@ type ConfigOptions struct {
 	AccessTokenDuration time.Duration
 	AuthMaker           auth.Maker
 	ObjectStorage       objstore.Storage
+	PaymentProcessor    *payment.PaymentProcessor
 }
 type Server struct {
 	opts     ConfigOptions

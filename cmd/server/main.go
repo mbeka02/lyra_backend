@@ -13,6 +13,7 @@ import (
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
+	payment "github.com/mbeka02/lyra_backend/internal/payments"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
 
@@ -55,12 +56,14 @@ func setupServer() (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
 	}
+	processor := payment.NewPaymentProcessor(conf.PAYSTACK_API_KEY)
 	// Configutation Options
 	opts := server.ConfigOptions{
 		Port:                conf.PORT,
 		AccessTokenDuration: conf.ACCESS_TOKEN_DURATION,
 		AuthMaker:           maker,
 		ObjectStorage:       storage,
+		PaymentProcessor:    processor,
 	}
 	server := server.NewServer(opts)
 	return server, nil
