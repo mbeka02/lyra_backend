@@ -10,7 +10,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
-	payment "github.com/mbeka02/lyra_backend/internal/payments"
+	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server/handler"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
@@ -60,13 +60,13 @@ func initRepositories(store *database.Store) Repositories {
 	}
 }
 
-func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
+func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration, paymentProcessor *payment.PaymentProcessor) Services {
 	return Services{
 		User:         service.NewUserService(repos.User, maker, objStorage, duration),
 		Patient:      service.NewPatientService(repos.Patient),
 		Doctor:       service.NewDoctorService(repos.Doctor),
 		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
-		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient),
+		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient, paymentProcessor),
 	}
 }
 
@@ -85,7 +85,7 @@ func NewServer(opts ConfigOptions) *http.Server {
 	// repository(data access) layer
 	repositories := initRepositories(store)
 	// service layer
-	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration)
+	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration, opts.PaymentProcessor)
 	// transport layer
 	handlers := initHandlers(services)
 

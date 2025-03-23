@@ -29,7 +29,7 @@ func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *h
 	if !ok {
 		return
 	}
-	response, err := h.appointmentService.CreateAppointment(r.Context(), request, payload.UserID)
+	response, err := h.appointmentService.CreateAppointmentWithPayment(r.Context(), request, payload.UserID, payload.Email)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
