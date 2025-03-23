@@ -11,16 +11,16 @@ import (
 
 var baseURL = "https://api.paystack.co"
 
-type paymentProcessor struct {
+type PaymentProcessor struct {
 	apiKey string
 	client *http.Client
 }
 
-func NewPaymentProcessor(apiKey string) *paymentProcessor {
-	return &paymentProcessor{apiKey, &http.Client{}}
+func NewPaymentProcessor(apiKey string) *PaymentProcessor {
+	return &PaymentProcessor{apiKey, &http.Client{}}
 }
 
-func (p *paymentProcessor) FetchTransaction(transactionId uint64) (*model.FetchTransactionResponse, error) {
+func (p *PaymentProcessor) FetchTransaction(transactionId uint64) (*model.FetchTransactionResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/transaction/%v", baseURL, transactionId), nil)
 	// Add content type header
 	req.Header.Add("Content-Type", "application/json")
@@ -43,7 +43,7 @@ func (p *paymentProcessor) FetchTransaction(transactionId uint64) (*model.FetchT
 	return &respBody, nil
 }
 
-func (p *paymentProcessor) VerifyTransaction(reference string) (*model.VerifyTransactionResponse, error) {
+func (p *PaymentProcessor) VerifyTransaction(reference string) (*model.VerifyTransactionResponse, error) {
 	req, err := http.NewRequest(http.MethodGet, fmt.Sprintf("%s/transaction/verify/%s", baseURL, reference), nil)
 	// Add content type header
 	req.Header.Add("Content-Type", "application/json")
@@ -66,7 +66,7 @@ func (p *paymentProcessor) VerifyTransaction(reference string) (*model.VerifyTra
 	return &respBody, nil
 }
 
-func (p *paymentProcessor) InitializeTransaction(request model.InitializeTransactionRequest) (*model.InitializeTransactionResponse, error) {
+func (p *PaymentProcessor) InitializeTransaction(request model.InitializeTransactionRequest) (*model.InitializeTransactionResponse, error) {
 	buff, err := json.Marshal(request)
 	if err != nil {
 		return nil, err

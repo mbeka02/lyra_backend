@@ -12,6 +12,7 @@ type Config struct {
 	SENDGRID_API_KEY      string        `mapstructure:"SENDGRID_API_KEY"`
 	GCLOUD_PROJECT_ID     string        `mapstructure:"GCLOUD_PROJECT_ID"`
 	GCLOUD_IMAGE_BUCKET   string        `mapstructure:"GCLOUD_IMAGE_BUCKET"`
+	PAYSTACK_API_KEY      string        `mapstructure:"PAYSTACK_API_KEY"`
 	// DB_CONNECTION_STRING  string        `mapstructure:"DB_CONNECTION_STRING"`
 	PORT string `mapstructure:"PORT"`
 }

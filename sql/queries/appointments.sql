@@ -6,3 +6,4 @@ SELECT * FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3;
 UPDATE appointments SET current_status=$1 WHERE appointment_id=$2 RETURNING *;
 -- name: DeleteAppointment :exec
 DELETE FROM appointments WHERE appointment_id=$1;
+
