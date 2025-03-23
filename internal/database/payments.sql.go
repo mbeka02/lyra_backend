@@ -7,39 +7,32 @@ package database
 
 import (
 	"context"
-	"time"
 )
 
 const createPayment = `-- name: CreatePayment :one
 INSERT INTO payments (
   reference,
   amount,
-  current_status,
-  created_at,
   patient_id,
   doctor_id,
   appointment_id
 ) VALUES (
-  $1, $2, $3, $4, $5, $6, $7
+  $1, $2, $3, $4, $5
 ) RETURNING payment_id, reference, current_status, amount, metadata, payment_method, currency, appointment_id, patient_id, doctor_id, created_at, updated_at, completed_at
 `
 
 type CreatePaymentParams struct {
-	Reference     string        `json:"reference"`
-	Amount        string        `json:"amount"`
-	CurrentStatus PaymentStatus `json:"current_status"`
-	CreatedAt     time.Time     `json:"created_at"`
-	PatientID     int64         `json:"patient_id"`
-	DoctorID      int64         `json:"doctor_id"`
-	AppointmentID int64         `json:"appointment_id"`
+	Reference     string `json:"reference"`
+	Amount        string `json:"amount"`
+	PatientID     int64  `json:"patient_id"`
+	DoctorID      int64  `json:"doctor_id"`
+	AppointmentID int64  `json:"appointment_id"`
 }
 
 func (q *Queries) CreatePayment(ctx context.Context, arg CreatePaymentParams) (Payment, error) {
 	row := q.db.QueryRowContext(ctx, createPayment,
 		arg.Reference,
 		arg.Amount,
-		arg.CurrentStatus,
-		arg.CreatedAt,
 		arg.PatientID,
 		arg.DoctorID,
 		arg.AppointmentID,
