@@ -55,7 +55,7 @@ func (h *paymentHandler) HandlePaymentStatusPolling(w http.ResponseWriter, r *ht
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	resp, err := h.paymentService.VerifyPayment(request)
+	resp, err := h.paymentService.VerifyPayment(r.Context(), request)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("errror, unable to verify payment:%v", err))
 		return
