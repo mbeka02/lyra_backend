@@ -28,6 +28,11 @@ type InitializeTransactionResponse struct {
 	} `json:"data"`
 }
 
+// The request a client makes when it wants to know the payment status
+type PaymentStatusRequest struct {
+	Reference string `json:"reference" validate:"required"`
+}
+
 // Represents the paystack API response for fetching a specific transaction
 type FetchTransactionResponse struct {
 	Status  bool   `json:"status"`
