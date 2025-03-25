@@ -1,5 +1,7 @@
 package model
 
+import "time"
+
 type InitializeTransactionRequest struct {
 	Amount            string   `json:"amount" validate:"required"`
 	Email             string   `json:"email" validate:"required,email" `
@@ -26,6 +28,11 @@ type InitializeTransactionResponse struct {
 		AccessCode       string `json:"access_code"`
 		Reference        string `json:"reference"`
 	} `json:"data"`
+}
+
+// The request a client makes when it wants to know the payment status
+type PaymentStatusRequest struct {
+	Reference string `json:"reference" validate:"required"`
 }
 
 // Represents the paystack API response for fetching a specific transaction
@@ -164,4 +171,73 @@ type VerifyTransactionResponse struct {
 		PlanObject         interface{} `json:"plan_object"`
 		Split              interface{} `json:"split"`
 	} `json:"data"`
+}
+
+// represents the payload sent to the webhook endpoint
+type PaystackWebhookPayload struct {
+	Event string             `json:"event"`
+	Data  PaystackChargeData `json:"data"`
+}
+
+type PaystackChargeData struct {
+	ID              int64                  `json:"id"`
+	Domain          string                 `json:"domain"`
+	Status          string                 `json:"status"`
+	Reference       string                 `json:"reference"`
+	Amount          int64                  `json:"amount"`
+	Message         interface{}            `json:"message"`
+	GatewayResponse string                 `json:"gateway_response"`
+	PaidAt          time.Time              `json:"paid_at"`
+	CreatedAt       time.Time              `json:"created_at"`
+	Channel         string                 `json:"channel"`
+	Currency        string                 `json:"currency"`
+	IPAddress       string                 `json:"ip_address"`
+	Metadata        interface{}            `json:"metadata"`
+	Log             PaystackLog            `json:"log"`
+	Fees            interface{}            `json:"fees"`
+	Customer        Customer               `json:"customer"`
+	Authorization   Authorization          `json:"authorization"`
+	Plan            map[string]interface{} `json:"plan"`
+}
+
+type PaystackLog struct {
+	TimeSpent      int           `json:"time_spent"`
+	Attempts       int           `json:"attempts"`
+	Authentication string        `json:"authentication"`
+	Errors         int           `json:"errors"`
+	Success        bool          `json:"success"`
+	Mobile         bool          `json:"mobile"`
+	Input          []interface{} `json:"input"`
+	Channel        interface{}   `json:"channel"`
+	History        []LogHistory  `json:"history"`
+}
+
+type LogHistory struct {
+	Type    string `json:"type"`
+	Message string `json:"message"`
+	Time    int    `json:"time"`
+}
+
+type Customer struct {
+	ID           int64       `json:"id"`
+	FirstName    string      `json:"first_name"`
+	LastName     string      `json:"last_name"`
+	Email        string      `json:"email"`
+	CustomerCode string      `json:"customer_code"`
+	Phone        interface{} `json:"phone"`
+	Metadata     interface{} `json:"metadata"`
+	RiskAction   string      `json:"risk_action"`
+}
+
+type Authorization struct {
+	AuthorizationCode string `json:"authorization_code"`
+	Bin               string `json:"bin"`
+	Last4             string `json:"last4"`
+	ExpMonth          string `json:"exp_month"`
+	ExpYear           string `json:"exp_year"`
+	CardType          string `json:"card_type"`
+	Bank              string `json:"bank"`
+	CountryCode       string `json:"country_code"`
+	Brand             string `json:"brand"`
+	AccountName       string `json:"account_name"`
 }

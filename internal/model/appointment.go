@@ -7,4 +7,5 @@ type CreateAppointmentRequest struct {
 	StartTime time.Time `json:"start_time" validate:"required"`
 	EndTime   time.Time `json:"end_time" validate:"required" `
 	Reason    string    `json:"reason" validate:"required"`
+	Amount    string    `json:"amount" validate:"required"`
 }

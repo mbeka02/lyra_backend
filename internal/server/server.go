@@ -10,7 +10,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
-	payment "github.com/mbeka02/lyra_backend/internal/payments"
+	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server/handler"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
@@ -34,6 +34,7 @@ type Handlers struct {
 	Doctor       *handler.DoctorHandler
 	Availability *handler.AvailabilityHandler
 	Appointment  *handler.AppointmentHandler
+	Payment      *handler.PaymentHandler
 }
 type Services struct {
 	User         service.UserService
@@ -41,6 +42,7 @@ type Services struct {
 	Doctor       service.DoctorService
 	Availability service.AvailabilityService
 	Appointment  service.AppointmentService
+	Payment      service.PaymentService
 }
 type Repositories struct {
 	User         repository.UserRepository
@@ -48,6 +50,7 @@ type Repositories struct {
 	Doctor       repository.DoctorRepository
 	Availability repository.AvailabilityRepository
 	Appointment  repository.AppointmentRepository
+	Payment      repository.PaymentRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
@@ -57,16 +60,18 @@ func initRepositories(store *database.Store) Repositories {
 		Doctor:       repository.NewDoctorRepository(store),
 		Availability: repository.NewAvailabilityRepository(store),
 		Appointment:  repository.NewAppointmentRepository(store),
+		Payment:      repository.NewPaymentRepository(store),
 	}
 }
 
-func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration) Services {
+func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration, paymentProcessor *payment.PaymentProcessor) Services {
 	return Services{
 		User:         service.NewUserService(repos.User, maker, objStorage, duration),
 		Patient:      service.NewPatientService(repos.Patient),
 		Doctor:       service.NewDoctorService(repos.Doctor),
 		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
-		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient),
+		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient, paymentProcessor),
+		Payment:      service.NewPaymentService(paymentProcessor, repos.Payment),
 	}
 }
 
@@ -77,6 +82,7 @@ func initHandlers(services Services) Handlers {
 		Doctor:       handler.NewDoctorHandler(services.Doctor),
 		Availability: handler.NewAvailabilityHandler(services.Availability),
 		Appointment:  handler.NewAppointmentHandler(services.Appointment),
+		Payment:      handler.NewPaymentHandler(services.Payment),
 	}
 }
 
@@ -85,7 +91,7 @@ func NewServer(opts ConfigOptions) *http.Server {
 	// repository(data access) layer
 	repositories := initRepositories(store)
 	// service layer
-	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration)
+	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration, opts.PaymentProcessor)
 	// transport layer
 	handlers := initHandlers(services)
 

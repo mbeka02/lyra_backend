@@ -124,7 +124,30 @@ func SetConnectionString(str string) {
 	connStr = str
 }
 
-// expose the db instance for migration
+// expose the db instance
 func (s *Store) DB() *sql.DB {
 	return s.db
+}
+
+// executes fn  within a db transaction
+func (s *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
+	// get a tx for making transaction requests
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+
+	q := New(tx)
+	// exec the callback fn and return an error if it fails
+	err = fn(q)
+	// rollback the transaction in case of failure
+	if err != nil {
+		// if the rollback also fails return both errors
+		if rbErr := tx.Rollback(); rbErr != nil {
+			return fmt.Errorf(" tx err:%v,rb err:%v", err, rbErr)
+		}
+		return err
+	}
+	// commit the transaction and return its error if it occurs
+	return tx.Commit()
 }

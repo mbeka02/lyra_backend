@@ -13,7 +13,7 @@ import (
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
-	payment "github.com/mbeka02/lyra_backend/internal/payments"
+	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server"
 )
 
