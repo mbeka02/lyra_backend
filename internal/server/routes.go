@@ -79,6 +79,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Route("/appointments", func(r chi.Router) {
 				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
 			})
+			// Payment endpoints
+			r.Route("/payments", func(r chi.Router) {
+				r.Post("/webhook", s.handlers.Payment.PaymentWebhook)
+			})
 		})
 	})
 

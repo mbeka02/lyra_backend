@@ -35,7 +35,12 @@ func (s *paymentService) UpdateStatus(ctx context.Context, req model.PaystackWeb
 		appointmentStatus string
 	)
 	// refactor this , you need to handle other events properly
-	if req.Event != "transaction.success" {
+	event := req.Event
+	// successEvents := map[string]bool{
+	// 	"charge.success": true,
+	// }
+	// if _, ok := successEvents[event]; !ok {
+	if event != "charge.success" {
 		log.Println("paystack event=>", req.Event)
 		return fmt.Errorf("error wrong event type for this endpoint")
 	}
