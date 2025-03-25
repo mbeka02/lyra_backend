@@ -99,8 +99,8 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 	return items, nil
 }
 
-const updateAppointmentStatus = `-- name: UpdateAppointmentStatus :one
-UPDATE appointments SET current_status=$1 WHERE appointment_id=$2 RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
+const updateAppointmentStatus = `-- name: UpdateAppointmentStatus :exec
+UPDATE appointments SET current_status=$1 WHERE appointment_id=$2
 `
 
 type UpdateAppointmentStatusParams struct {
@@ -108,20 +108,7 @@ type UpdateAppointmentStatusParams struct {
 	AppointmentID int64             `json:"appointment_id"`
 }
 
-func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) (Appointment, error) {
-	row := q.db.QueryRowContext(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
-	var i Appointment
-	err := row.Scan(
-		&i.AppointmentID,
-		&i.PatientID,
-		&i.DoctorID,
-		&i.CurrentStatus,
-		&i.Reason,
-		&i.Notes,
-		&i.StartTime,
-		&i.EndTime,
-		&i.CreatedAt,
-		&i.UpdatedAt,
-	)
-	return i, err
+func (q *Queries) UpdateAppointmentStatus(ctx context.Context, arg UpdateAppointmentStatusParams) error {
+	_, err := q.db.ExecContext(ctx, updateAppointmentStatus, arg.CurrentStatus, arg.AppointmentID)
+	return err
 }

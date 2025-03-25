@@ -22,10 +22,12 @@ type CreateAppointmentWithPaymentParams struct {
 	Reference string // payment reference
 	Amount    string // this will be cast to a postgres numeric
 }
+
 type CreateAppointmentWithPaymentTxResults struct {
 	Appointment database.Appointment `json:"appointment"`
 	Payment     database.Payment     `json:"payment"`
 }
+
 type AppointmentRepository interface {
 	Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error)

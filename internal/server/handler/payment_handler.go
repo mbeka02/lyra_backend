@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"os"
 
@@ -15,20 +16,20 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
-type paymentHandler struct {
+type PaymentHandler struct {
 	paymentService service.PaymentService
 }
 
-func NewPaymentHandler(service service.PaymentService) *paymentHandler {
-	return &paymentHandler{service}
+func NewPaymentHandler(service service.PaymentService) *PaymentHandler {
+	return &PaymentHandler{service}
 }
 
 // this is the callback endpoint that paystack will use
-func (h *paymentHandler) HandlePaymentCallback(w http.ResponseWriter, r *http.Request) {
+func (h *PaymentHandler) HandlePaymentCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 // this is the webhook endpoint that paystack will use
-func (h *paymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) {
+func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("error , unable to read request body:%v", err))
@@ -45,11 +46,27 @@ func (h *paymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusUnauthorized, fmt.Errorf("invalid signature"))
 		return
 	}
+	request := model.PaystackWebhookPayload{}
+	if err := parseAndValidateRequest(r, &request); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
 	// DO STUFF WITH THE REQUEST
+	log.Println("paystack req=>", request)
+	if err = h.paymentService.UpdateStatus(r.Context(), request); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	var nilValue interface{}
+	if err := respondWithJSON(w, http.StatusOK, nilValue); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
 }
 
 // this endpoint is used for polling the payment status (fallback route incase the callback or webhook don't work)
-func (h *paymentHandler) HandlePaymentStatusPolling(w http.ResponseWriter, r *http.Request) {
+func (h *PaymentHandler) HandlePaymentStatusPolling(w http.ResponseWriter, r *http.Request) {
 	request := model.PaymentStatusRequest{}
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
