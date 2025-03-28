@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -25,7 +24,32 @@ func NewPaymentHandler(service service.PaymentService) *PaymentHandler {
 }
 
 // this is the callback endpoint that paystack will use
-func (h *PaymentHandler) HandlePaymentCallback(w http.ResponseWriter, r *http.Request) {
+func (h *PaymentHandler) PaymentCallback(w http.ResponseWriter, r *http.Request) {
+	params := NewQueryParamExtractor(r)
+	reference := params.GetString("reference")
+	if reference == "" {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing payment reference"))
+		return
+	}
+	status, err := h.paymentService.UpdateStatusCallback(r.Context(), reference)
+	if err != nil {
+		http.Redirect(w, r, "lyra://payment?status=failed&reference="+reference, http.StatusSeeOther)
+		return
+	}
+
+	// Redirect the user back to lyra  via deep link.
+	// Determine the redirect URL based on status.
+	var redirectURL string
+	switch status {
+	case "completed":
+		redirectURL = "lyra://payment?status=success&reference=" + reference
+	case "pending":
+		redirectURL = "lyra://payment?status=pending&reference=" + reference
+	default:
+		redirectURL = "lyra://payment?status=failed&reference=" + reference
+	}
+
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 // this is the webhook endpoint that paystack will use
@@ -51,33 +75,13 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	// DO STUFF WITH THE REQUEST
-	log.Println("paystack req=>", request)
-	if err = h.paymentService.UpdateStatus(r.Context(), request); err != nil {
+	if err = h.paymentService.UpdateStatusWebhook(r.Context(), request); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	var nilValue interface{}
 	if err := respondWithJSON(w, http.StatusOK, nilValue); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-}
-
-// this endpoint is used for polling the payment status (fallback route incase the callback or webhook don't work)
-func (h *PaymentHandler) HandlePaymentStatusPolling(w http.ResponseWriter, r *http.Request) {
-	request := model.PaymentStatusRequest{}
-	if err := parseAndValidateRequest(r, &request); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
-		return
-	}
-	resp, err := h.paymentService.VerifyPayment(r.Context(), request)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("errror, unable to verify payment:%v", err))
-		return
-	}
-	if err := respondWithJSON(w, http.StatusOK, resp); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}

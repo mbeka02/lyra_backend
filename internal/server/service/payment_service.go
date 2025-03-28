@@ -11,8 +11,8 @@ import (
 )
 
 type PaymentService interface {
-	VerifyPayment(ctx context.Context, req model.PaymentStatusRequest) (*model.VerifyTransactionResponse, error)
-	UpdateStatus(ctx context.Context, req model.PaystackWebhookPayload) error
+	UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error
+	UpdateStatusCallback(ctx context.Context, reference string) (currentStatus string, err error)
 }
 
 type paymentService struct {
@@ -24,31 +24,56 @@ func NewPaymentService(paymentProcessor *payment.PaymentProcessor, repo reposito
 	return &paymentService{paymentProcessor, repo}
 }
 
-func (s *paymentService) VerifyPayment(ctx context.Context, req model.PaymentStatusRequest) (*model.VerifyTransactionResponse, error) {
-	return s.paymentProcessor.VerifyTransaction(req.Reference)
-	// TODO: ADD REPO LAYER FOR UPDATING THE DB
-}
-
-func (s *paymentService) UpdateStatus(ctx context.Context, req model.PaystackWebhookPayload) error {
-	var (
-		paymentStatus     string
-		appointmentStatus string
-	)
-	// refactor this , you need to handle other events properly
-	event := req.Event
-	// successEvents := map[string]bool{
-	// 	"charge.success": true,
-	// }
-	// if _, ok := successEvents[event]; !ok {
-	if event != "charge.success" {
-		log.Println("paystack event=>", req.Event)
-		return fmt.Errorf("error wrong event type for this endpoint")
-	}
-	paymentStatus = "completed"
-	appointmentStatus = "scheduled"
-	return s.paymentRepo.UpdatePaymentAndAppointmentStatus(ctx, repository.UpdatePaymentAndAppointmentStatusParams{
-		Reference:         req.Data.Reference,
+// updateStatus is a helper to update both payment and appointment statuses.
+func (s *paymentService) updateStatus(ctx context.Context, reference, paymentStatus, appointmentStatus string) error {
+	if err := s.paymentRepo.UpdatePaymentAndAppointmentStatus(ctx, repository.UpdatePaymentAndAppointmentStatusParams{
+		Reference:         reference,
 		PaymentStatus:     paymentStatus,
 		AppointmentStatus: appointmentStatus,
-	})
+	}); err != nil {
+		log.Printf("Error updating status for reference %s: %v", reference, err)
+		return fmt.Errorf("unable to update status for reference %s: %w", reference, err)
+	}
+	return nil
+}
+
+func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference string) (string, error) {
+	verification, err := s.paymentProcessor.VerifyTransaction(reference)
+	// debugging log
+	log.Println("payment verification body=>", verification)
+	if err != nil {
+		// If verification fails, mark payment as failed.
+		if repoErr := s.updateStatus(ctx, reference, "failed", "pending_payment"); repoErr != nil {
+			return "failed", repoErr
+		}
+		return "failed", err
+	}
+	var paymentStatus string
+	switch verification.Data.Status {
+	case "success":
+		paymentStatus = "completed"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "scheduled"); err != nil {
+			return paymentStatus, err
+		}
+	case "pending":
+		paymentStatus = "pending"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "pending_payment"); err != nil {
+			return paymentStatus, err
+		}
+	default:
+		paymentStatus = "failed"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "pending_payment"); err != nil {
+			return paymentStatus, err
+		}
+	}
+	return paymentStatus, nil
+}
+
+func (s *paymentService) UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error {
+	event := req.Event
+	if event != "charge.success" {
+		log.Printf("Received unsupported Paystack event: %s", req.Event)
+		return fmt.Errorf("unsupported event type: %s", req.Event)
+	}
+	return s.updateStatus(ctx, req.Data.Reference, "completed", "scheduled")
 }
