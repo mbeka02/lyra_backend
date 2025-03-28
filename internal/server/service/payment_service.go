@@ -48,25 +48,25 @@ func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference str
 		}
 		return "failed", err
 	}
-	var payment_status string
+	var paymentStatus string
 	switch verification.Data.Status {
 	case "success":
-		payment_status = "completed"
-		if err := s.updateStatus(ctx, reference, payment_status, "scheduled"); err != nil {
-			return payment_status, err
+		paymentStatus = "completed"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "scheduled"); err != nil {
+			return paymentStatus, err
 		}
 	case "pending":
-		payment_status = "pending"
-		if err := s.updateStatus(ctx, reference, payment_status, "pending_payment"); err != nil {
-			return payment_status, err
+		paymentStatus = "pending"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "pending_payment"); err != nil {
+			return paymentStatus, err
 		}
 	default:
-		payment_status = "failed"
-		if err := s.updateStatus(ctx, reference, payment_status, "pending_payment"); err != nil {
-			return payment_status, err
+		paymentStatus = "failed"
+		if err := s.updateStatus(ctx, reference, paymentStatus, "pending_payment"); err != nil {
+			return paymentStatus, err
 		}
 	}
-	return payment_status, nil
+	return paymentStatus, nil
 }
 
 func (s *paymentService) UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error {

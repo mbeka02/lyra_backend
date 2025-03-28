@@ -31,7 +31,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(middleware.Recoverer)
 	// extracts the real client IP from the headers even when behind a proxy
 	r.Use(middleware.RealIP)
-	// add a unique request ID for each req
+	// add a unique request ID for each request
 	r.Use(middleware.RequestID)
 	// request timeout
 	r.Use(middleware.Timeout(30 * time.Second))
