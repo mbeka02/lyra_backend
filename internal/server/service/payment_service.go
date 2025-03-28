@@ -32,7 +32,7 @@ func (s *paymentService) updateStatus(ctx context.Context, reference, paymentSta
 		AppointmentStatus: appointmentStatus,
 	}); err != nil {
 		log.Printf("Error updating status for reference %s: %v", reference, err)
-		return fmt.Errorf("unable to update status for reference %s", reference)
+		return fmt.Errorf("unable to update status for reference %s: %w", reference, err)
 	}
 	return nil
 }
