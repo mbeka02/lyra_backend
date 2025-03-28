@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 
@@ -51,33 +50,13 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	// DO STUFF WITH THE REQUEST
-	log.Println("paystack req=>", request)
-	if err = h.paymentService.UpdateStatus(r.Context(), request); err != nil {
+	if err = h.paymentService.UpdateStatusWebhook(r.Context(), request); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
 	var nilValue interface{}
 	if err := respondWithJSON(w, http.StatusOK, nilValue); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
-}
-
-// this endpoint is used for polling the payment status (fallback route incase the callback or webhook don't work)
-func (h *PaymentHandler) HandlePaymentStatusPolling(w http.ResponseWriter, r *http.Request) {
-	request := model.PaymentStatusRequest{}
-	if err := parseAndValidateRequest(r, &request); err != nil {
-		respondWithError(w, http.StatusBadRequest, err)
-		return
-	}
-	resp, err := h.paymentService.VerifyPayment(r.Context(), request)
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("errror, unable to verify payment:%v", err))
-		return
-	}
-	if err := respondWithJSON(w, http.StatusOK, resp); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}

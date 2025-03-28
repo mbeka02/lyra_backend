@@ -68,8 +68,8 @@ func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference str
 func (s *paymentService) UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error {
 	event := req.Event
 	if event != "charge.success" {
-		log.Println("paystack event=>", req.Event)
-		return fmt.Errorf("error wrong event type for this endpoint")
+		log.Printf("Received unsupported Paystack event: %s", req.Event)
+		return fmt.Errorf("unsupported event type: %s", req.Event)
 	}
 	return s.updateStatus(ctx, req.Data.Reference, "completed", "scheduled")
 }
