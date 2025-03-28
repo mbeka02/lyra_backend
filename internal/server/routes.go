@@ -27,11 +27,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 	}))
 	// logs requests
 	r.Use(middleware.Logger)
-	// catches paincs in the handlers and returns a 500 instead of crashing the server
+	// catches panics in the handlers and returns a 500 instead of crashing the server
 	r.Use(middleware.Recoverer)
 	// extracts the real client IP from the headers even when behind a proxy
 	r.Use(middleware.RealIP)
-	// add a unique request ID for each endpoint
+	// add a unique request ID for each req
 	r.Use(middleware.RequestID)
 	// request timeout
 	r.Use(middleware.Timeout(30 * time.Second))
@@ -82,6 +82,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Payment endpoints
 			r.Route("/payments", func(r chi.Router) {
 				r.Post("/webhook", s.handlers.Payment.PaymentWebhook)
+				r.Get("/callback", s.handlers.Payment.PaymentCallback)
 			})
 		})
 	})

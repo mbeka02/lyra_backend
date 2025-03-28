@@ -12,7 +12,7 @@ import (
 
 type PaymentService interface {
 	UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error
-	UpdateStatusCallback(ctx context.Context, reference string) error
+	UpdateStatusCallback(ctx context.Context, reference string) (currentStatus string, err error)
 }
 
 type paymentService struct {
@@ -37,32 +37,32 @@ func (s *paymentService) updateStatus(ctx context.Context, reference, paymentSta
 	return nil
 }
 
-func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference string) error {
+func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference string) (string, error) {
 	verification, err := s.paymentProcessor.VerifyTransaction(reference)
 	// debugging log
 	log.Println("payment verification body=>", verification)
 	if err != nil {
 		// If verification fails, mark payment as failed.
 		if repoErr := s.updateStatus(ctx, reference, "failed", "pending_payment"); repoErr != nil {
-			return repoErr
+			return "failed", repoErr
 		}
-		return err
+		return "failed", err
 	}
 	switch verification.Data.Status {
 	case "success":
 		if err := s.updateStatus(ctx, reference, "completed", "scheduled"); err != nil {
-			return err
+			return "completed", err
 		}
 	case "pending":
 		if err := s.updateStatus(ctx, reference, "pending", "pending_payment"); err != nil {
-			return err
+			return "pending", err
 		}
 	default:
 		if err := s.updateStatus(ctx, reference, "failed", "pending_payment"); err != nil {
-			return err
+			return "failed", err
 		}
 	}
-	return nil
+	return "failed", nil
 }
 
 func (s *paymentService) UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error {
