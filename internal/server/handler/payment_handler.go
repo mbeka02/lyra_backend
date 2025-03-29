@@ -42,11 +42,11 @@ func (h *PaymentHandler) PaymentCallback(w http.ResponseWriter, r *http.Request)
 	var redirectURL string
 	switch status {
 	case "completed":
-		redirectURL = "lyra-telemedicine://payment?status=success&reference=" + reference
+		redirectURL = "lyra://payment?status=success&reference=" + reference
 	case "pending":
-		redirectURL = "lyra-telemedicine://payment?status=pending&reference=" + reference
+		redirectURL = "lyra://payment?status=pending&reference=" + reference
 	default:
-		redirectURL = "lyra-telemedicine://payment?status=failed&reference=" + reference
+		redirectURL = "lyra://payment?status=failed&reference=" + reference
 	}
 
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
