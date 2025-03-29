@@ -31,10 +31,16 @@ func (r *paymentRepository) UpdatePaymentAndAppointmentStatus(ctx context.Contex
 		)
 		// get the payment  record
 		payment, err = q.GetPaymentByReference(ctx, params.Reference)
+
 		// update the payment status
 		err = q.UpdatePaymentStatus(ctx, database.UpdatePaymentStatusParams{
 			CurrentStatus: database.PaymentStatus(params.PaymentStatus),
+			Reference:     params.Reference,
 		})
+		// NB: MAKE SURE YOU RETURN THE QUERY ERROR AT EACH STAGE OF THE TRANSACTION
+		if err != nil {
+			return err
+		}
 		// update the appointment status
 		err = q.UpdateAppointmentStatus(ctx, database.UpdateAppointmentStatusParams{
 			AppointmentID: payment.AppointmentID,
