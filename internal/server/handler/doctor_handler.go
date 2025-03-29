@@ -20,9 +20,9 @@ func NewDoctorHandler(doctorService service.DoctorService) *DoctorHandler {
 
 func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request) {
 	params := NewQueryParamExtractor(r)
-	page := params.GetInt("page", 0)
+	page := params.GetInt32("page", 0)
 	pageSize := int32(10)
-	offset := int32(page) * pageSize
+	offset := page * pageSize
 
 	response, err := h.doctorService.GetDoctors(r.Context(), params.GetString("county"), params.GetString("specialization"), params.GetString("minPrice"), params.GetString("maxPrice"), params.GetString("sort"), params.GetString("order"), params.GetInt32("minExperience", 0), params.GetInt32("maxExperience", 10000), pageSize, offset)
 	if err != nil {
