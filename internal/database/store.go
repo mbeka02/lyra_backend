@@ -129,7 +129,7 @@ func (s *Store) DB() *sql.DB {
 	return s.db
 }
 
-// executes fn  within a db transaction
+// executes queries  within a db transaction
 func (s *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
 	// get a tx for making transaction requests
 	tx, err := s.db.BeginTx(ctx, nil)
@@ -144,7 +144,7 @@ func (s *Store) ExecTx(ctx context.Context, fn func(*Queries) error) error {
 	if err != nil {
 		// if the rollback also fails return both errors
 		if rbErr := tx.Rollback(); rbErr != nil {
-			return fmt.Errorf(" tx err:%v,rb err:%v", err, rbErr)
+			return fmt.Errorf(" transaction error:%v,rollback error:%v", err, rbErr)
 		}
 		return err
 	}

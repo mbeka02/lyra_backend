@@ -39,8 +39,6 @@ func (s *paymentService) updateStatus(ctx context.Context, reference, paymentSta
 
 func (s *paymentService) UpdateStatusCallback(ctx context.Context, reference string) (string, error) {
 	verification, err := s.paymentProcessor.VerifyTransaction(reference)
-	// debugging log
-	log.Println("payment verification body=>", verification)
 	if err != nil {
 		// If verification fails, mark payment as failed.
 		if repoErr := s.updateStatus(ctx, reference, "failed", "pending_payment"); repoErr != nil {

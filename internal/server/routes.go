@@ -43,6 +43,12 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 	// API versioning - all API endpoints under /api/v1
 	r.Route("/api/v1", func(r chi.Router) {
+		// Payment endpoints
+		r.Route("/payments", func(r chi.Router) {
+			r.Post("/webhook", s.handlers.Payment.PaymentWebhook)
+			r.Get("/callback", s.handlers.Payment.PaymentCallback)
+		})
+
 		// Protected routes
 		r.Group(func(r chi.Router) {
 			// Apply authentication middleware to all routes in this group
@@ -78,11 +84,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Appointment endpoints
 			r.Route("/appointments", func(r chi.Router) {
 				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
-			})
-			// Payment endpoints
-			r.Route("/payments", func(r chi.Router) {
-				r.Post("/webhook", s.handlers.Payment.PaymentWebhook)
-				r.Get("/callback", s.handlers.Payment.PaymentCallback)
 			})
 		})
 	})
