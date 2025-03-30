@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -23,7 +24,7 @@ func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *h
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-
+	log.Println("APPOINTMENT REQUEST=>", request)
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
