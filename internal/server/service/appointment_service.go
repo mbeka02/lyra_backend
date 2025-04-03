@@ -20,6 +20,8 @@ type appointmentService struct {
 type AppointmentService interface {
 	CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, req model.CreateAppointmentRequest, userId int64, email string) (*model.InitializeTransactionResponse, error)
+
+	GetPatientAppointments(ctx context.Context, userId int64) ([]database.Appointment, error)
 }
 
 func NewAppointmentService(appointmentRepo repository.AppointmentRepository, patientRepo repository.PatientRepository, paymentProcessor *payment.PaymentProcessor) AppointmentService {
@@ -28,6 +30,14 @@ func NewAppointmentService(appointmentRepo repository.AppointmentRepository, pat
 		patientRepo,
 		paymentProcessor,
 	}
+}
+
+func (s *appointmentService) GetPatientAppointments(ctx context.Context, userId int64) ([]database.Appointment, error) {
+	patientId, err := s.patientRepo.GetPatientIdByUserId(ctx, userId)
+	if err != nil {
+		return nil, errors.New("unable to get the user details of this account")
+	}
+	return s.appointmentRepo.GetPatientAppointments(ctx, patientId)
 }
 
 func (s *appointmentService) CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error) {

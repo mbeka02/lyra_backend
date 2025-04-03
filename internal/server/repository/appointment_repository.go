@@ -31,6 +31,7 @@ type CreateAppointmentWithPaymentTxResults struct {
 type AppointmentRepository interface {
 	Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error)
+	GetPatientAppointments(ctx context.Context, PatientID int64) ([]database.Appointment, error)
 }
 
 type appointmentRepository struct {
@@ -41,6 +42,10 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 	return &appointmentRepository{
 		store,
 	}
+}
+
+func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, PatientID int64) ([]database.Appointment, error) {
+	return r.store.GetPatientAppointments(ctx, PatientID)
 }
 
 func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error) {
