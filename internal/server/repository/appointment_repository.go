@@ -45,9 +45,7 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 }
 
 func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, PatientID int64) ([]database.Appointment, error) {
-	return r.store.GetPatientAppointments(ctx, database.GetPatientAppointmentsParams{
-		PatientID: PatientID,
-	})
+	return r.store.GetPatientAppointments(ctx, PatientID)
 }
 
 func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error) {
