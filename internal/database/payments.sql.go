@@ -85,6 +85,7 @@ const updatePaymentStatus = `-- name: UpdatePaymentStatus :exec
 UPDATE payments
 SET 
   current_status = $1,
+  --NB: Cast string literal to the appropriate type (payment status)
   completed_at = CASE WHEN $1 = 'completed'::payment_status THEN NOW() ELSE completed_at END,
   updated_at = NOW()
 WHERE reference = $2

@@ -56,17 +56,11 @@ func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) er
 }
 
 const getPatientAppointments = `-- name: GetPatientAppointments :many
-SELECT appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at FROM appointments WHERE patient_id=$1 LIMIT $2 OFFSET $3
+SELECT appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at FROM appointments WHERE patient_id=$1 AND DATE(start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7  days'
 `
 
-type GetPatientAppointmentsParams struct {
-	PatientID int64 `json:"patient_id"`
-	Limit     int32 `json:"limit"`
-	Offset    int32 `json:"offset"`
-}
-
-func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppointmentsParams) ([]Appointment, error) {
-	rows, err := q.db.QueryContext(ctx, getPatientAppointments, arg.PatientID, arg.Limit, arg.Offset)
+func (q *Queries) GetPatientAppointments(ctx context.Context, patientID int64) ([]Appointment, error) {
+	rows, err := q.db.QueryContext(ctx, getPatientAppointments, patientID)
 	if err != nil {
 		return nil, err
 	}
