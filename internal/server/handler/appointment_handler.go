@@ -28,7 +28,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
+	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
