@@ -22,7 +22,11 @@ type CreateAppointmentWithPaymentParams struct {
 	Reference string // payment reference
 	Amount    string // this will be cast to a postgres numeric
 }
-
+type GetPatientAppointmentsParams struct {
+	PatientID int64
+	Interval  int32
+	Status    string
+}
 type CreateAppointmentWithPaymentTxResults struct {
 	Appointment database.Appointment `json:"appointment"`
 	Payment     database.Payment     `json:"payment"`
@@ -31,7 +35,7 @@ type CreateAppointmentWithPaymentTxResults struct {
 type AppointmentRepository interface {
 	Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error)
-	GetPatientAppointments(ctx context.Context, PatientID int64) ([]database.Appointment, error)
+	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 }
 
 type appointmentRepository struct {
@@ -44,8 +48,12 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 	}
 }
 
-func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, PatientID int64) ([]database.Appointment, error) {
-	return r.store.GetPatientAppointments(ctx, PatientID)
+func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error) {
+	return r.store.GetPatientAppointments(ctx, database.GetPatientAppointmentsParams{
+		PatientID:   params.PatientID,
+		SetInterval: params.Interval,
+		Status:      database.AppointmentStatus(params.Status),
+	})
 }
 
 func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error) {

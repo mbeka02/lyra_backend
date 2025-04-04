@@ -23,7 +23,13 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	if !ok {
 		return
 	}
-	response, err := h.appointmentService.GetPatientAppointments(r.Context(), payload.UserID)
+	params := NewQueryParamExtractor(r)
+
+	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
+		UserID:   payload.UserID,
+		Status:   params.GetString("status"),
+		Interval: params.GetInt32("interval"),
+	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
