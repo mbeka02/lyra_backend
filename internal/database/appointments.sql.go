@@ -69,12 +69,13 @@ JOIN
 users u ON d.user_id = u.user_id
 WHERE a.patient_id=$1
 AND (a.current_status = $2::appointment_status OR TRIM($2::text)='')
-AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'*@set_interval::integer
+AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* $3::integer
 `
 
 type GetPatientAppointmentsParams struct {
-	PatientID int64             `json:"patient_id"`
-	Status    AppointmentStatus `json:"status"`
+	PatientID   int64             `json:"patient_id"`
+	Status      AppointmentStatus `json:"status"`
+	SetInterval int32             `json:"set_interval"`
 }
 
 type GetPatientAppointmentsRow struct {
@@ -93,7 +94,7 @@ type GetPatientAppointmentsRow struct {
 }
 
 func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppointmentsParams) ([]GetPatientAppointmentsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getPatientAppointments, arg.PatientID, arg.Status)
+	rows, err := q.db.QueryContext(ctx, getPatientAppointments, arg.PatientID, arg.Status, arg.SetInterval)
 	if err != nil {
 		return nil, err
 	}
