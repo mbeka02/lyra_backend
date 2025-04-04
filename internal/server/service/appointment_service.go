@@ -16,12 +16,16 @@ type appointmentService struct {
 	patientRepo      repository.PatientRepository
 	paymentProcessor *payment.PaymentProcessor
 }
-
+type GetPatientAppointmentsParams struct {
+	UserId   int64
+	Interval int32
+	Status   string
+}
 type AppointmentService interface {
 	CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, req model.CreateAppointmentRequest, userId int64, email string) (*model.InitializeTransactionResponse, error)
 
-	GetPatientAppointments(ctx context.Context, userId int64) ([]database.Appointment, error)
+	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 }
 
 func NewAppointmentService(appointmentRepo repository.AppointmentRepository, patientRepo repository.PatientRepository, paymentProcessor *payment.PaymentProcessor) AppointmentService {
@@ -32,12 +36,16 @@ func NewAppointmentService(appointmentRepo repository.AppointmentRepository, pat
 	}
 }
 
-func (s *appointmentService) GetPatientAppointments(ctx context.Context, userId int64) ([]database.Appointment, error) {
-	patientId, err := s.patientRepo.GetPatientIdByUserId(ctx, userId)
+func (s *appointmentService) GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error) {
+	patientId, err := s.patientRepo.GetPatientIdByUserId(ctx, params.UserId)
 	if err != nil {
 		return nil, errors.New("unable to get the user details of this account")
 	}
-	return s.appointmentRepo.GetPatientAppointments(ctx, patientId)
+	return s.appointmentRepo.GetPatientAppointments(ctx, repository.GetPatientAppointmentsParams{
+		PatientId: patientId,
+		Status:    params.Status,
+		Interval:  params.Interval,
+	})
 }
 
 func (s *appointmentService) CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error) {
