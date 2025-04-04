@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 	"time"
 )
 
@@ -56,18 +57,50 @@ func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) er
 }
 
 const getPatientAppointments = `-- name: GetPatientAppointments :many
-SELECT appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at FROM appointments WHERE patient_id=$1 AND DATE(start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '7  days'
+SELECT
+a.appointment_id, a.patient_id, a.doctor_id, a.current_status, a.reason, a.notes, a.start_time, a.end_time, a.created_at, a.updated_at,
+d.specialization,
+u.profile_image_url AS doctor_profile_image_url
+FROM 
+appointments a
+JOIN 
+doctors d ON a.doctor_id = d.doctor_id
+JOIN 
+users u ON d.user_id = u.user_id
+WHERE a.patient_id=$1
+AND (a.current_status = $2::appointment_status OR TRIM($2::text)='')
+AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'*@set_interval::integer
 `
 
-func (q *Queries) GetPatientAppointments(ctx context.Context, patientID int64) ([]Appointment, error) {
-	rows, err := q.db.QueryContext(ctx, getPatientAppointments, patientID)
+type GetPatientAppointmentsParams struct {
+	PatientID int64             `json:"patient_id"`
+	Status    AppointmentStatus `json:"status"`
+}
+
+type GetPatientAppointmentsRow struct {
+	AppointmentID         int64             `json:"appointment_id"`
+	PatientID             int64             `json:"patient_id"`
+	DoctorID              int64             `json:"doctor_id"`
+	CurrentStatus         AppointmentStatus `json:"current_status"`
+	Reason                string            `json:"reason"`
+	Notes                 sql.NullString    `json:"notes"`
+	StartTime             time.Time         `json:"start_time"`
+	EndTime               time.Time         `json:"end_time"`
+	CreatedAt             time.Time         `json:"created_at"`
+	UpdatedAt             sql.NullTime      `json:"updated_at"`
+	Specialization        string            `json:"specialization"`
+	DoctorProfileImageUrl string            `json:"doctor_profile_image_url"`
+}
+
+func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppointmentsParams) ([]GetPatientAppointmentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getPatientAppointments, arg.PatientID, arg.Status)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Appointment
+	var items []GetPatientAppointmentsRow
 	for rows.Next() {
-		var i Appointment
+		var i GetPatientAppointmentsRow
 		if err := rows.Scan(
 			&i.AppointmentID,
 			&i.PatientID,
@@ -79,6 +112,8 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, patientID int64) (
 			&i.EndTime,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Specialization,
+			&i.DoctorProfileImageUrl,
 		); err != nil {
 			return nil, err
 		}
