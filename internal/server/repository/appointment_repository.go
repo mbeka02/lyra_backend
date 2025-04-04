@@ -23,7 +23,7 @@ type CreateAppointmentWithPaymentParams struct {
 	Amount    string // this will be cast to a postgres numeric
 }
 type GetPatientAppointmentsParams struct {
-	PatientId int64
+	PatientID int64
 	Interval  int32
 	Status    string
 }
@@ -50,7 +50,7 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 
 func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error) {
 	return r.store.GetPatientAppointments(ctx, database.GetPatientAppointmentsParams{
-		PatientID:   params.PatientId,
+		PatientID:   params.PatientID,
 		SetInterval: params.Interval,
 		Status:      database.AppointmentStatus(params.Status),
 	})

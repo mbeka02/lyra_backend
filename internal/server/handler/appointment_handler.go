@@ -26,7 +26,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	params := NewQueryParamExtractor(r)
 
 	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
-		UserId:   payload.UserID,
+		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
 		Interval: params.GetInt32("interval"),
 	})

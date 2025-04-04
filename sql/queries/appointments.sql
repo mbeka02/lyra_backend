@@ -13,7 +13,7 @@ JOIN
 users u ON d.user_id = u.user_id
 WHERE a.patient_id=$1
 AND (a.current_status = @status::appointment_status OR TRIM(@status::text)='')
-AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* @set_interval::integer;
+AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'*@set_interval::integer;
 
 -- name: UpdateAppointmentStatus :exec
 UPDATE appointments SET current_status=$1 WHERE appointment_id=$2;
