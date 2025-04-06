@@ -52,7 +52,7 @@ func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, para
 	return r.store.GetPatientAppointments(ctx, database.GetPatientAppointmentsParams{
 		PatientID:   params.PatientID,
 		SetInterval: params.Interval,
-		Status:      database.AppointmentStatus(params.Status),
+		Status:      params.Status,
 	})
 }
 

@@ -18,8 +18,9 @@ type AppointmentStatus string
 const (
 	AppointmentStatusPendingPayment AppointmentStatus = "pending_payment"
 	AppointmentStatusScheduled      AppointmentStatus = "scheduled"
+	AppointmentStatusInProgress     AppointmentStatus = "in_progress"
 	AppointmentStatusCompleted      AppointmentStatus = "completed"
-	AppointmentStatusCanceled       AppointmentStatus = "canceled"
+	AppointmentStatusCancelled      AppointmentStatus = "cancelled"
 )
 
 func (e *AppointmentStatus) Scan(src interface{}) error {

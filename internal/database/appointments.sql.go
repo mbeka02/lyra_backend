@@ -69,14 +69,14 @@ doctors d ON a.doctor_id = d.doctor_id
 JOIN 
 users u ON d.user_id = u.user_id
 WHERE a.patient_id=$1
-AND (a.current_status = $2::appointment_status OR TRIM($2::text)='')
+AND ($2::text = '' OR a.current_status::text = $2::text)
 AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* $3::integer
 `
 
 type GetPatientAppointmentsParams struct {
-	PatientID   int64             `json:"patient_id"`
-	Status      AppointmentStatus `json:"status"`
-	SetInterval int32             `json:"set_interval"`
+	PatientID   int64  `json:"patient_id"`
+	Status      string `json:"status"`
+	SetInterval int32  `json:"set_interval"`
 }
 
 type GetPatientAppointmentsRow struct {

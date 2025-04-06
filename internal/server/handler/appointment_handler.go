@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -24,13 +25,14 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 		return
 	}
 	params := NewQueryParamExtractor(r)
-
+	defaultInterval := 21
 	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
-		Interval: params.GetInt32("interval", 21),
+		Interval: params.GetInt32("interval", int32(defaultInterval)),
 	})
 	if err != nil {
+		log.Println("service error=>", err)
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
