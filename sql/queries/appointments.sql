@@ -4,6 +4,7 @@ INSERT INTO appointments(patient_id,doctor_id,start_time,end_time, reason) VALUE
 SELECT
 a.*,
 d.specialization,
+u.full_name AS doctor_name,
 u.profile_image_url AS doctor_profile_image_url
 FROM 
 appointments a

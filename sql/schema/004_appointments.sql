@@ -1,5 +1,5 @@
 -- +goose Up 
-CREATE TYPE appointment_status AS ENUM ('pending_payment','scheduled', 'completed', 'canceled');
+CREATE TYPE appointment_status AS ENUM ('pending_payment','scheduled','in_progress', 'completed', 'cancelled');
 CREATE TABLE IF NOT EXISTS appointments(
   appointment_id bigserial PRIMARY KEY,
   patient_id bigint NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
