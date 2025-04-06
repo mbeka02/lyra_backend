@@ -60,6 +60,7 @@ const getPatientAppointments = `-- name: GetPatientAppointments :many
 SELECT
 a.appointment_id, a.patient_id, a.doctor_id, a.current_status, a.reason, a.notes, a.start_time, a.end_time, a.created_at, a.updated_at,
 d.specialization,
+u.full_name AS doctor_name,
 u.profile_image_url AS doctor_profile_image_url
 FROM 
 appointments a
@@ -90,6 +91,7 @@ type GetPatientAppointmentsRow struct {
 	CreatedAt             time.Time         `json:"created_at"`
 	UpdatedAt             sql.NullTime      `json:"updated_at"`
 	Specialization        string            `json:"specialization"`
+	DoctorName            string            `json:"doctor_name"`
 	DoctorProfileImageUrl string            `json:"doctor_profile_image_url"`
 }
 
@@ -114,6 +116,7 @@ func (q *Queries) GetPatientAppointments(ctx context.Context, arg GetPatientAppo
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Specialization,
+			&i.DoctorName,
 			&i.DoctorProfileImageUrl,
 		); err != nil {
 			return nil, err

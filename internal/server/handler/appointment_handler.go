@@ -28,7 +28,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
-		Interval: params.GetInt32("interval"),
+		Interval: params.GetInt32("interval", 21),
 	})
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
