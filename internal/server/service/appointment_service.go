@@ -73,7 +73,7 @@ func (s *appointmentService) CreateAppointmentWithPayment(ctx context.Context, r
 	amountFloat, err := strconv.ParseFloat(req.Amount, 64)
 	if err != nil {
 		// Handle error
-		return nil, err
+		return nil, fmt.Errorf("failed to parse payment amount as float64")
 	}
 
 	// Multiply by 100 for cents
