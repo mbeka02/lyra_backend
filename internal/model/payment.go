@@ -3,7 +3,7 @@ package model
 import "time"
 
 type InitializeTransactionRequest struct {
-	Amount            string   `json:"amount" validate:"required"`
+	Amount            int64    `json:"amount" validate:"required"`
 	Email             string   `json:"email" validate:"required,email" `
 	CallBackURL       string   `json:"callback_url,omitempty"` //  Use this to override the callback url provided on the dashboard for this transaction
 	Channels          []string `json:"channels,omitempty"`     // An array of payment channels to control what channels you want to make available to the user to make a payment with.

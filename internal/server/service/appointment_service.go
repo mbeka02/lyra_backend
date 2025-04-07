@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -68,10 +69,20 @@ func (s *appointmentService) CreateAppointmentWithPayment(ctx context.Context, r
 	if err != nil {
 		return nil, errors.New("unable to get the user details of this account")
 	}
+	// convert amount to a float64
+	amountFloat, err := strconv.ParseFloat(req.Amount, 64)
+	if err != nil {
+		// Handle error
+		return nil, err
+	}
+
+	// Multiply by 100 for cents
+	amountInCents := int64(amountFloat * 100)
+
 	// send paystack  initialize payment request
 	response, err := s.paymentProcessor.InitializeTransaction(model.InitializeTransactionRequest{
 		Email:  email,
-		Amount: req.Amount,
+		Amount: amountInCents,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("payment processing error:%v", err)
