@@ -21,7 +21,6 @@ func NewStreamClient(apiKey, apiSecret string) (*StreamClient, error) {
 }
 
 type CreateStreamUserParams struct {
-	Role   string
 	Name   string
 	Email  string
 	UserID int64
@@ -33,7 +32,6 @@ func (s *StreamClient) CreateUser(ctx context.Context, params CreateStreamUserPa
 		Users: map[string]getstream.UserRequest{
 			userIdString: {
 				ID:   userIdString,
-				Role: getstream.PtrTo(params.Role),
 				Name: getstream.PtrTo(params.Name),
 			},
 		},
