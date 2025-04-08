@@ -11,3 +11,6 @@ UPDATE users SET full_name=$1 ,email=$2 , telephone_number=$3 WHERE user_id=$4;
 
 -- name: UpdateProfilePicture :exec
 UPDATE users SET profile_image_url=$1 WHERE user_id=$2;
+
+-- name: CompleteOnboarding :exec
+UPDATE users SET is_onboarded=true WHERE user_id=$1;
