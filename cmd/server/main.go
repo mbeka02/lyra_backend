@@ -59,7 +59,7 @@ func setupServer() (*http.Server, error) {
 	}
 	// external payment service setup
 	processor := payment.NewPaymentProcessor(conf.PAYSTACK_API_KEY)
-	streamClient, err := streamsdk.NewStreamClient(conf.GETSREAM_API_KEY, conf.GETSREAM_API_SECRET)
+	streamClient, err := streamsdk.NewStreamClient(conf.GETSTREAM_API_KEY, conf.GETSTREAM_API_SECRET)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the getstream client:%v", err)
 	}
