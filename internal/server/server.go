@@ -14,6 +14,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/server/handler"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
+	"github.com/mbeka02/lyra_backend/internal/streamsdk"
 )
 
 type ConfigOptions struct {
@@ -22,6 +23,7 @@ type ConfigOptions struct {
 	AuthMaker           auth.Maker
 	ObjectStorage       objstore.Storage
 	PaymentProcessor    *payment.PaymentProcessor
+	StreamClient        *streamsdk.StreamClient
 }
 type Server struct {
 	opts     ConfigOptions
