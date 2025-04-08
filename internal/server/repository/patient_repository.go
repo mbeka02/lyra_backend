@@ -38,7 +38,7 @@ func (r *patientRepository) Create(ctx context.Context, params CreatePatientPara
 	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
 		var err error
 		// create record
-		patient, err = r.store.CreatePatient(ctx, database.CreatePatientParams{
+		patient, err = q.CreatePatient(ctx, database.CreatePatientParams{
 			UserID:                params.UserID,
 			Allergies:             params.Allergies,
 			CurrentMedication:     params.CurrentMedication,
