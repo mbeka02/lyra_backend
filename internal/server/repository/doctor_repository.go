@@ -46,15 +46,27 @@ func NewDoctorRepository(store *database.Store) DoctorRepository {
 }
 
 func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (database.Doctor, error) {
-	return r.store.CreateDoctor(ctx, database.CreateDoctorParams{
-		UserID:            params.UserID,
-		LicenseNumber:     params.LicenseNumber,
-		Specialization:    params.Specialization,
-		Description:       params.Description,
-		County:            params.County,
-		YearsOfExperience: params.YearsOfExperience,
-		PricePerHour:      params.PricePerHour,
+	var doctor database.Doctor
+	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
+		var err error
+		// create record
+		doctor, err = q.CreateDoctor(ctx, database.CreateDoctorParams{
+			UserID:            params.UserID,
+			LicenseNumber:     params.LicenseNumber,
+			Specialization:    params.Specialization,
+			Description:       params.Description,
+			County:            params.County,
+			YearsOfExperience: params.YearsOfExperience,
+			PricePerHour:      params.PricePerHour,
+		})
+		if err != nil {
+			return err
+		}
+		// mark onboarding as completed
+		err = q.CompleteOnboarding(ctx, params.UserID)
+		return err
 	})
+	return doctor, err
 }
 
 func (r *doctorRepository) GetDoctorIdByUserId(ctx context.Context, UserID int64) (int64, error) {

@@ -34,18 +34,30 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 }
 
 func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (database.Patient, error) {
-	return r.store.CreatePatient(ctx, database.CreatePatientParams{
-		UserID:                params.UserID,
-		Allergies:             params.Allergies,
-		CurrentMedication:     params.CurrentMedication,
-		PastMedicalHistory:    params.PastMedicalHistory,
-		FamilyMedicalHistory:  params.FamilyMedicalHistory,
-		InsurancePolicyNumber: params.InsurancePolicyNumber,
-		InsuranceProvider:     params.InsuranceProvider,
-		Address:               params.Address,
-		EmergencyContactName:  params.EmergencyContactName,
-		EmergencyContactPhone: params.EmergencyContactPhone,
+	var patient database.Patient
+	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
+		var err error
+		// create record
+		patient, err = r.store.CreatePatient(ctx, database.CreatePatientParams{
+			UserID:                params.UserID,
+			Allergies:             params.Allergies,
+			CurrentMedication:     params.CurrentMedication,
+			PastMedicalHistory:    params.PastMedicalHistory,
+			FamilyMedicalHistory:  params.FamilyMedicalHistory,
+			InsurancePolicyNumber: params.InsurancePolicyNumber,
+			InsuranceProvider:     params.InsuranceProvider,
+			Address:               params.Address,
+			EmergencyContactName:  params.EmergencyContactName,
+			EmergencyContactPhone: params.EmergencyContactPhone,
+		})
+		if err != nil {
+			return err
+		}
+		// mark onboarding as completed
+		err = q.CompleteOnboarding(ctx, params.UserID)
+		return err
 	})
+	return patient, err
 }
 
 func (r *patientRepository) GetPatientIdByUserId(ctx context.Context, UserID int64) (int64, error) {

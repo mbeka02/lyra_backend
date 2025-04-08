@@ -79,7 +79,8 @@ func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context
 			Reference:     params.Reference,
 			Amount:        params.Amount,
 		})
-		return nil
+
+		return err
 	})
 	return result, err
 }
