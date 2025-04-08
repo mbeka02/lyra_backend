@@ -13,8 +13,8 @@ type Config struct {
 	GCLOUD_PROJECT_ID     string        `mapstructure:"GCLOUD_PROJECT_ID"`
 	GCLOUD_IMAGE_BUCKET   string        `mapstructure:"GCLOUD_IMAGE_BUCKET"`
 	PAYSTACK_API_KEY      string        `mapstructure:"PAYSTACK_API_KEY"`
-	GETSREAM_API_KEY      string        `mapstructure:"GETSREAM_API_KEY"`
-	GETSREAM_API_SECRET   string        `mapstructure:"GETSREAM_API_SECRET"`
+	GETSREAM_API_KEY      string        `mapstructure:"GETSTREAM_API_KEY"`
+	GETSREAM_API_SECRET   string        `mapstructure:"GETSTREAM_API_SECRET"`
 	// DB_CONNECTION_STRING  string        `mapstructure:"DB_CONNECTION_STRING"`
 	PORT string `mapstructure:"PORT"`
 }
