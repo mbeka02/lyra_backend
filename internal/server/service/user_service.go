@@ -14,6 +14,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
+	"github.com/mbeka02/lyra_backend/internal/streamsdk"
 )
 
 const maxFileSize = 1024 * 1024 * 10 // 10 MB Limit
@@ -41,6 +42,7 @@ type UserService interface {
 type userService struct {
 	userRepo            repository.UserRepository
 	authMaker           auth.Maker
+	streamClient        *streamsdk.StreamClient
 	imgStorage          objstore.Storage
 	accessTokenDuration time.Duration
 }
@@ -49,17 +51,20 @@ type userService struct {
 func NewUserService(
 	userRepo repository.UserRepository,
 	authMaker auth.Maker,
+	streamClient *streamsdk.StreamClient,
 	imgStorage objstore.Storage,
 	accessTokenDuration time.Duration,
 ) UserService {
 	return &userService{
 		userRepo:            userRepo,
 		authMaker:           authMaker,
+		streamClient:        streamClient,
 		imgStorage:          imgStorage,
 		accessTokenDuration: accessTokenDuration,
 	}
 }
 
+// TODO:make the return value a ptr
 func (s *userService) CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error) {
 	passwordHash, err := auth.HashPassword(req.Password)
 	if err != nil {
@@ -79,14 +84,28 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 	}
 
 	userResponse := model.NewUserResponse(user)
-	token, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
+	// auth token
+	accessToken, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
-
+	// getstream
+	err = s.streamClient.CreateUser(ctx, streamsdk.CreateStreamUserParams{
+		UserID: user.UserID,
+		Name:   user.FullName,
+		Email:  user.Email,
+	})
+	if err != nil {
+		return model.AuthResponse{}, fmt.Errorf("stream client error : %v", err)
+	}
+	getStreamToken, err := s.streamClient.CreateToken(fmt.Sprintf("%d", user.UserID))
+	if err != nil {
+		return model.AuthResponse{}, err
+	}
 	return model.AuthResponse{
-		AccessToken: token,
-		User:        userResponse,
+		AccessToken:    accessToken,
+		GetStreamToken: getStreamToken,
+		User:           userResponse,
 	}, nil
 }
 
@@ -138,14 +157,18 @@ func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.
 	}
 
 	userResponse := model.NewUserResponse(user)
-	token, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
+	accessToken, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
-
+	getStreamToken, err := s.streamClient.CreateToken(fmt.Sprintf("%d", user.UserID))
+	if err != nil {
+		return model.AuthResponse{}, err
+	}
 	return model.AuthResponse{
-		AccessToken: token,
-		User:        userResponse,
+		AccessToken:    accessToken,
+		GetStreamToken: getStreamToken,
+		User:           userResponse,
 	}, nil
 }
 

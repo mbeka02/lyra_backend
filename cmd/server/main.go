@@ -15,6 +15,7 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server"
+	"github.com/mbeka02/lyra_backend/internal/streamsdk"
 )
 
 func gracefulShutdown(apiServer *http.Server, done chan bool) {
@@ -46,17 +47,23 @@ func setupServer() (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to load config: %v", err)
 	}
-
+	// auth setup
 	maker, err := auth.NewJWTMaker(conf.SYMMETRIC_KEY)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup the auth token maker:%v", err)
 	}
-
+	// cloud storage setup
 	storage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_IMAGE_BUCKET)
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
 	}
+	// external payment service setup
 	processor := payment.NewPaymentProcessor(conf.PAYSTACK_API_KEY)
+	streamClient, err := streamsdk.NewStreamClient(conf.GETSTREAM_API_KEY, conf.GETSTREAM_API_SECRET)
+	if err != nil {
+		return nil, fmt.Errorf("unable to initialize the getstream client:%v", err)
+	}
+
 	// Configutation Options
 	opts := server.ConfigOptions{
 		Port:                conf.PORT,
@@ -64,6 +71,7 @@ func setupServer() (*http.Server, error) {
 		AuthMaker:           maker,
 		ObjectStorage:       storage,
 		PaymentProcessor:    processor,
+		StreamClient:        streamClient,
 	}
 	server := server.NewServer(opts)
 	return server, nil

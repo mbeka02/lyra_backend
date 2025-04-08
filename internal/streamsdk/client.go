@@ -13,27 +13,25 @@ type StreamClient struct {
 }
 
 func NewStreamClient(apiKey, apiSecret string) (*StreamClient, error) {
-	client, err := getstream.NewClient(apiKey, apiSecret)
+	client, err := getstream.NewClient(apiKey, apiSecret, getstream.WithTimeout(10000*time.Millisecond))
 	if err != nil {
 		return nil, err
 	}
 	return &StreamClient{client}, nil
 }
 
-type CreateUserParams struct {
-	Role  string
-	Name  string
-	Email string
-	Id    int64
+type CreateStreamUserParams struct {
+	Name   string
+	Email  string
+	UserID int64
 }
 
-func (s *StreamClient) CreateUser(ctx context.Context, params CreateUserParams) error {
-	customId := fmt.Sprintf("%s_%d", params.Email, params.Id)
+func (s *StreamClient) CreateUser(ctx context.Context, params CreateStreamUserParams) error {
+	userIdString := fmt.Sprintf("%d", params.UserID)
 	_, err := s.client.UpdateUsers(ctx, &getstream.UpdateUsersRequest{
 		Users: map[string]getstream.UserRequest{
-			customId: {
-				ID:   customId,
-				Role: getstream.PtrTo(params.Role),
+			userIdString: {
+				ID:   userIdString,
 				Name: getstream.PtrTo(params.Name),
 			},
 		},
@@ -41,6 +39,6 @@ func (s *StreamClient) CreateUser(ctx context.Context, params CreateUserParams) 
 	return err
 }
 
-func (s *StreamClient) CreateToken(customId string) (string, error) {
-	return s.client.CreateToken(customId, getstream.WithExpiration(time.Hour*72))
+func (s *StreamClient) CreateToken(userIdString string) (string, error) {
+	return s.client.CreateToken(userIdString, getstream.WithExpiration(time.Hour*72))
 }

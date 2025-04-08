@@ -34,8 +34,9 @@ type LoginRequest struct {
 }
 
 type AuthResponse struct {
-	AccessToken string       `json:"access_token"`
-	User        UserResponse `json:"user"`
+	AccessToken    string       `json:"access_token"`
+	GetStreamToken string       `json:"get_stream_token"`
+	User           UserResponse `json:"user"`
 }
 
 func NewUserResponse(user database.User) UserResponse {
