@@ -10,8 +10,17 @@ import (
 	"time"
 )
 
+const completeOnboarding = `-- name: CompleteOnboarding :exec
+UPDATE users SET is_onboarded=true WHERE user_id=$1
+`
+
+func (q *Queries) CompleteOnboarding(ctx context.Context, userID int64) error {
+	_, err := q.db.ExecContext(ctx, completeOnboarding, userID)
+	return err
+}
+
 const createUser = `-- name: CreateUser :one
-INSERT INTO users(full_name , password ,date_of_birth, email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5,$6) RETURNING user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at
+INSERT INTO users(full_name , password ,date_of_birth, email , telephone_number ,user_role) VALUES ($1,$2,$3,$4,$5,$6) RETURNING user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, is_onboarded, password_changed_at
 `
 
 type CreateUserParams struct {
@@ -44,13 +53,14 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.CreatedAt,
 		&i.UserRole,
 		&i.VerifiedAt,
+		&i.IsOnboarded,
 		&i.PasswordChangedAt,
 	)
 	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE email=$1
+SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, is_onboarded, password_changed_at FROM users WHERE email=$1
 `
 
 func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
@@ -67,13 +77,14 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.CreatedAt,
 		&i.UserRole,
 		&i.VerifiedAt,
+		&i.IsOnboarded,
 		&i.PasswordChangedAt,
 	)
 	return i, err
 }
 
 const getUserById = `-- name: GetUserById :one
-SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, password_changed_at FROM users WHERE user_id=$1
+SELECT user_id, date_of_birth, full_name, password, email, telephone_number, profile_image_url, created_at, user_role, verified_at, is_onboarded, password_changed_at FROM users WHERE user_id=$1
 `
 
 func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
@@ -90,6 +101,7 @@ func (q *Queries) GetUserById(ctx context.Context, userID int64) (User, error) {
 		&i.CreatedAt,
 		&i.UserRole,
 		&i.VerifiedAt,
+		&i.IsOnboarded,
 		&i.PasswordChangedAt,
 	)
 	return i, err

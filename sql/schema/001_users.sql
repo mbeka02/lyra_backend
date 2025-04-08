@@ -11,6 +11,7 @@ profile_image_url text NOT NULL DEFAULT '' ,
 created_at timestamptz NOT NULL DEFAULT (now()),
 user_role role NOT NULL,
 verified_at timestamptz,
+is_onboarded boolean NOT NULL DEFAULT false,
 password_changed_at timestamptz NOT NULL DEFAULT '0001-01-01 00:00:00Z'
 );
 

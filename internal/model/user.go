@@ -20,12 +20,13 @@ type UpdateUserRequest struct {
 	TelephoneNumber string `json:"telephone_number" validate:"required,max=15"`
 }
 type UserResponse struct {
-	UserId          int64         `json:"user_id" validate:"required"`
-	Fullname        string        `json:"full_name" validate:"required"`
-	Email           string        `json:"email" validate:"required,email"`
-	TelephoneNumber string        `json:"telephone_number" validate:"required"`
-	Role            database.Role `json:"role" validate:"required"`
+	UserId          int64         `json:"user_id"`
+	Fullname        string        `json:"full_name"`
+	Email           string        `json:"email"`
+	TelephoneNumber string        `json:"telephone_number" `
+	Role            database.Role `json:"role" `
 	ProfileImageURL string        `json:"profile_image_url"`
+	IsOnboarded     bool          `json:"is_onboarded"`
 }
 
 type LoginRequest struct {
@@ -47,5 +48,6 @@ func NewUserResponse(user database.User) UserResponse {
 		TelephoneNumber: user.TelephoneNumber,
 		Role:            user.UserRole,
 		ProfileImageURL: user.ProfileImageUrl,
+		IsOnboarded:     user.IsOnboarded,
 	}
 }

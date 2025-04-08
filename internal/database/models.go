@@ -224,5 +224,6 @@ type User struct {
 	CreatedAt         time.Time    `json:"created_at"`
 	UserRole          Role         `json:"user_role"`
 	VerifiedAt        sql.NullTime `json:"verified_at"`
+	IsOnboarded       bool         `json:"is_onboarded"`
 	PasswordChangedAt time.Time    `json:"password_changed_at"`
 }
