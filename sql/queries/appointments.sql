@@ -26,7 +26,7 @@ JOIN
 patients p ON a.patient_id=p.patient_id
 JOIN
 users u ON p.user_id = u.user_id
-WHERE a.patient_id=$1
+WHERE a.doctor_id=$1
 AND (@status::text = '' OR a.current_status::text = @status::text)
 AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* @set_interval::integer;
 
