@@ -23,8 +23,8 @@ func NewPasetoMaker(symmetricKey string) (Maker, error) {
 	}, nil
 }
 
-func (maker *PasetoMaker) Create(email string, userId int64, duration time.Duration) (string, error) {
-	payload := NewPayload(email, userId, duration)
+func (maker *PasetoMaker) Create(userId int64, email, role string, duration time.Duration) (string, error) {
+	payload := NewPayload(userId, email, role, duration)
 	// key has to be 32 bytes
 	return maker.paseto.Encrypt(maker.symmetricKey, payload, nil)
 }

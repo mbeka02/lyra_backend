@@ -26,6 +26,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	}
 	params := NewQueryParamExtractor(r)
 	defaultInterval := 21
+	log.Println("user role=>", payload.Role)
 	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
@@ -53,6 +54,7 @@ func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *h
 	if !ok {
 		return
 	}
+
 	response, err := h.appointmentService.CreateAppointmentWithPayment(r.Context(), request, payload.UserID, payload.Email)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)

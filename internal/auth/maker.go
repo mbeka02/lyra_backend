@@ -3,6 +3,6 @@ package auth
 import "time"
 
 type Maker interface {
-	Create(email string, userId int64, duration time.Duration) (string, error)
+	Create(userId int64, email, role string, duration time.Duration) (string, error)
 	Verify(tokenString string) (*Payload, error)
 }
