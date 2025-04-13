@@ -43,7 +43,7 @@ func NewAppointmentService(appointmentRepo repository.AppointmentRepository, pat
 func (s *appointmentService) GetDoctorAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error) {
 	doctorID, err := s.doctorRepo.GetDoctorIdByUserId(ctx, params.UserID)
 	if err != nil {
-		return nil, errors.New("unable to get the user details of this account")
+		return nil, errors.New("unable to get the doctor details for this account")
 	}
 	return s.appointmentRepo.GetDoctorAppointments(ctx, repository.GetDoctorAppointmentsParams{
 		DoctorID: doctorID,
