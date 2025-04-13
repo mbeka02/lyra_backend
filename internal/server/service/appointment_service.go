@@ -15,9 +15,10 @@ import (
 type appointmentService struct {
 	appointmentRepo  repository.AppointmentRepository
 	patientRepo      repository.PatientRepository
+	doctorRepo       repository.DoctorRepository
 	paymentProcessor *payment.PaymentProcessor
 }
-type GetPatientAppointmentsParams struct {
+type GetAppointmentsParams struct {
 	UserID   int64
 	Interval int32
 	Status   string
@@ -26,18 +27,32 @@ type AppointmentService interface {
 	CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, req model.CreateAppointmentRequest, userId int64, email string) (*model.InitializeTransactionResponse, error)
 
-	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
+	GetPatientAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
+	GetDoctorAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error)
 }
 
-func NewAppointmentService(appointmentRepo repository.AppointmentRepository, patientRepo repository.PatientRepository, paymentProcessor *payment.PaymentProcessor) AppointmentService {
+func NewAppointmentService(appointmentRepo repository.AppointmentRepository, patientRepo repository.PatientRepository, doctorRepo repository.DoctorRepository, paymentProcessor *payment.PaymentProcessor) AppointmentService {
 	return &appointmentService{
 		appointmentRepo,
 		patientRepo,
+		doctorRepo,
 		paymentProcessor,
 	}
 }
 
-func (s *appointmentService) GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error) {
+func (s *appointmentService) GetDoctorAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error) {
+	doctorID, err := s.doctorRepo.GetDoctorIdByUserId(ctx, params.UserID)
+	if err != nil {
+		return nil, errors.New("unable to get the doctor details for this account")
+	}
+	return s.appointmentRepo.GetDoctorAppointments(ctx, repository.GetDoctorAppointmentsParams{
+		DoctorID: doctorID,
+		Status:   params.Status,
+		Interval: params.Interval,
+	})
+}
+
+func (s *appointmentService) GetPatientAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetPatientAppointmentsRow, error) {
 	patientID, err := s.patientRepo.GetPatientIdByUserId(ctx, params.UserID)
 	if err != nil {
 		return nil, errors.New("unable to get the user details of this account")

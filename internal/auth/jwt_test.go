@@ -13,11 +13,12 @@ func TestJWTMaker(t *testing.T) {
 	require.NoError(t, err)
 	email := util.RandEmail()
 	userId := util.RandInt(1, 100)
+	role := util.RandRole()
 	duration := time.Minute
 	issuedAt := time.Now()
 	expiresAt := time.Now().Add(duration)
 
-	token, err := maker.Create(email, userId, duration)
+	token, err := maker.Create(userId, email, role, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 
@@ -25,6 +26,8 @@ func TestJWTMaker(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, claims)
 	require.Equal(t, email, claims.Email)
+	require.Equal(t, userId, claims.UserID)
+	require.Equal(t, role, claims.Role)
 	require.WithinDuration(t, issuedAt, claims.IssuedAt, time.Second)
 	require.WithinDuration(t, expiresAt, claims.ExpiresAt, time.Second)
 }
@@ -35,8 +38,9 @@ func TestExpiredJWTToken(t *testing.T) {
 	email := util.RandEmail()
 	userId := util.RandInt(1, 100)
 	duration := -time.Minute
+	role := util.RandRole()
+	token, err := maker.Create(userId, email, role, duration)
 
-	token, err := maker.Create(email, userId, duration)
 	require.NoError(t, err)
 	require.NotEmpty(t, token)
 

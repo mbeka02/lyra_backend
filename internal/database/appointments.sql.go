@@ -56,6 +56,78 @@ func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) er
 	return err
 }
 
+const getDoctorAppointments = `-- name: GetDoctorAppointments :many
+SELECT 
+a.appointment_id, a.patient_id, a.doctor_id, a.current_status, a.reason, a.notes, a.start_time, a.end_time, a.created_at, a.updated_at, 
+u.full_name AS patient_name,
+u.profile_image_url AS patient_profile_image_url
+FROM appointments a 
+JOIN 
+patients p ON a.patient_id=p.patient_id
+JOIN
+users u ON p.user_id = u.user_id
+WHERE a.doctor_id=$1
+AND ($2::text = '' OR a.current_status::text = $2::text)
+AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* $3::integer
+`
+
+type GetDoctorAppointmentsParams struct {
+	DoctorID    int64  `json:"doctor_id"`
+	Status      string `json:"status"`
+	SetInterval int32  `json:"set_interval"`
+}
+
+type GetDoctorAppointmentsRow struct {
+	AppointmentID          int64             `json:"appointment_id"`
+	PatientID              int64             `json:"patient_id"`
+	DoctorID               int64             `json:"doctor_id"`
+	CurrentStatus          AppointmentStatus `json:"current_status"`
+	Reason                 string            `json:"reason"`
+	Notes                  sql.NullString    `json:"notes"`
+	StartTime              time.Time         `json:"start_time"`
+	EndTime                time.Time         `json:"end_time"`
+	CreatedAt              time.Time         `json:"created_at"`
+	UpdatedAt              sql.NullTime      `json:"updated_at"`
+	PatientName            string            `json:"patient_name"`
+	PatientProfileImageUrl string            `json:"patient_profile_image_url"`
+}
+
+func (q *Queries) GetDoctorAppointments(ctx context.Context, arg GetDoctorAppointmentsParams) ([]GetDoctorAppointmentsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getDoctorAppointments, arg.DoctorID, arg.Status, arg.SetInterval)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetDoctorAppointmentsRow
+	for rows.Next() {
+		var i GetDoctorAppointmentsRow
+		if err := rows.Scan(
+			&i.AppointmentID,
+			&i.PatientID,
+			&i.DoctorID,
+			&i.CurrentStatus,
+			&i.Reason,
+			&i.Notes,
+			&i.StartTime,
+			&i.EndTime,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.PatientName,
+			&i.PatientProfileImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getPatientAppointments = `-- name: GetPatientAppointments :many
 SELECT
 a.appointment_id, a.patient_id, a.doctor_id, a.current_status, a.reason, a.notes, a.start_time, a.end_time, a.created_at, a.updated_at,

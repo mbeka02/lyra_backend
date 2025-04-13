@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
@@ -18,6 +17,29 @@ func NewAppointmentHandler(appointmentService service.AppointmentService) *Appoi
 	}
 }
 
+func (h *AppointmentHandler) HandleGetDoctorAppointments(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	params := NewQueryParamExtractor(r)
+	defaultInterval := 21
+	response, err := h.appointmentService.GetDoctorAppointments(r.Context(), service.GetAppointmentsParams{
+		UserID:   payload.UserID,
+		Status:   params.GetString("status"),
+		Interval: params.GetInt32("interval", int32(defaultInterval)),
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
@@ -26,13 +48,12 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	}
 	params := NewQueryParamExtractor(r)
 	defaultInterval := 21
-	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetPatientAppointmentsParams{
+	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
 		Interval: params.GetInt32("interval", int32(defaultInterval)),
 	})
 	if err != nil {
-		log.Println("service error=>", err)
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -53,6 +74,7 @@ func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *h
 	if !ok {
 		return
 	}
+
 	response, err := h.appointmentService.CreateAppointmentWithPayment(r.Context(), request, payload.UserID, payload.Email)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)

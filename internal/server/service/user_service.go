@@ -85,7 +85,7 @@ func (s *userService) CreateUser(ctx context.Context, req model.CreateUserReques
 
 	userResponse := model.NewUserResponse(user)
 	// auth token
-	accessToken, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
+	accessToken, err := s.authMaker.Create(user.UserID, user.Email, string(user.UserRole), s.accessTokenDuration)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
@@ -157,7 +157,7 @@ func (s *userService) Login(ctx context.Context, req model.LoginRequest) (model.
 	}
 
 	userResponse := model.NewUserResponse(user)
-	accessToken, err := s.authMaker.Create(user.Email, user.UserID, s.accessTokenDuration)
+	accessToken, err := s.authMaker.Create(user.UserID, user.Email, string(user.UserRole), s.accessTokenDuration)
 	if err != nil {
 		return model.AuthResponse{}, err
 	}
