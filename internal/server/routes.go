@@ -64,12 +64,14 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Patient endpoints
 			r.Route("/patients", func(r chi.Router) {
 				r.Post("/", s.handlers.Patient.HandleCreatePatient)
+				r.Get("/appointments", s.handlers.Appointment.HandleGetPatientAppointments)
 			})
 
 			// Doctor endpoints
 			r.Route("/doctors", func(r chi.Router) {
 				r.Get("/", s.handlers.Doctor.HandleGetDoctors)
 				r.Post("/", s.handlers.Doctor.HandleCreateDoctor)
+				r.Get("/appointments", s.handlers.Appointment.HandleGetDoctorAppointments)
 
 				// Doctor availability endpoints
 				r.Route("/availability", func(r chi.Router) {
@@ -83,7 +85,6 @@ func (s *Server) RegisterRoutes() http.Handler {
 
 			// Appointment endpoints
 			r.Route("/appointments", func(r chi.Router) {
-				r.Get("/", s.handlers.Appointment.HandleGetPatientAppointments)
 				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
 			})
 		})

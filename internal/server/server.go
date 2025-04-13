@@ -72,7 +72,7 @@ func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Stor
 		Patient:      service.NewPatientService(repos.Patient),
 		Doctor:       service.NewDoctorService(repos.Doctor),
 		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
-		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient, paymentProcessor),
+		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
 		Payment:      service.NewPaymentService(paymentProcessor, repos.Payment),
 	}
 }
