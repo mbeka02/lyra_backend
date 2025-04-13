@@ -16,6 +16,20 @@ WHERE a.patient_id=$1
 AND (@status::text = '' OR a.current_status::text = @status::text)
 AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* @set_interval::integer;
 
+-- name: GetDoctorAppointments :many
+SELECT 
+a.*, 
+u.full_name AS patient_name,
+u.profile_image_url AS patient_profile_image_url
+FROM appointments a 
+JOIN 
+patients p ON a.patient_id=p.patient_id
+JOIN
+users u ON p.user_id = u.user_id
+WHERE a.patient_id=$1
+AND (@status::text = '' OR a.current_status::text = @status::text)
+AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* @set_interval::integer;
+
 -- name: UpdateAppointmentStatus :exec
 UPDATE appointments SET current_status=$1 WHERE appointment_id=$2;
 -- name: DeleteAppointment :exec
