@@ -2,6 +2,10 @@ package model
 
 import "time"
 
+type UpdateAppointmentStatusRequest struct {
+	AppointmentID int64  `json:"appointment_id" validate:"required"`
+	Status        string `json:"status" validate:"required"`
+}
 type CreateAppointmentRequest struct {
 	DoctorID  int64     `json:"doctor_id" validate:"required"`
 	StartTime time.Time `json:"start_time" validate:"required"`
