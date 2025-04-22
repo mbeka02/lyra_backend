@@ -41,7 +41,7 @@ type GetAppointmentIDsParams struct {
 	Role string
 }
 type UpdateAppointmentStatusParams struct {
-	appointmentID int64
+	AppointmentID int64
 	Status        string
 }
 type AppointmentRepository interface {
@@ -66,7 +66,7 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 func (r *appointmentRepository) UpdateAppointmentStatus(ctx context.Context, params UpdateAppointmentStatusParams) error {
 	return r.store.UpdateAppointmentStatus(ctx, database.UpdateAppointmentStatusParams{
 		CurrentStatus: database.AppointmentStatus(params.Status),
-		AppointmentID: params.appointmentID,
+		AppointmentID: params.AppointmentID,
 	})
 }
 

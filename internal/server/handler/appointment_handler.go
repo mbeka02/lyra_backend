@@ -17,6 +17,24 @@ func NewAppointmentHandler(appointmentService service.AppointmentService) *Appoi
 	}
 }
 
+func (h *AppointmentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) {
+	request := model.UpdateAppointmentStatusRequest{}
+	if err := parseAndValidateRequest(r, &request); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+	err := h.appointmentService.UpdateAppointmentStatus(r.Context(), request)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := respondWithJSON(w, http.StatusOK, "updated appointment status successfully"); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *AppointmentHandler) HandleGetCompletedAppointments(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
