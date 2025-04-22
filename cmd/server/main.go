@@ -63,7 +63,6 @@ func setupServer() (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize the getstream client:%v", err)
 	}
-
 	// Configutation Options
 	opts := server.ConfigOptions{
 		Port:                conf.PORT,
@@ -82,6 +81,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("fatal error,the server setup process failed : %v", err)
 	}
+
 	// Create a done channel to signal when the shutdown is complete
 	done := make(chan bool, 1)
 

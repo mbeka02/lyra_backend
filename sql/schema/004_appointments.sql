@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS appointments(
   appointment_id bigserial PRIMARY KEY,
   patient_id bigint NOT NULL REFERENCES patients(patient_id) ON DELETE CASCADE,
   doctor_id bigint NOT NULL REFERENCES doctors(doctor_id) ON DELETE CASCADE,
-  current_status appointment_status NOT NULL DEFAULT ('scheduled'),
+  current_status appointment_status NOT NULL DEFAULT ('pending_payment'),
   reason TEXT NOT NULL,
 notes TEXT,
   start_time timestamptz NOT NULL,

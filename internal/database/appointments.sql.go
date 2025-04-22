@@ -56,6 +56,52 @@ func (q *Queries) DeleteAppointment(ctx context.Context, appointmentID int64) er
 	return err
 }
 
+const getAppointmentIDs = `-- name: GetAppointmentIDs :many
+WITH params AS (
+  SELECT
+    $1::bigint AS id,
+    $2::text   AS role
+)
+SELECT appointment_id
+FROM appointments
+CROSS JOIN params
+WHERE current_status = 'completed'
+  AND (
+    (params.role = 'specialist'  AND doctor_id  = params.id)
+    OR
+    (params.role = 'patient' AND patient_id = params.id)
+  )
+ORDER BY appointment_id
+`
+
+type GetAppointmentIDsParams struct {
+	ID   int64  `json:"id"`
+	Role string `json:"role"`
+}
+
+func (q *Queries) GetAppointmentIDs(ctx context.Context, arg GetAppointmentIDsParams) ([]int64, error) {
+	rows, err := q.db.QueryContext(ctx, getAppointmentIDs, arg.ID, arg.Role)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []int64
+	for rows.Next() {
+		var appointment_id int64
+		if err := rows.Scan(&appointment_id); err != nil {
+			return nil, err
+		}
+		items = append(items, appointment_id)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getDoctorAppointments = `-- name: GetDoctorAppointments :many
 SELECT 
 a.appointment_id, a.patient_id, a.doctor_id, a.current_status, a.reason, a.notes, a.start_time, a.end_time, a.created_at, a.updated_at, 
