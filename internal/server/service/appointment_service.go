@@ -23,12 +23,17 @@ type GetAppointmentsParams struct {
 	Interval int32
 	Status   string
 }
+type GetAppointmentIDsParams struct {
+	UserID int64
+	Role   string
+}
 type AppointmentService interface {
 	CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, req model.CreateAppointmentRequest, userId int64, email string) (*model.InitializeTransactionResponse, error)
 
 	GetPatientAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 	GetDoctorAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error)
+	GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error)
 }
 
 func NewAppointmentService(appointmentRepo repository.AppointmentRepository, patientRepo repository.PatientRepository, doctorRepo repository.DoctorRepository, paymentProcessor *payment.PaymentProcessor) AppointmentService {
@@ -37,6 +42,31 @@ func NewAppointmentService(appointmentRepo repository.AppointmentRepository, pat
 		patientRepo,
 		doctorRepo,
 		paymentProcessor,
+	}
+}
+
+func (s *appointmentService) GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error) {
+	switch params.Role {
+	case "patient":
+		patientID, err := s.patientRepo.GetPatientIdByUserId(ctx, params.UserID)
+		if err != nil {
+			return nil, errors.New("unable to get the patient details for this account")
+		}
+		return s.appointmentRepo.GetAppointmentIDs(ctx, repository.GetAppointmentIDsParams{
+			Role: params.Role,
+			ID:   patientID,
+		})
+	case "specialist":
+		doctorID, err := s.doctorRepo.GetDoctorIdByUserId(ctx, params.UserID)
+		if err != nil {
+			return nil, errors.New("unable to get the doctor details for this account")
+		}
+		return s.appointmentRepo.GetAppointmentIDs(ctx, repository.GetAppointmentIDsParams{
+			Role: params.Role,
+			ID:   doctorID,
+		})
+	default:
+		return nil, errors.New("an invalid user role has been passed to this service")
 	}
 }
 

@@ -17,6 +17,27 @@ func NewAppointmentHandler(appointmentService service.AppointmentService) *Appoi
 	}
 }
 
+func (h *AppointmentHandler) HandleGetCompletedAppointments(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	response, err := h.appointmentService.GetAppointmentIDs(r.Context(), service.GetAppointmentIDsParams{
+		Role:   payload.Role,
+		UserID: payload.UserID,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+
+	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+}
+
 func (h *AppointmentHandler) HandleGetDoctorAppointments(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)

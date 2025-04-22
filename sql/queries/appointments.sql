@@ -30,8 +30,25 @@ WHERE a.doctor_id=$1
 AND (@status::text = '' OR a.current_status::text = @status::text)
 AND DATE(a.start_time) BETWEEN CURRENT_DATE AND CURRENT_DATE + INTERVAL '1 day'* @set_interval::integer;
 
+-- name: GetAppointmentIDs :many
+WITH params AS (
+  SELECT
+    @id::bigint AS id,
+    @role::text   AS role
+)
+SELECT appointment_id
+FROM appointments
+CROSS JOIN params
+WHERE current_status = 'completed'
+  AND (
+    (params.role = 'doctor'  AND doctor_id  = params.id)
+    OR
+    (params.role = 'patient' AND patient_id = params.id)
+  )
+ORDER BY appointment_id;
 -- name: UpdateAppointmentStatus :exec
 UPDATE appointments SET current_status=$1 WHERE appointment_id=$2;
+
 -- name: DeleteAppointment :exec
 DELETE FROM appointments WHERE appointment_id=$1;
 
