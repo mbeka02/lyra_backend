@@ -40,12 +40,17 @@ type GetAppointmentIDsParams struct {
 	ID   int64
 	Role string
 }
+type UpdateAppointmentStatusParams struct {
+	appointmentID int64
+	Status        string
+}
 type AppointmentRepository interface {
 	Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error)
 	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 	GetDoctorAppointments(ctx context.Context, params GetDoctorAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error)
 	GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error)
+	UpdateAppointmentStatus(ctx context.Context, params UpdateAppointmentStatusParams) error
 }
 
 type appointmentRepository struct {
@@ -56,6 +61,13 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 	return &appointmentRepository{
 		store,
 	}
+}
+
+func (r *appointmentRepository) UpdateAppointmentStatus(ctx context.Context, params UpdateAppointmentStatusParams) error {
+	return r.store.UpdateAppointmentStatus(ctx, database.UpdateAppointmentStatusParams{
+		CurrentStatus: database.AppointmentStatus(params.Status),
+		AppointmentID: params.appointmentID,
+	})
 }
 
 func (r *appointmentRepository) GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error) {
