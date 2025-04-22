@@ -41,7 +41,7 @@ FROM appointments
 CROSS JOIN params
 WHERE current_status = 'completed'
   AND (
-    (params.role = 'doctor'  AND doctor_id  = params.id)
+    (params.role = 'specialist'  AND doctor_id  = params.id)
     OR
     (params.role = 'patient' AND patient_id = params.id)
   )
