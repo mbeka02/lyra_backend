@@ -19,7 +19,7 @@ type CreatePatientParams struct {
 	EmergencyContactPhone string
 }
 type PatientRepository interface {
-	Create(context.Context, CreatePatientParams) (database.Patient, error)
+	Create(context.Context, CreatePatientParams) (*database.Patient, error)
 	GetPatientIdByUserId(context.Context, int64) (int64, error)
 }
 
@@ -33,7 +33,7 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 	}
 }
 
-func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (database.Patient, error) {
+func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (*database.Patient, error) {
 	var patient database.Patient
 	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
 		var err error
@@ -57,7 +57,7 @@ func (r *patientRepository) Create(ctx context.Context, params CreatePatientPara
 		err = q.CompleteOnboarding(ctx, params.UserID)
 		return err
 	})
-	return patient, err
+	return &patient, err
 }
 
 func (r *patientRepository) GetPatientIdByUserId(ctx context.Context, UserID int64) (int64, error) {

@@ -15,7 +15,7 @@ type availabilityService struct {
 }
 
 type AvailabilityService interface {
-	CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (database.Availability, error)
+	CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (*database.Availability, error)
 	GetAvailabilityByDoctor(ctx context.Context, userId int64) ([]database.Availability, error)
 	GetSlots(ctx context.Context, req model.GetSlotsRequest) ([]database.GetAppointmentSlotsRow, error)
 	DeleteById(ctx context.Context, avavailabilityId int64, userId int64) error
@@ -53,21 +53,11 @@ func NewAvailabilityService(availabilityRepo repository.AvailabilityRepository, 
 	}
 }
 
-func (s *availabilityService) CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (database.Availability, error) {
+func (s *availabilityService) CreateAvailability(ctx context.Context, req model.CreateAvailabilityRequest, userId int64) (*database.Availability, error) {
 	doctorId, err := s.doctorRepo.GetDoctorIdByUserId(ctx, userId)
 	if err != nil {
-		return database.Availability{}, errors.New("unable to get the user details of this account")
+		return nil, errors.New("unable to get the user details of this account")
 	}
-	// // parse the time
-	// startTime, err := util.ParseTimeFromString(req.StartTime)
-	// if err != nil {
-	// 	return database.Availability{}, errors.New("invalid time format.")
-	// }
-	// endTime, err := util.ParseTimeFromString(req.EndTime)
-	// if err != nil {
-	// 	return database.Availability{}, errors.New("invalid time format.")
-	// }
-	// log.Println(startTime, endTime)
 
 	return s.availabilityRepo.Create(ctx, repository.CreateAvailabilityParams{
 		DoctorID:        doctorId,

@@ -33,7 +33,6 @@ type UpdateAppointmentStatusParams struct {
 }
 
 type AppointmentService interface {
-	CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error)
 	CreateAppointmentWithPayment(ctx context.Context, req model.CreateAppointmentRequest, userId int64, email string) (*model.InitializeTransactionResponse, error)
 
 	GetPatientAppointments(ctx context.Context, params GetAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
@@ -105,20 +104,6 @@ func (s *appointmentService) GetPatientAppointments(ctx context.Context, params 
 		Status:    params.Status,
 		Interval:  params.Interval,
 	})
-}
-
-func (s *appointmentService) CreateAppointment(ctx context.Context, req model.CreateAppointmentRequest, userId int64) (database.Appointment, error) {
-	patientId, err := s.patientRepo.GetPatientIdByUserId(ctx, userId)
-	if err != nil {
-		return database.Appointment{}, errors.New("error getting the patient info linked to this account")
-	}
-
-	return s.appointmentRepo.Create(ctx, repository.CreateAppointmentParams{
-		DoctorID:  req.DoctorID,
-		StartTime: req.StartTime,
-		EndTime:   req.EndTime,
-		Reason:    req.Reason,
-	}, patientId)
 }
 
 // TODO: CLEAN THIS UP

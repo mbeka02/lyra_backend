@@ -22,7 +22,7 @@ type GetSlotsParams struct {
 	SlotDate  time.Time
 }
 type AvailabilityRepository interface {
-	Create(ctx context.Context, params CreateAvailabilityParams) (database.Availability, error)
+	Create(ctx context.Context, params CreateAvailabilityParams) (*database.Availability, error)
 	GetByDoctor(ctx context.Context, doctorId int64) ([]database.Availability, error)
 	GetSlots(ctx context.Context, params GetSlotsParams) ([]database.GetAppointmentSlotsRow, error)
 	DeleteById(ctx context.Context, availabilityId int64, doctorId int64) error
@@ -47,14 +47,18 @@ func (r *availabilityRepository) GetSlots(ctx context.Context, params GetSlotsPa
 	})
 }
 
-func (r *availabilityRepository) Create(ctx context.Context, params CreateAvailabilityParams) (database.Availability, error) {
-	return r.store.CreateAvailability(ctx, database.CreateAvailabilityParams{
+func (r *availabilityRepository) Create(ctx context.Context, params CreateAvailabilityParams) (*database.Availability, error) {
+	availabilitySlot, err := r.store.CreateAvailability(ctx, database.CreateAvailabilityParams{
 		DoctorID:        params.DoctorID,
 		StartTime:       params.StartTime,
 		EndTime:         params.EndTime,
 		DayOfWeek:       params.DayOfWeek,
 		IntervalMinutes: params.IntervalMinutes,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &availabilitySlot, nil
 }
 
 func (r *availabilityRepository) GetByDoctor(ctx context.Context, DoctorID int64) ([]database.Availability, error) {

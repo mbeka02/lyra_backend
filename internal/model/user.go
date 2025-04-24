@@ -40,7 +40,7 @@ type AuthResponse struct {
 	User           UserResponse `json:"user"`
 }
 
-func NewUserResponse(user database.User) UserResponse {
+func NewUserResponse(user *database.User) UserResponse {
 	return UserResponse{
 		UserId:          user.UserID,
 		Fullname:        user.FullName,
