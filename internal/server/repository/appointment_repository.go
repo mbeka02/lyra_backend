@@ -45,8 +45,7 @@ type UpdateAppointmentStatusParams struct {
 	Status        string
 }
 type AppointmentRepository interface {
-	Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error)
-	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error)
+	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (*CreateAppointmentWithPaymentTxResults, error)
 	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 	GetDoctorAppointments(ctx context.Context, params GetDoctorAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error)
 	GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error)
@@ -93,7 +92,7 @@ func (r *appointmentRepository) GetPatientAppointments(ctx context.Context, para
 	})
 }
 
-func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (CreateAppointmentWithPaymentTxResults, error) {
+func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (*CreateAppointmentWithPaymentTxResults, error) {
 	var result CreateAppointmentWithPaymentTxResults
 	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
 		var err error
@@ -119,15 +118,5 @@ func (r *appointmentRepository) CreateAppointmentWithPayment(ctx context.Context
 
 		return err
 	})
-	return result, err
-}
-
-func (r *appointmentRepository) Create(ctx context.Context, params CreateAppointmentParams, PatientID int64) (database.Appointment, error) {
-	return r.store.CreateAppointment(ctx, database.CreateAppointmentParams{
-		DoctorID:  params.DoctorID,
-		PatientID: PatientID,
-		StartTime: params.StartTime,
-		EndTime:   params.EndTime,
-		Reason:    params.Reason,
-	})
+	return &result, err
 }

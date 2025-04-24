@@ -37,7 +37,6 @@ func (r *paymentRepository) UpdatePaymentAndAppointmentStatus(ctx context.Contex
 			CurrentStatus: database.PaymentStatus(params.PaymentStatus),
 			Reference:     params.Reference,
 		})
-		// NB: MAKE SURE YOU RETURN THE QUERY ERROR AT EACH STAGE OF THE TRANSACTION
 		if err != nil {
 			return err
 		}

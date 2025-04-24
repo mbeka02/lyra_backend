@@ -30,7 +30,7 @@ type GetDoctorsParams struct {
 }
 
 type DoctorRepository interface {
-	Create(context.Context, CreateDoctorParams) (database.Doctor, error)
+	Create(context.Context, CreateDoctorParams) (*database.Doctor, error)
 	GetAllDoctors(context.Context, GetDoctorsParams) ([]database.GetDoctorsRow, error)
 	GetDoctorIdByUserId(context.Context, int64) (int64, error)
 }
@@ -45,7 +45,7 @@ func NewDoctorRepository(store *database.Store) DoctorRepository {
 	}
 }
 
-func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (database.Doctor, error) {
+func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (*database.Doctor, error) {
 	var doctor database.Doctor
 	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
 		var err error
@@ -66,7 +66,7 @@ func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams
 		err = q.CompleteOnboarding(ctx, params.UserID)
 		return err
 	})
-	return doctor, err
+	return &doctor, err
 }
 
 func (r *doctorRepository) GetDoctorIdByUserId(ctx context.Context, UserID int64) (int64, error) {

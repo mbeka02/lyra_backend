@@ -64,7 +64,6 @@ func NewUserService(
 	}
 }
 
-// TODO:make the return value a ptr
 func (s *userService) CreateUser(ctx context.Context, req model.CreateUserRequest) (model.AuthResponse, error) {
 	passwordHash, err := auth.HashPassword(req.Password)
 	if err != nil {
