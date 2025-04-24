@@ -23,9 +23,9 @@ type UpdateUserParams struct {
 	UserId          int64
 }
 type UserRepository interface {
-	Create(ctx context.Context, params CreateUserParams) (database.User, error)
-	GetByEmail(ctx context.Context, email string) (database.User, error)
-	GetById(ctx context.Context, id int64) (database.User, error)
+	Create(ctx context.Context, params CreateUserParams) (*database.User, error)
+	GetByEmail(ctx context.Context, email string) (*database.User, error)
+	GetById(ctx context.Context, id int64) (*database.User, error)
 	Update(ctx context.Context, params UpdateUserParams) error
 	UpdateProfilePicture(ctx context.Context, profilePictureURL string, userId int64) error
 }
@@ -40,8 +40,8 @@ func NewUserRepository(store *database.Store) UserRepository {
 	}
 }
 
-func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (database.User, error) {
-	return r.store.CreateUser(ctx, database.CreateUserParams{
+func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (*database.User, error) {
+	user, err := r.store.CreateUser(ctx, database.CreateUserParams{
 		FullName:        params.FullName,
 		Email:           params.Email,
 		TelephoneNumber: params.TelephoneNumber,
@@ -49,6 +49,10 @@ func (r *userRepository) Create(ctx context.Context, params CreateUserParams) (d
 		UserRole:        params.UserRole,
 		DateOfBirth:     params.DateOfBirth,
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
 
 func (r *userRepository) Update(ctx context.Context, params UpdateUserParams) error {
@@ -67,10 +71,18 @@ func (r *userRepository) UpdateProfilePicture(ctx context.Context, profilePictur
 	})
 }
 
-func (r *userRepository) GetByEmail(ctx context.Context, email string) (database.User, error) {
-	return r.store.GetUserByEmail(ctx, email)
+func (r *userRepository) GetByEmail(ctx context.Context, email string) (*database.User, error) {
+	user, err := r.store.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+	return &user, err
 }
 
-func (r *userRepository) GetById(ctx context.Context, userId int64) (database.User, error) {
-	return r.store.GetUserById(ctx, userId)
+func (r *userRepository) GetById(ctx context.Context, userId int64) (*database.User, error) {
+	user, err := r.store.GetUserById(ctx, userId)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }
