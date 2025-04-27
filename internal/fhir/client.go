@@ -45,8 +45,6 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 	if err != nil {
 		return nil, fmt.Errorf("marshal Patient: %w", err)
 	}
-	// hb := &healthcare.HttpBody{Data: string(payload), ContentType: "application/fhir+json"}
-	// var resp *healthcare.HttpBody
 	path := f.basePath + "/Patient/" + *patient.Id
 	var resp *http.Response
 	// If the version Id is emtpy create otherwise update
@@ -58,10 +56,10 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 			return nil, fmt.Errorf("Create resource error: %w", err)
 		}
 		defer resp.Body.Close()
-
-		if resp.StatusCode > 299 {
-			return nil, fmt.Errorf("Create resource error: status %d : %s", resp.StatusCode, resp.Status)
+		if err := checkFHIRResponse(resp, "Create"); err != nil {
+			return nil, err
 		}
+
 	} else {
 		// Update with PUT; include If-Match header for optimistic concurrency
 		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.
@@ -69,6 +67,14 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 		call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 		call.Header().Set("If-Match", fmt.Sprintf(`W/"%s"`, *patient.Meta.VersionId))
 		resp, err = call.Do()
+		if err != nil {
+			return nil, fmt.Errorf("Update resource error: %w", err)
+		}
+
+		defer resp.Body.Close()
+		if err := checkFHIRResponse(resp, "Update"); err != nil {
+			return nil, err
+		}
 	}
 	var p samplyFhir.Patient
 	err = json.NewDecoder(resp.Body).Decode(&p)
@@ -76,4 +82,12 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 		return nil, fmt.Errorf("error decoding patient response: %w", err)
 	}
 	return &p, nil
+}
+
+// a utility for checking the fhir response
+func checkFHIRResponse(resp *http.Response, action string) error {
+	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
+		return nil
+	}
+	return fmt.Errorf("%s resource error: status %d: %s", action, resp.StatusCode, resp.Status)
 }
