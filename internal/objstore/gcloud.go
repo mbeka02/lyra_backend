@@ -29,37 +29,6 @@ func NewGCStorage(projectId, bucketName string) (Storage, error) {
 	}, nil
 }
 
-// func (g *GCStorage) Upload(ctx context.Context, fileHeader *multipart.FileHeader) (*UploadResponse, error) {
-// 	// open the associated File
-// 	srcFile, err := fileHeader.Open()
-// 	if err != nil {
-// 		return nil, fmt.Errorf("unable to open the file:%v", err)
-// 	}
-//
-// 	defer srcFile.Close()
-// 	// create a unique filename
-// 	fileName := fmt.Sprintf("%s_%d", fileHeader.Filename, time.Now().UnixNano())
-//
-// 	// get the bucket handle
-// 	bucket := g.client.Bucket(g.bucketName)
-// 	objectHandle := bucket.Object(fileName)
-//
-// 	writer := objectHandle.NewWriter(ctx)
-// 	writer.ContentType = fileHeader.Header.Get("Content-Type")
-//
-// 	// Copy the file to the Object
-// 	_, err = io.Copy(writer, srcFile)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("unable to copy to storage:%v", err)
-// 	}
-// 	defer writer.Close()
-// 	storageUrl := fmt.Sprintf("https://storage.googleapis.com/%s/%s", g.bucketName, fileName)
-// 	return &UploadResponse{
-// 		StorageUrl: storageUrl,
-// 		ObjectName: fileName,
-// 	}, nil
-// }
-
 func (g *GCStorage) Download(ctx context.Context, objName string) ([]byte, error) {
 	objectHandle := g.client.Bucket(g.bucketName).Object(objName)
 	reader, err := objectHandle.NewReader(ctx)
