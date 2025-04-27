@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	samplyFhir "github.com/samply/golang-fhir-models/fhir-models/fhir"
 	healthcare "google.golang.org/api/healthcare/v1"
 	"google.golang.org/api/option"
 )
@@ -34,4 +35,7 @@ func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.Client
 	base := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s/fhir",
 		config.ProjectID, config.DatasetLocation, config.DatasetID, config.FHIRStoreID)
 	return &FHIRClient{svc: svc, basePath: base}, nil
+}
+
+func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Patient) {
 }
