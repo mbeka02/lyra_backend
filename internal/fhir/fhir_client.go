@@ -36,7 +36,7 @@ func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.Client
 	if err != nil {
 		return nil, fmt.Errorf("healthcare.NewService error: %w", err)
 	}
-	base := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s/fhir",
+	base := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s",
 		config.ProjectID, config.DatasetLocation, config.DatasetID, config.FHIRStoreID)
 	return &FHIRClient{svc: svc, basePath: base}, nil
 }
@@ -47,18 +47,22 @@ func (f *FHIRClient) UpsertDocumentReference(ctx context.Context, docRef *samply
 	if err != nil {
 		return nil, fmt.Errorf("marshal documentreference: %w", err)
 	}
+	resourceType := "DocumentReference"
+	resourceID := *docRef.Id
 
-	path := f.basePath + "/DocumentReference/" + *docRef.Id
+	parentPath := fmt.Sprintf("%s", f.basePath)                                   // for Create
+	resourcePath := fmt.Sprintf("%s/%s/%s", f.basePath, resourceType, resourceID) // for Update
+
 	var resp *http.Response
 
 	if docRef.Meta == nil || docRef.Meta.VersionId == nil || *docRef.Meta.VersionId == "" {
 		// Create
-		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(f.basePath+"/DocumentReference", "DocumentReference", bytes.NewReader(payload))
+		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(parentPath, "DocumentReference", bytes.NewReader(payload))
 		call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 		resp, err = call.Do()
 	} else {
 		// Update
-		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Update(path, bytes.NewReader(payload))
+		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Update(resourcePath, bytes.NewReader(payload))
 		call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 		call.Header().Set("If-Match", fmt.Sprintf(`W/"%s"`, *docRef.Meta.VersionId))
 		resp, err = call.Do()
@@ -80,24 +84,28 @@ func (f *FHIRClient) UpsertDocumentReference(ctx context.Context, docRef *samply
 	return &dr, nil
 }
 
-// This method creates or updates a patient resource
 func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Patient) (*samplyFhir.Patient, error) {
 	payload, err := json.Marshal(patient)
 	if err != nil {
 		return nil, fmt.Errorf("marshal patient: %w", err)
 	}
 
-	path := f.basePath + "/Patient/" + *patient.Id
+	resourceType := "Patient"
+	resourceID := *patient.Id
+
+	parentPath := fmt.Sprintf("%s", f.basePath)                                   // for Create
+	resourcePath := fmt.Sprintf("%s/%s/%s", f.basePath, resourceType, resourceID) // for Update
+
 	var resp *http.Response
 
 	if patient.Meta == nil || patient.Meta.VersionId == nil || *patient.Meta.VersionId == "" {
-		// Create
-		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(f.basePath+"/Patient", "Patient", bytes.NewReader(payload))
+		// CREATE
+		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(parentPath, resourceType, bytes.NewReader(payload))
 		call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 		resp, err = call.Do()
 	} else {
-		// Update
-		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Update(path, bytes.NewReader(payload))
+		// UPDATE
+		call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Update(resourcePath, bytes.NewReader(payload))
 		call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 		call.Header().Set("If-Match", fmt.Sprintf(`W/"%s"`, *patient.Meta.VersionId))
 		resp, err = call.Do()
@@ -127,8 +135,9 @@ func (f *FHIRClient) CreateObservation(ctx context.Context, obs *samplyFhir.Obse
 	}
 	var resp *http.Response
 
+	parentPath := fmt.Sprintf("%s", f.basePath)
 	var o samplyFhir.Observation
-	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(f.basePath+"/Observation", "Observation", bytes.NewReader(payload))
+	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(parentPath, "Observation", bytes.NewReader(payload))
 	call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 	resp, err = call.Do()
 	if err != nil {
@@ -148,5 +157,6 @@ func (f *FHIRClient) CreateObservation(ctx context.Context, obs *samplyFhir.Obse
 // a utility function for reading the error response
 func (f *FHIRClient) readErrorResponse(resp *http.Response) error {
 	body, _ := io.ReadAll(resp.Body)
+
 	return fmt.Errorf("fhir client error: status %d, body: %s", resp.StatusCode, string(body))
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/mbeka02/lyra_backend/internal/auth"
 	"github.com/mbeka02/lyra_backend/internal/database"
+	"github.com/mbeka02/lyra_backend/internal/fhir"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server/handler"
@@ -21,9 +22,11 @@ type ConfigOptions struct {
 	Port                string
 	AccessTokenDuration time.Duration
 	AuthMaker           auth.Maker
-	ObjectStorage       objstore.Storage
+	ImageStorage        objstore.Storage
+	FileStorage         objstore.Storage
 	PaymentProcessor    *payment.PaymentProcessor
 	StreamClient        *streamsdk.StreamClient
+	FHIRClient          *fhir.FHIRClient
 }
 type Server struct {
 	opts     ConfigOptions
@@ -66,10 +69,10 @@ func initRepositories(store *database.Store) Repositories {
 	}
 }
 
-func initServices(repos Repositories, maker auth.Maker, objStorage objstore.Storage, duration time.Duration, paymentProcessor *payment.PaymentProcessor, streamClient *streamsdk.StreamClient) Services {
+func initServices(repos Repositories, maker auth.Maker, imgStorage, fileStorage objstore.Storage, duration time.Duration, paymentProcessor *payment.PaymentProcessor, streamClient *streamsdk.StreamClient, fhirClient *fhir.FHIRClient) Services {
 	return Services{
-		User:         service.NewUserService(repos.User, maker, streamClient, objStorage, duration),
-		Patient:      service.NewPatientService(repos.Patient),
+		User:         service.NewUserService(repos.User, maker, streamClient, imgStorage, duration),
+		Patient:      service.NewPatientService(repos.Patient, fhirClient, fileStorage),
 		Doctor:       service.NewDoctorService(repos.Doctor),
 		Availability: service.NewAvailabilityService(repos.Availability, repos.Doctor),
 		Appointment:  service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
@@ -93,7 +96,7 @@ func NewServer(opts ConfigOptions) *http.Server {
 	// repository(data access) layer
 	repositories := initRepositories(store)
 	// service layer
-	services := initServices(repositories, opts.AuthMaker, opts.ObjectStorage, opts.AccessTokenDuration, opts.PaymentProcessor, opts.StreamClient)
+	services := initServices(repositories, opts.AuthMaker, opts.ImageStorage, opts.FileStorage, opts.AccessTokenDuration, opts.PaymentProcessor, opts.StreamClient, opts.FHIRClient)
 	// transport layer
 	handlers := initHandlers(services)
 

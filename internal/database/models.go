@@ -193,6 +193,7 @@ type Patient struct {
 	FamilyMedicalHistory  string       `json:"family_medical_history"`
 	InsuranceProvider     string       `json:"insurance_provider"`
 	InsurancePolicyNumber string       `json:"insurance_policy_number"`
+	FhirVersion           string       `json:"fhir_version"`
 	CreatedAt             time.Time    `json:"created_at"`
 	UpdatedAt             sql.NullTime `json:"updated_at"`
 }

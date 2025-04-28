@@ -17,6 +17,7 @@ CREATE TABLE patients (
     -- Insurance Information
     insurance_provider VARCHAR(255) NOT NULL DEFAULT '',
     insurance_policy_number VARCHAR(255) NOT NULL DEFAULT '',
+    fhir_version VARCHAR(50) NOT NULL DEFAULT '1',
 
     --TODO:Identification and Verification
 
