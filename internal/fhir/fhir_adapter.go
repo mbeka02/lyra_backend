@@ -2,10 +2,13 @@ package fhir
 
 import (
 	"fmt"
+	"time"
 
+	"github.com/google/uuid"
 	samplyFhir "github.com/samply/golang-fhir-models/fhir-models/fhir"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
+	"github.com/mbeka02/lyra_backend/internal/model"
 )
 
 func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFhir.Patient, error) {
@@ -119,6 +122,99 @@ func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFh
 	// }
 
 	return patient, nil
+}
+
+// BuildFHIRDocumentReference constructs a DocumentReference FHIR resource.
+// It now takes metadata and GCS/file details separately.
+func BuildFHIRDocumentReference(
+	metadata model.CreateDocumentReferenceRequest,
+	gcsUrl string,
+	contentType string,
+	sizeBytes int64,
+	attachmentCreation *time.Time, // Optional: Actual creation time of the file if known
+) (*samplyFhir.DocumentReference, error) {
+	docRef := &samplyFhir.DocumentReference{}
+
+	docRef.MasterIdentifier = &samplyFhir.Identifier{
+		System: stringPtr("urn:ietf:rfc:3986"),
+		Value:  stringPtr("urn:uuid:" + uuid.NewString()),
+	}
+	docRef.Status = samplyFhir.DocumentReferenceStatusCurrent
+
+	if metadata.DocTypeCode != nil || metadata.DocTypeDisplay != nil {
+		docType := samplyFhir.CodeableConcept{}
+		if metadata.DocTypeDisplay != nil {
+			docType.Text = stringPtr(*metadata.DocTypeDisplay)
+		}
+		if metadata.DocTypeCode != nil {
+			coding := samplyFhir.Coding{
+				Code: stringPtr(*metadata.DocTypeCode),
+			}
+			if metadata.DocTypeDisplay != nil {
+				coding.Display = stringPtr(*metadata.DocTypeDisplay)
+			}
+			docType.Coding = []samplyFhir.Coding{coding}
+		}
+		docRef.Type = &docType
+	}
+
+	docRef.Subject = &samplyFhir.Reference{
+		Reference: stringPtr(fmt.Sprintf("Patient/%d", metadata.PatientID)),
+		Type:      stringPtr("Patient"),
+	}
+
+	// --- Author (using SpecialistID or Patient) ---
+	// A document *can* be shared, but FHIR `author` usually refers to the creator
+	// of the *reference* or the document itself. Access control determines who can *see* it.
+	// If a specialist uploads it, they are the author. If patient uploads, they are.
+	if metadata.SpecialistID != nil {
+		docRef.Author = []samplyFhir.Reference{
+			{
+				// Assuming Practitioner resources exist or IDs are consistent
+				Reference: stringPtr(fmt.Sprintf("Practitioner/%d", *metadata.SpecialistID)),
+				Type:      stringPtr("Practitioner"),
+			},
+		}
+	} else {
+		// Default to Patient as author if no specialist ID provided
+		docRef.Author = []samplyFhir.Reference{
+			{
+				Reference: stringPtr(fmt.Sprintf("Patient/%d", metadata.PatientID)),
+				Type:      stringPtr("Patient"),
+			},
+		}
+	}
+
+	now := time.Now().Format(time.RFC3339Nano)
+	docRef.Date = &now // When the reference was created
+
+	attachment := samplyFhir.Attachment{
+		ContentType: stringPtr(contentType),
+		Url:         stringPtr(gcsUrl),
+		Title:       metadata.Title, // Use the provided title
+	}
+	if sizeBytes > 0 {
+		sizeBytesInt := int(sizeBytes)
+		attachment.Size = &sizeBytesInt
+	}
+	if attachmentCreation != nil {
+		creationTimeStr := attachmentCreation.Format(time.RFC3339Nano)
+		attachment.Creation = &creationTimeStr
+	}
+
+	docRef.Content = []samplyFhir.DocumentReferenceContent{
+		{Attachment: attachment},
+	}
+
+	return docRef, nil
+}
+
+// Helper function to create string pointers only if the string is not empty (reuse from previous suggestion)
+func stringPtrIfNotEmpty(s *string) *string {
+	if s != nil && *s != "" {
+		return s
+	}
+	return nil
 }
 
 // Helper function to create string pointers
