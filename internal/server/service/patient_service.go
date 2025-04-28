@@ -2,9 +2,9 @@ package service
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/mbeka02/lyra_backend/internal/database"
+	samplyFhir "github.com/samply/golang-fhir-models/fhir-models/fhir"
+
 	"github.com/mbeka02/lyra_backend/internal/fhir"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
@@ -18,7 +18,7 @@ type patientService struct {
 }
 
 type PatientService interface {
-	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*database.Patient, error)
+	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*samplyFhir.Patient, error)
 	GetPatientIdByUserId(ctx context.Context, userId int64) (int64, error)
 }
 
@@ -34,7 +34,7 @@ func (s *patientService) GetPatientIdByUserId(ctx context.Context, userId int64)
 	return s.patientRepo.GetPatientIdByUserId(ctx, userId)
 }
 
-func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*database.Patient, error) {
+func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*samplyFhir.Patient, error) {
 	// create patient in the DB
 	txResult, err := s.patientRepo.Create(ctx, repository.CreatePatientParams{
 		UserID:                userId,
@@ -57,17 +57,17 @@ func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePati
 		return nil, err
 	}
 	// Save resource to the  Google HealthCare API
-	savedFhirPatient, err := s.fhirClient.UpsertPatient(ctx, fhirPatient)
-	if err != nil {
-		return nil, err
-	}
-	// update the version ID
-	if savedFhirPatient.Meta.VersionId == nil {
-		return nil, fmt.Errorf("patient resource version id error")
-	}
-	err = s.patientRepo.UpdateFHIRVersion(ctx, txResult.Patient.PatientID, *savedFhirPatient.Meta.VersionId)
-	if err != nil {
-		return nil, err
-	}
-	return &txResult.Patient, nil
+	// savedFhirPatient, err := s.fhirClient.UpsertPatient(ctx, fhirPatient)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// // update the version ID
+	// if savedFhirPatient.Meta.VersionId == nil {
+	// 	return nil, fmt.Errorf("patient resource version id error")
+	// }
+	// err = s.patientRepo.UpdateFHIRVersion(ctx, txResult.Patient.PatientID, *savedFhirPatient.Meta.VersionId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return fhirPatient, nil
 }
