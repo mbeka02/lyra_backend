@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"log"
+	"fmt"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/fhir"
@@ -52,15 +52,17 @@ func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePati
 		return nil, err
 	}
 	// Save resource to the API
-	_, err = s.fhirClient.UpsertPatient(ctx, fhirPatient)
+	savedFhirPatient, err := s.fhirClient.UpsertPatient(ctx, fhirPatient)
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("fhir patient:%v", fhirPatient)
 	// update the version ID
-	// err = s.patientRepo.UpdateFHIRVersion(ctx, txResult.Patient.PatientID, *fhirPatient.Meta.VersionId)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	if savedFhirPatient.Meta.VersionId == nil {
+		return nil, fmt.Errorf("patient resource version id error")
+	}
+	err = s.patientRepo.UpdateFHIRVersion(ctx, txResult.Patient.PatientID, *savedFhirPatient.Meta.VersionId)
+	if err != nil {
+		return nil, err
+	}
 	return &txResult.Patient, nil
 }
