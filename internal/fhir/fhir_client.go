@@ -77,8 +77,12 @@ func (f *FHIRClient) UpsertDocumentReference(ctx context.Context, docRef *samply
 		return nil, f.readErrorResponse(resp)
 	}
 
-	var dr samplyFhir.DocumentReference
-	if err := json.NewDecoder(resp.Body).Decode(&dr); err != nil {
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("decoding error:%v", err)
+	}
+	dr, err := samplyFhir.UnmarshalDocumentReference(bodyBytes)
+	if err != nil {
 		return nil, fmt.Errorf("decode documentreference response: %w", err)
 	}
 	return &dr, nil
@@ -120,9 +124,11 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 		return nil, f.readErrorResponse(resp)
 	}
 
-	bodyBytes, _ := io.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("decoding error:%v", err)
+	}
 	p, err := samplyFhir.UnmarshalPatient(bodyBytes)
-	fmt.Println("patient", patient)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal patient response: %w", err)
 	}
@@ -138,7 +144,6 @@ func (f *FHIRClient) CreateObservation(ctx context.Context, obs *samplyFhir.Obse
 	var resp *http.Response
 
 	parentPath := fmt.Sprintf("%s", f.basePath)
-	var o samplyFhir.Observation
 	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(parentPath, "Observation", bytes.NewReader(payload))
 	call.Header().Set("Content-Type", "application/fhir+json;charset=utf-8")
 	resp, err = call.Do()
@@ -150,6 +155,12 @@ func (f *FHIRClient) CreateObservation(ctx context.Context, obs *samplyFhir.Obse
 	if resp.StatusCode >= 400 {
 		return nil, f.readErrorResponse(resp)
 	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("decoding error:%v", err)
+	}
+	o, err := samplyFhir.UnmarshalObservation(bodyBytes)
 	if err := json.NewDecoder(resp.Body).Decode(&o); err != nil {
 		return nil, fmt.Errorf("decode observation response: %w", err)
 	}

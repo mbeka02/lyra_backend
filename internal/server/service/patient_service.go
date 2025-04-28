@@ -51,7 +51,7 @@ func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePati
 	if err != nil {
 		return nil, err
 	}
-	// Save resource to the API
+	// Save resource to the  Google HealthCare API
 	savedFhirPatient, err := s.fhirClient.UpsertPatient(ctx, fhirPatient)
 	if err != nil {
 		return nil, err
