@@ -120,9 +120,11 @@ func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Pati
 		return nil, f.readErrorResponse(resp)
 	}
 
-	var p samplyFhir.Patient
-	if err := json.NewDecoder(resp.Body).Decode(&p); err != nil {
-		return nil, fmt.Errorf("decode patient response: %w", err)
+	bodyBytes, _ := io.ReadAll(resp.Body)
+	p, err := samplyFhir.UnmarshalPatient(bodyBytes)
+	fmt.Println("patient", patient)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshal patient response: %w", err)
 	}
 	return &p, nil
 }
