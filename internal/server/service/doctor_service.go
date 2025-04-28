@@ -12,6 +12,7 @@ import (
 type DoctorService interface {
 	CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (*database.Doctor, error)
 	GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error)
+	GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error)
 }
 type doctorService struct {
 	doctorRepo repository.DoctorRepository
@@ -33,6 +34,10 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 		YearsOfExperience: req.YearsOfExperience,
 		UserID:            userId,
 	})
+}
+
+func (s *doctorService) GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error) {
+	return s.doctorRepo.GetDoctorIdByUserId(ctx, userId)
 }
 
 func (s *doctorService) GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error) {

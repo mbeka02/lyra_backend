@@ -19,6 +19,7 @@ type patientService struct {
 
 type PatientService interface {
 	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*database.Patient, error)
+	GetPatientIdByUserId(ctx context.Context, userId int64) (int64, error)
 }
 
 func NewPatientService(patientRepo repository.PatientRepository, fhirClient *fhir.FHIRClient, fileStorage objstore.Storage) PatientService {
@@ -27,6 +28,10 @@ func NewPatientService(patientRepo repository.PatientRepository, fhirClient *fhi
 		fhirClient,
 		fileStorage,
 	}
+}
+
+func (s *patientService) GetPatientIdByUserId(ctx context.Context, userId int64) (int64, error) {
+	return s.patientRepo.GetPatientIdByUserId(ctx, userId)
 }
 
 func (s *patientService) CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*database.Patient, error) {
