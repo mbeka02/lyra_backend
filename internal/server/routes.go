@@ -89,6 +89,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 				r.Get("/completed", s.handlers.Appointment.HandleGetCompletedAppointments)
 				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
 			})
+			// Document endpoints
+			r.Route("/document", func(r chi.Router) {
+				r.Post("/upload", s.handlers.DocumentReference.HandleCreateDocumentReference)
+			})
 		})
 	})
 
