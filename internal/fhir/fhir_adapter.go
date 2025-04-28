@@ -1,7 +1,9 @@
 package fhir
 
 import (
+	"encoding/json"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -207,6 +209,102 @@ func BuildFHIRDocumentReference(
 	}
 
 	return docRef, nil
+}
+
+func BuildFHIRObservation(req model.CreateObservationRequest) (*samplyFhir.Observation, error) {
+	obs := &samplyFhir.Observation{}
+	// ... (Identifier, Status, Category, Code - same as before) ...
+	obs.Identifier = []samplyFhir.Identifier{{
+		System: stringPtr("urn:ietf:rfc:3986"),
+		Value:  stringPtr("urn:uuid:" + uuid.NewString()),
+	}}
+	obs.Status = samplyFhir.ObservationStatus(req.Status)
+	if req.CategoryCode != nil || req.CategoryDisplay != nil {
+		category := samplyFhir.CodeableConcept{}
+		if req.CategoryDisplay != nil {
+			category.Text = stringPtr(*req.CategoryDisplay)
+		}
+		if req.CategoryCode != nil {
+			coding := samplyFhir.Coding{
+				System: stringPtrIfNotEmpty(req.CategorySystem),
+				Code:   stringPtr(*req.CategoryCode),
+			}
+			if req.CategoryDisplay != nil {
+				coding.Display = stringPtr(*req.CategoryDisplay)
+			}
+			category.Coding = []samplyFhir.Coding{coding}
+		}
+		obs.Category = []samplyFhir.CodeableConcept{category}
+	}
+	code := samplyFhir.CodeableConcept{}
+	if req.CodeDisplay != nil {
+		code.Text = stringPtr(*req.CodeDisplay)
+	}
+	codeCoding := samplyFhir.Coding{
+		System: stringPtrIfNotEmpty(req.CodeSystem),
+		Code:   stringPtr(req.CodeCode),
+	}
+	if req.CodeDisplay != nil {
+		codeCoding.Display = stringPtr(*req.CodeDisplay)
+	}
+	code.Coding = []samplyFhir.Coding{codeCoding}
+	obs.Code = code
+
+	// --- Subject (Link to Patient) ---
+	obs.Subject = &samplyFhir.Reference{
+		Reference: stringPtr(fmt.Sprintf("Patient/%d", req.PatientID)),
+		Type:      stringPtr("Patient"),
+	}
+
+	// --- Effective DateTime ---
+	if req.EffectiveDateTime != nil {
+		effectiveTimeStr := req.EffectiveDateTime.Format(time.RFC3339Nano)
+		obs.EffectiveDateTime = &effectiveTimeStr
+	} else {
+		return nil, fmt.Errorf("effectiveDateTime is required for Observation")
+	}
+
+	// --- Performer (using SpecialistID) ---
+	if req.SpecialistID != nil {
+		obs.Performer = []samplyFhir.Reference{
+			{
+				// Assuming Practitioner resources exist or IDs are consistent
+				Reference: stringPtr(fmt.Sprintf("Practitioner/%d", *req.SpecialistID)),
+				Type:      stringPtr("Practitioner"),
+			},
+		}
+	}
+
+	// value
+	if req.ValueQuantity != nil {
+		// 1. Get the float64 value
+		floatVal := *req.ValueQuantity
+
+		// 2. Format the float64 to a string representation.
+		// 'g' format is generally good for preserving precision compactly.
+		// -1 precision means use the smallest number of digits necessary.
+		valueStr := strconv.FormatFloat(floatVal, 'g', -1, 64)
+
+		// 3. Create a json.Number from the string.
+		jsonNum := json.Number(valueStr)
+
+		// 4. Create the Quantity struct using the *pointer* to the json.Number.
+		valueQuantity := samplyFhir.Quantity{
+			Value:  &jsonNum, // Assign the address of the json.Number
+			Unit:   stringPtrIfNotEmpty(req.ValueUnit),
+			System: stringPtrIfNotEmpty(req.ValueSystem),
+			Code:   stringPtrIfNotEmpty(req.ValueCode),
+		}
+		obs.ValueQuantity = &valueQuantity
+	}
+	// ... (Note, Issued - same as before) ...
+	if req.Note != nil {
+		obs.Note = []samplyFhir.Annotation{
+			{Text: *req.Note},
+		}
+	}
+
+	return obs, nil
 }
 
 // Helper function to create string pointers only if the string is not empty (reuse from previous suggestion)
