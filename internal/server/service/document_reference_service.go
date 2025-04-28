@@ -49,13 +49,13 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 	fileHeader := input.FileHeader
 	metadata := input.Metadata
 
-	// 1. Validate File Input
+	// Validate File Input
 	err := s.validateDocumentFile(fileHeader)
 	if err != nil {
 		return nil, fmt.Errorf("invalid document file: %w", err)
 	}
 
-	// 2. Generate unique GCS Object Name
+	// Generate unique GCS Object Name
 	fileExt := filepath.Ext(fileHeader.Filename)
 	objectName := fmt.Sprintf("patients/%d/documents/%s%s",
 		metadata.PatientID,
@@ -63,7 +63,7 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 		fileExt,
 	)
 
-	// 3. Upload file to GCS using injected storage service
+	// Upload file to GCS using injected storage service
 	gcsUrl, err := s.fileStorage.Upload(ctx, objectName, fileHeader)
 	if err != nil {
 		return nil, fmt.Errorf("failed to upload document to storage: %w", err)
@@ -91,8 +91,7 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 	}
 
 	// Save resource to the FHIR Store
-	// Assuming Upsert handles creation correctly when ID/Meta are nil
-	savedFhirDocRef, err := s.fhirClient.UpsertDocumentReference(ctx, fhirDocRef)
+	savedFhirDocRef, err := s.fhirClient.CreateDocumentReference(ctx, fhirDocRef)
 	if err != nil {
 		/*TODO:Attempt to clean up GCS file if FHIR creation fails(Could be complex)
 		Consider adding cleanup logic here or documenting that orphans might occur.*/
@@ -104,7 +103,7 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 	return savedFhirDocRef, nil
 }
 
-// validateDocumentFile checks size and allowed types
+// This checks size and allowed types
 func (s *documentReferenceService) validateDocumentFile(fileHeader *multipart.FileHeader) error {
 	if fileHeader == nil {
 		return fmt.Errorf("file header is missing")
