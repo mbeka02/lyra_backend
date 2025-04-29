@@ -111,23 +111,10 @@ func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFh
 			ValueString: &insuranceText,
 		})
 	}
-
-	// // Add link to user account
-	// userReference := fmt.Sprintf("User/%d", p.UserID)
-	// patient.Link = []samplyFhir.PatientLink{
-	// 	{
-	// 		Other: samplyFhir.Reference{
-	// 			Reference: &userReference,
-	// 		},
-	// 		Type: seealsoLinkType,
-	// 	},
-	// }
-
 	return patient, nil
 }
 
 // BuildFHIRDocumentReference constructs a DocumentReference FHIR resource.
-// It now takes metadata and GCS/file details separately.
 func BuildFHIRDocumentReference(
 	metadata model.CreateDocumentReferenceRequest,
 	gcsUrl string,

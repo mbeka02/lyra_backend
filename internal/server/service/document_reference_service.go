@@ -123,10 +123,10 @@ func (s *documentReferenceService) ListPatientDocuments(ctx context.Context, pat
 		queryValues.Set("_count", strconv.Itoa(count))
 	}
 	if pageToken != "" {
-		// Check GCP FHIR docs - it might use '_page_token' or '_getpagesoffset' + '_count', or rely on Bundle links.
+		// TODO: Check GCP FHIR docs - it might use '_page_token' or '_getpagesoffset' + '_count', or rely on Bundle links.
 		// Assuming '_page_token' for now based on some GCP APIs, adjust if needed.
 		// Alternatively, standard FHIR uses Bundle links (`next`). The initial query might just set _count.
-		// Let's keep it simple for now and rely on the client handling next links from the Bundle.
+		//  for now i'll rely on the client handling next links from the Bundle.
 		// queryValues.Set("_page_token", pageToken) // Use if GCP FHIR supports it directly
 	}
 
