@@ -12,6 +12,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 	"github.com/mbeka02/lyra_backend/config"
 	"github.com/mbeka02/lyra_backend/internal/auth"
+	"github.com/mbeka02/lyra_backend/internal/fhir"
 	"github.com/mbeka02/lyra_backend/internal/objstore"
 	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server"
@@ -52,10 +53,25 @@ func setupServer() (*http.Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("unable to setup the auth token maker:%v", err)
 	}
-	// cloud storage setup
-	storage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_IMAGE_BUCKET)
+	// cloud storage setup for images
+	imgStorage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_IMAGE_BUCKET)
 	if err != nil {
-		return nil, fmt.Errorf("unable to setup cloud storage:%v", err)
+		return nil, fmt.Errorf("unable to setup image cloud storage:%v", err)
+	}
+	// cloud storage setup for files
+	fileStorage, err := objstore.NewGCStorage(conf.GCLOUD_PROJECT_ID, conf.GCLOUD_PATIENT_RECORD_BUCKET)
+	if err != nil {
+		return nil, fmt.Errorf("unable to setup file cloud storage:%v", err)
+	}
+	// setup the fhir client
+	fhirClient, err := fhir.NewFHIRClient(context.Background(), fhir.FHIRConfig{
+		ProjectID:       conf.GCLOUD_PROJECT_ID,
+		DatasetLocation: conf.GCLOUD_DATASET_LOCATION,
+		DatasetID:       conf.GCLOUD_DATASET_ID,
+		FHIRStoreID:     conf.GCLOUD_FHIR_STORE_ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("unable to setup fhir client:%v", err)
 	}
 	// external payment service setup
 	processor := payment.NewPaymentProcessor(conf.PAYSTACK_API_KEY)
@@ -68,9 +84,11 @@ func setupServer() (*http.Server, error) {
 		Port:                conf.PORT,
 		AccessTokenDuration: conf.ACCESS_TOKEN_DURATION,
 		AuthMaker:           maker,
-		ObjectStorage:       storage,
+		ImageStorage:        imgStorage,
 		PaymentProcessor:    processor,
 		StreamClient:        streamClient,
+		FileStorage:         fileStorage,
+		FHIRClient:          fhirClient,
 	}
 	server := server.NewServer(opts)
 	return server, nil

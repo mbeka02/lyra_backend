@@ -7,14 +7,18 @@ import (
 )
 
 type Config struct {
-	SYMMETRIC_KEY         string        `mapstructure:"SYMMETRIC_KEY"`
-	ACCESS_TOKEN_DURATION time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
-	SENDGRID_API_KEY      string        `mapstructure:"SENDGRID_API_KEY"`
-	GCLOUD_PROJECT_ID     string        `mapstructure:"GCLOUD_PROJECT_ID"`
-	GCLOUD_IMAGE_BUCKET   string        `mapstructure:"GCLOUD_IMAGE_BUCKET"`
-	PAYSTACK_API_KEY      string        `mapstructure:"PAYSTACK_API_KEY"`
-	GETSTREAM_API_KEY     string        `mapstructure:"GETSTREAM_API_KEY"`
-	GETSTREAM_API_SECRET  string        `mapstructure:"GETSTREAM_API_SECRET"`
+	SYMMETRIC_KEY                string        `mapstructure:"SYMMETRIC_KEY"`
+	ACCESS_TOKEN_DURATION        time.Duration `mapstructure:"ACCESS_TOKEN_DURATION"`
+	SENDGRID_API_KEY             string        `mapstructure:"SENDGRID_API_KEY"`
+	GCLOUD_PROJECT_ID            string        `mapstructure:"GCLOUD_PROJECT_ID"`
+	GCLOUD_IMAGE_BUCKET          string        `mapstructure:"GCLOUD_IMAGE_BUCKET"`
+	GCLOUD_PATIENT_RECORD_BUCKET string        `mapstructure:"GCLOUD_PATIENT_RECORD_BUCKET"`
+	GCLOUD_DATASET_LOCATION      string        `mapstructure:"GCLOUD_DATASET_LOCATION"`
+	GCLOUD_DATASET_ID            string        `mapstructure:"GCLOUD_DATASET_ID"`
+	GCLOUD_FHIR_STORE_ID         string        `mapstructure:"GCLOUD_FHIR_STORE_ID"`
+	PAYSTACK_API_KEY             string        `mapstructure:"PAYSTACK_API_KEY"`
+	GETSTREAM_API_KEY            string        `mapstructure:"GETSTREAM_API_KEY"`
+	GETSTREAM_API_SECRET         string        `mapstructure:"GETSTREAM_API_SECRET"`
 	// DB_CONNECTION_STRING  string        `mapstructure:"DB_CONNECTION_STRING"`
 	PORT string `mapstructure:"PORT"`
 }

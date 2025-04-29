@@ -10,7 +10,7 @@ import (
 )
 
 const createPatient = `-- name: CreatePatient :one
-INSERT INTO patients(user_id,allergies,current_medication,past_medical_history,family_medical_history,insurance_provider,insurance_policy_number, address,emergency_contact_name , emergency_contact_phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)RETURNING patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, created_at, updated_at
+INSERT INTO patients(user_id,allergies,current_medication,past_medical_history,family_medical_history,insurance_provider,insurance_policy_number, address,emergency_contact_name , emergency_contact_phone) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)RETURNING patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, fhir_version, created_at, updated_at
 `
 
 type CreatePatientParams struct {
@@ -52,6 +52,7 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 		&i.FamilyMedicalHistory,
 		&i.InsuranceProvider,
 		&i.InsurancePolicyNumber,
+		&i.FhirVersion,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 	)
@@ -67,4 +68,18 @@ func (q *Queries) GetPatientIdByUserId(ctx context.Context, userID int64) (int64
 	var patient_id int64
 	err := row.Scan(&patient_id)
 	return patient_id, err
+}
+
+const updateFhirVersionId = `-- name: UpdateFhirVersionId :exec
+UPDATE  patients SET fhir_version=$1 WHERE patient_id=$2
+`
+
+type UpdateFhirVersionIdParams struct {
+	FhirVersion string `json:"fhir_version"`
+	PatientID   int64  `json:"patient_id"`
+}
+
+func (q *Queries) UpdateFhirVersionId(ctx context.Context, arg UpdateFhirVersionIdParams) error {
+	_, err := q.db.ExecContext(ctx, updateFhirVersionId, arg.FhirVersion, arg.PatientID)
+	return err
 }

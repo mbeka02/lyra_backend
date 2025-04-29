@@ -18,9 +18,14 @@ type CreatePatientParams struct {
 	EmergencyContactName  string
 	EmergencyContactPhone string
 }
+type CreatePatientTxResult struct {
+	User    database.User
+	Patient database.Patient
+}
 type PatientRepository interface {
-	Create(context.Context, CreatePatientParams) (*database.Patient, error)
+	Create(context.Context, CreatePatientParams) (*CreatePatientTxResult, error)
 	GetPatientIdByUserId(context.Context, int64) (int64, error)
+	UpdateFHIRVersion(ctx context.Context, patientID int64, version string) error
 }
 
 type patientRepository struct {
@@ -33,12 +38,12 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 	}
 }
 
-func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (*database.Patient, error) {
-	var patient database.Patient
+func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (*CreatePatientTxResult, error) {
+	var result CreatePatientTxResult
 	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
 		var err error
 		// create record
-		patient, err = q.CreatePatient(ctx, database.CreatePatientParams{
+		result.Patient, err = q.CreatePatient(ctx, database.CreatePatientParams{
 			UserID:                params.UserID,
 			Allergies:             params.Allergies,
 			CurrentMedication:     params.CurrentMedication,
@@ -53,13 +58,25 @@ func (r *patientRepository) Create(ctx context.Context, params CreatePatientPara
 		if err != nil {
 			return err
 		}
+		// get the user record
+		result.User, err = q.GetUserById(ctx, params.UserID)
+		if err != nil {
+			return err
+		}
 		// mark onboarding as completed
 		err = q.CompleteOnboarding(ctx, params.UserID)
 		return err
 	})
-	return &patient, err
+	return &result, err
 }
 
 func (r *patientRepository) GetPatientIdByUserId(ctx context.Context, UserID int64) (int64, error) {
 	return r.store.GetPatientIdByUserId(ctx, UserID)
+}
+
+func (r *patientRepository) UpdateFHIRVersion(ctx context.Context, patientID int64, version string) error {
+	return r.store.UpdateFhirVersionId(ctx, database.UpdateFhirVersionIdParams{
+		PatientID:   patientID,
+		FhirVersion: version,
+	})
 }
