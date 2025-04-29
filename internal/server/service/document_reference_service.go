@@ -117,7 +117,8 @@ func (s *documentReferenceService) ListPatientDocuments(ctx context.Context, pat
 
 	// Sort by date descending (most recent first) - common requirement
 	queryValues.Set("_sort", "-date")
-
+	// NOTE: _type can only be used for global searches
+	// queryValues.Set("_type", "DocumentReference")
 	// Handle pagination parameters
 	if count > 0 {
 		queryValues.Set("_count", strconv.Itoa(count))

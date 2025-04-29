@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	samplyFhir "github.com/samply/golang-fhir-models/fhir-models/fhir"
+	"golang.org/x/oauth2/google"
 	healthcare "google.golang.org/api/healthcare/v1"
 	"google.golang.org/api/option"
 )
@@ -17,8 +18,10 @@ import (
 // FHIRClient wraps Google Cloud Healthcare FHIR API calls.
 // It handles JSON marshalling/unmarshalling of FHIR resources.
 type FHIRClient struct {
-	svc      *healthcare.Service
-	basePath string
+	svc        *healthcare.Service
+	basePath   string
+	baseApiUrl string // Base API endpoint:
+	client     *http.Client
 }
 
 // FHIRConfig holds the project id ,dataset location , id and the id of the fhir store
@@ -31,15 +34,34 @@ type FHIRConfig struct {
 
 // NewFHIRClient initializes the Healthcare API client using ADC.
 func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.ClientOption) (*FHIRClient, error) {
-	// Default to CloudPlatformScope if not overridden
-	opts = append([]option.ClientOption{option.WithScopes(healthcare.CloudPlatformScope)}, opts...)
-	svc, err := healthcare.NewService(ctx, opts...)
+	// 1. Get the default authenticated HTTP client using ADC
+	// Ensure the context has the necessary credentials available (e.g., running on GCP, GOOGLE_APPLICATION_CREDENTIALS env var)
+	httpClient, err := google.DefaultClient(ctx, healthcare.CloudPlatformScope)
+	if err != nil {
+		return nil, fmt.Errorf("google.DefaultClient error: %w", err)
+	}
+
+	// 2. Create the healthcare service, passing the authenticated client
+	// Prepend the authenticated client option to any user-provided options
+	finalOpts := append([]option.ClientOption{option.WithHTTPClient(httpClient)}, opts...)
+	svc, err := healthcare.NewService(ctx, finalOpts...)
 	if err != nil {
 		return nil, fmt.Errorf("healthcare.NewService error: %w", err)
 	}
-	base := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s",
+
+	// 3. Construct path segments
+	basePath := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s",
 		config.ProjectID, config.DatasetLocation, config.DatasetID, config.FHIRStoreID)
-	return &FHIRClient{svc: svc, basePath: base}, nil
+	// Base URL for the Healthcare API v1
+	baseApiUrl := "https://healthcare.googleapis.com/v1" // Adjust if using a different endpoint/version
+
+	// 4. Return the client struct containing both service and http client
+	return &FHIRClient{
+		svc:        svc,
+		client:     httpClient, // Store the client
+		basePath:   basePath,
+		baseApiUrl: baseApiUrl,
+	}, nil
 }
 
 func (f *FHIRClient) UpsertPatient(ctx context.Context, patient *samplyFhir.Patient) (*samplyFhir.Patient, error) {
@@ -193,22 +215,67 @@ func (f *FHIRClient) UpdateDocumentReference(ctx context.Context, docRef *samply
 	return f.decodeDocumentReferenceResponse(resp.Body)
 }
 
-// Helper function to decode response
-func (f *FHIRClient) decodeDocumentReferenceResponse(body io.ReadCloser) (*samplyFhir.DocumentReference, error) {
-	bodyBytes, err := io.ReadAll(body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading response body: %w", err)
+// This method performs a search for DocumentReference resources based on query parameters.
+// NOTE: It uses a http client to make requests instead of the google package
+func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams string) (*samplyFhir.Bundle, error) {
+	resourceType := "DocumentReference"
+
+	// Construct the full API endpoint URL for the GET search
+	// Example: https://healthcare.googleapis.com/v1/projects/p/locations/l/datasets/d/fhirStores/f/fhir/DocumentReference?subject=Patient/123
+	fullApiPath := fmt.Sprintf("%s/%s/fhir/%s", f.baseApiUrl, f.basePath, resourceType)
+
+	// Append query parameters correctly
+	if queryParams != "" {
+		queryParams = strings.TrimPrefix(queryParams, "?")
+		queryParams = strings.TrimPrefix(queryParams, "&")
+		fullApiPath = fmt.Sprintf("%s?%s", fullApiPath, queryParams)
 	}
 
-	var dr samplyFhir.DocumentReference
-	if err := json.Unmarshal(bodyBytes, &dr); err != nil {
-		return nil, fmt.Errorf("error decoding documentreference response: %w. Body: %s", err, string(bodyBytes))
+	// Create the HTTP GET request object
+	req, err := http.NewRequestWithContext(ctx, "GET", fullApiPath, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create search request: %w", err)
 	}
-	return &dr, nil
+
+	// Set required headers
+	req.Header.Set("Accept", "application/fhir+json")
+	// Authentication headers are handled automatically by the httpClient obtained from google.DefaultClient
+
+	//  Execute the request using the stored authenticated client
+	resp, err := f.client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("search documentreferences (GET %s) API call failed: %w", fullApiPath, err)
+	}
+	defer resp.Body.Close()
+
+	//  Handle the response (status check)
+	if resp.StatusCode != http.StatusOK {
+		// Use the existing helper, passing the operation description
+		return nil, f.readErrorResponse(resp, fmt.Sprintf("search documentreferences (GET %s)", fullApiPath))
+	}
+
+	//  Decode the response body (should be a Bundle)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading search response body: %w", err)
+	}
+
+	var bundle samplyFhir.Bundle
+	if err := json.Unmarshal(bodyBytes, &bundle); err != nil {
+		// Include raw body in error for debugging decode failures
+		return nil, fmt.Errorf("error decoding search result bundle: %w. Body: %s", err, string(bodyBytes))
+	}
+
+	//  Validate bundle type (optional but recommended)
+	if bundle.Type != samplyFhir.BundleTypeSearchset {
+		fmt.Printf("Warning: Expected searchset bundle, got type %s\n", bundle.Type)
+	}
+
+	return &bundle, nil
 }
 
-// This method performs a search for DocumentReference resources based on query parameters.
-// queryParams should be URL-encoded key=value pairs (e.g., "subject=Patient/123&_sort=-date").
+//OLD FUNCTION
+/*
 func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams string) (*samplyFhir.Bundle, error) {
 	resourceType := "DocumentReference"
 
@@ -218,15 +285,17 @@ func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams s
 	} else if !strings.Contains(queryParams, "_type=") {
 		queryParams += "&_type=" + resourceType
 	}
-
+	// Construct the base URL path for DocumentReference resources
+	// Add query parameters to the base path if provided
 	// Construct the URL with the query parameters
-	parentPath := fmt.Sprintf("%s/fhir/%s?%s", f.basePath, resourceType, queryParams)
-
+	parentPath := fmt.Sprintf("%s", f.basePath)
 	// Create the search request
-	req := &healthcare.SearchResourcesRequest{}
+	req := &healthcare.SearchResourcesRequest{
+		ResourceType: resourceType,
+	}
 
 	// Create the search call
-	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Search(parentPath, req)
+	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.SearchType(parentPath, resourceType, req)
 
 	// Set necessary headers
 	call.Header().Set("Accept", "application/fhir+json")
@@ -261,6 +330,20 @@ func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams s
 	}
 
 	return &bundle, nil
+}
+*/
+// Helper function to decode response
+func (f *FHIRClient) decodeDocumentReferenceResponse(body io.ReadCloser) (*samplyFhir.DocumentReference, error) {
+	bodyBytes, err := io.ReadAll(body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading response body: %w", err)
+	}
+
+	var dr samplyFhir.DocumentReference
+	if err := json.Unmarshal(bodyBytes, &dr); err != nil {
+		return nil, fmt.Errorf("error decoding documentreference response: %w. Body: %s", err, string(bodyBytes))
+	}
+	return &dr, nil
 }
 
 func (f *FHIRClient) readErrorResponse(resp *http.Response, operation string) error {

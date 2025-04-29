@@ -12,8 +12,6 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
 
-// Assume maxDocumentSize is defined elsewhere or define it here
-const maxDocumentSize = 50 * 1024 * 1024 // 50 MB
 type DocumentReferenceHandler struct {
 	patientService  service.PatientService
 	doctorService   service.DoctorService
@@ -95,7 +93,7 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 		return
 	}
 
-	// Optional but Recommended: Authorization Check
+	// Authorization Check
 	// E.g., If specialist, check if they are allowed to access/modify targetPatientID's records.
 
 	// prepare input for the DocumentReferenceService
@@ -139,17 +137,19 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	params := NewQueryParamExtractor(r)
 	patientIdStr := params.GetString("patientId")
 
-	// Authorization Check (CRUCIAL!)
+	// TODO: Authorization Check (CRUCIAL!)
 	// Can the authenticated user (payload.UserID, payload.Role) view documents for targetPatientID?
 	authorized := false
 	if payload.Role == "patient" {
 		// Is the patient viewing their own documents?
 		pID, err := h.patientService.GetPatientIdByUserId(r.Context(), payload.UserID)
-		if err == nil && pID == targetPatientID {
+		if err == nil /*&& pID == targetPatientID*/ {
 			authorized = true
 		}
+
 		targetPatientID = pID
 	} else if payload.Role == "specialist" {
+		log.Println("ran this specialist block")
 		// Is the specialist viewing documents for a patient under their care?
 		// This requires logic in the specialistService/Repo to check the relationship.
 		if patientIdStr == "" {
