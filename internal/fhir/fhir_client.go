@@ -137,7 +137,7 @@ func (f *FHIRClient) CreateObservation(ctx context.Context, obs *samplyFhir.Obse
 		return nil, fmt.Errorf("decoding error:%v", err)
 	}
 	o, err := samplyFhir.UnmarshalObservation(bodyBytes)
-	if err := json.NewDecoder(resp.Body).Decode(&o); err != nil {
+	if err != nil {
 		return nil, fmt.Errorf("decode observation response: %w", err)
 	}
 	return &o, nil
