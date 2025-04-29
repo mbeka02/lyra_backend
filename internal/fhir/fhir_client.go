@@ -129,7 +129,7 @@ func (f *FHIRClient) CreateDocumentReference(ctx context.Context, docRef *samply
 	}
 
 	resourceType := "DocumentReference"
-	parentPath := fmt.Sprintf("%s/fhir", f.basePath) // Path for Create operation includes /fhir
+	parentPath := fmt.Sprintf("%s", f.basePath) // Path for Create operation includes /fhir
 
 	// Call the Create API
 	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Create(parentPath, resourceType, bytes.NewReader(payload))
@@ -171,7 +171,7 @@ func (f *FHIRClient) UpdateDocumentReference(ctx context.Context, docRef *samply
 	versionID := *docRef.Meta.VersionId
 
 	// Path for Update operation includes resource type and ID
-	resourcePath := fmt.Sprintf("%s/fhir/%s/%s", f.basePath, resourceType, resourceID)
+	resourcePath := fmt.Sprintf("%s/%s/%s", f.basePath, resourceType, resourceID)
 
 	// Call the Update API
 	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Update(resourcePath, bytes.NewReader(payload))
@@ -207,6 +207,62 @@ func (f *FHIRClient) decodeDocumentReferenceResponse(body io.ReadCloser) (*sampl
 	return &dr, nil
 }
 
+// This method performs a search for DocumentReference resources based on query parameters.
+// queryParams should be URL-encoded key=value pairs (e.g., "subject=Patient/123&_sort=-date").
+func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams string) (*samplyFhir.Bundle, error) {
+	resourceType := "DocumentReference"
+
+	// Prepare the query parameters
+	if queryParams == "" {
+		queryParams = "_type=" + resourceType
+	} else if !strings.Contains(queryParams, "_type=") {
+		queryParams += "&_type=" + resourceType
+	}
+
+	// Construct the URL with the query parameters
+	parentPath := fmt.Sprintf("%s/fhir/%s?%s", f.basePath, resourceType, queryParams)
+
+	// Create the search request
+	req := &healthcare.SearchResourcesRequest{}
+
+	// Create the search call
+	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.Search(parentPath, req)
+
+	// Set necessary headers
+	call.Header().Set("Accept", "application/fhir+json")
+
+	// Execute the request
+	resp, err := call.Do()
+	if err != nil {
+		// Consider adding retry logic here for transient network errors
+		return nil, fmt.Errorf("search documentreferences API call failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Search usually returns 200 OK
+	if resp.StatusCode != http.StatusOK {
+		return nil, f.readErrorResponse(resp, "search documentreferences")
+	}
+
+	// Decode the response body (should be a Bundle of type searchset)
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("error reading search response body: %w", err)
+	}
+
+	var bundle samplyFhir.Bundle
+	if err := json.Unmarshal(bodyBytes, &bundle); err != nil {
+		return nil, fmt.Errorf("error decoding search result bundle: %w. Body: %s", err, string(bodyBytes))
+	}
+
+	// Validate that it's a searchset bundle
+	if bundle.Type != samplyFhir.BundleTypeSearchset {
+		fmt.Printf("Warning: Expected searchset bundle, got type %v\n", bundle.Type)
+	}
+
+	return &bundle, nil
+}
+
 func (f *FHIRClient) readErrorResponse(resp *http.Response, operation string) error {
 	body, _ := io.ReadAll(resp.Body)
 
@@ -219,7 +275,7 @@ func (f *FHIRClient) readErrorResponse(resp *http.Response, operation string) er
 			if i > 0 {
 				issues.WriteString("; ")
 			}
-			issues.WriteString(fmt.Sprintf("Severity: %s, Code: %s, Details: %v", issue.Severity, issue.Code, issue.Diagnostics))
+			issues.WriteString(fmt.Sprintf("Severity: %s, Code: %s, Details: %s", issue.Severity, issue.Code, *issue.Diagnostics))
 		}
 		return fmt.Errorf("fhir client error during '%s': status %d, Outcome: [%s]", operation, resp.StatusCode, issues.String())
 	}
