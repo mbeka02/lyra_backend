@@ -8,6 +8,7 @@ import (
 	"path/filepath" // For getting file extension
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid" // For unique object names
 	samplyFhir "github.com/samply/golang-fhir-models/fhir-models/fhir"
@@ -78,16 +79,17 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 		contentType = "application/octet-stream" // Default if not provided
 	}
 	sizeBytes := fileHeader.Size
-	/* NB: You easily get the *actual file creation time* from a multipart upload.
-	If the client sends it (e.g., via model.AttachmentCreationStr), I could parse it here,for now, i'll pass nil for attachmentCreation.
+	/* NB: You can't easily get the *actual file creation time* from a multipart upload.
+	If the client sends it (e.g., via model.AttachmentCreationStr), I could parse it here,for now, i'll pass the current time on the server.
 	*/
+	now := time.Now()
 	// Build the FHIR DocumentReference Resource
 	fhirDocRef, err := fhir.BuildFHIRDocumentReference(
 		metadata,
 		gcsUrl,
 		contentType,
 		sizeBytes,
-		nil,
+		&now,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build FHIR DocumentReference: %w", err)
