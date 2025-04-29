@@ -3,7 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/server/middleware"
@@ -119,6 +121,76 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 	// respond with success
 	if err := respondWithJSON(w, http.StatusCreated, savedFhirDocRef); err != nil {
 		// log this error, as headers might already be sent
+		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
+	}
+}
+
+// handleListPatientDocuments handles GET requests for a patient's documents.
+func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, err := middleware.GetAuthPayload(r.Context())
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	// Extract Target Patient ID
+	var targetPatientID int64
+	// params
+	params := NewQueryParamExtractor(r)
+	patientIdStr := params.GetString("patientId")
+
+	// Authorization Check (CRUCIAL!)
+	// Can the authenticated user (payload.UserID, payload.Role) view documents for targetPatientID?
+	authorized := false
+	if payload.Role == "patient" {
+		// Is the patient viewing their own documents?
+		pID, err := h.patientService.GetPatientIdByUserId(r.Context(), payload.UserID)
+		if err == nil && pID == targetPatientID {
+			authorized = true
+		}
+		targetPatientID = pID
+	} else if payload.Role == "specialist" {
+		// Is the specialist viewing documents for a patient under their care?
+		// This requires logic in the specialistService/Repo to check the relationship.
+		if patientIdStr == "" {
+			respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing required patientId parameter"))
+			return
+		}
+		targetPatientID, err = strconv.ParseInt(patientIdStr, 10, 64)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId parameter: %v", err))
+			return
+		}
+
+		authorized = true // TODO: Implement proper specialist-patient link check
+	}
+
+	if !authorized {
+		respondWithError(w, http.StatusForbidden, fmt.Errorf("you are not authorized to view documents for this patient"))
+		return
+	}
+
+	// Extract Pagination Parameters
+	// Standard FHIR param
+	count := params.GetInt("_count", 0) // Ignore error, default to 0 (service might have its own default)
+	if count <= 0 || count > 100 {      // Apply a reasonable max limit
+		count = 20 // Default page size
+	}
+
+	pageToken := params.GetString("_page_token") // Or other token param if used
+
+	// Call the Service
+	bundle, err := h.documentService.ListPatientDocuments(r.Context(), targetPatientID, count, pageToken)
+	if err != nil {
+		log.Printf("ERROR: ListPatientDocuments failed: %v\n", err)
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve documents"))
+		return
+	}
+
+	// Respond with the FHIR Bundle
+	// Ensure response helpers set Content-Type: application/fhir+json
+	w.Header().Set("Content-Type", "application/fhir+json") // Explicitly set here or in helper
+	if err := respondWithJSON(w, http.StatusOK, bundle); err != nil {
 		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
 	}
 }
