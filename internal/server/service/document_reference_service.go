@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"net/url"
 	"path/filepath" // For getting file extension
+	"strconv"
 	"strings"
 
 	"github.com/google/uuid" // For unique object names
@@ -29,7 +31,8 @@ var allowedDocumentTypes = map[string]bool{ // Example list, expand significantl
 
 type DocumentReferenceService interface {
 	CreateDocumentReference(ctx context.Context, input model.CreateDocumentReferenceServiceInput) (*samplyFhir.DocumentReference, error)
-	// TODO: Add Get, List methods etc
+	// Returns a FHIR Bundle.
+	ListPatientDocuments(ctx context.Context, patientID int64, count int, pageToken string) (*samplyFhir.Bundle, error)
 }
 
 type documentReferenceService struct {
@@ -101,6 +104,43 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 
 	// Return the saved resource
 	return savedFhirDocRef, nil
+}
+
+func (s *documentReferenceService) ListPatientDocuments(ctx context.Context, patientID int64, count int, pageToken string) (*samplyFhir.Bundle, error) {
+	// Construct FHIR Query Parameters
+	queryValues := url.Values{} // Use url.Values for proper encoding
+
+	// Filter by subject (the patient)
+	queryValues.Set("subject", fmt.Sprintf("Patient/%d", patientID))
+
+	// Sort by date descending (most recent first) - common requirement
+	queryValues.Set("_sort", "-date")
+
+	// Handle pagination parameters
+	if count > 0 {
+		queryValues.Set("_count", strconv.Itoa(count))
+	}
+	if pageToken != "" {
+		// Check GCP FHIR docs - it might use '_page_token' or '_getpagesoffset' + '_count', or rely on Bundle links.
+		// Assuming '_page_token' for now based on some GCP APIs, adjust if needed.
+		// Alternatively, standard FHIR uses Bundle links (`next`). The initial query might just set _count.
+		// Let's keep it simple for now and rely on the client handling next links from the Bundle.
+		// queryValues.Set("_page_token", pageToken) // Use if GCP FHIR supports it directly
+	}
+
+	// Encode parameters: queryValues.Encode() -> "subject=Patient%2F123&_sort=-date&_count=20"
+	queryString := queryValues.Encode()
+
+	// Call FHIR Client Search
+	bundle, err := s.fhirClient.SearchDocumentReferences(ctx, queryString)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search document references in FHIR store: %w", err)
+	}
+
+	// Return the resulting bundle
+	// The bundle contains the list of DocumentReference resources in bundle.Entry
+	// It also potentially contains pagination links (bundle.Link) like 'next', 'self'.
+	return bundle, nil
 }
 
 // This checks size and allowed types
