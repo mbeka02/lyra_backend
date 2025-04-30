@@ -164,16 +164,16 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 		doctorID, err := h.doctorService.GetDoctorIdByUserId(r.Context(), payload.UserID)
 		if err != nil {
 			log.Printf("Auth check failed for specialist user %d: %v\n", payload.UserID, err)
-			// Don't authorize if we can't even find the doctors record
+			respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve doctor information"))
+			return
+		}
+		// Now, check the care relationship using the service method
+		isUnderCare, err := h.doctorService.IsPatientUnderCare(r.Context(), doctorID, targetPatientID)
+		if err != nil {
+			// Log the error from the care check
+			log.Printf("Auth check error for doctor %d viewing patient %d: %v\n", doctorID, targetPatientID, err)
 		} else {
-			// Now, check the care relationship using the service method
-			isUnderCare, err := h.doctorService.IsPatientUnderCare(r.Context(), doctorID, targetPatientID)
-			if err != nil {
-				// Log the error from the care check
-				log.Printf("Auth check error for doctor %d viewing patient %d: %v\n", doctorID, targetPatientID, err)
-			} else {
-				authorized = isUnderCare // Authorize if the service confirms care relationship
-			}
+			authorized = isUnderCare // Authorize if the service confirms care relationship
 		}
 	}
 
