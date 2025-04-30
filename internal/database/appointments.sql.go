@@ -11,6 +11,28 @@ import (
 	"time"
 )
 
+const checkSpecialistPatientAppointmentExists = `-- name: CheckSpecialistPatientAppointmentExists :one
+SELECT EXISTS(
+  SELECT 1
+  FROM appointments 
+  WHERE doctor_id=$1 AND patient_id=$2
+  AND current_status NOT IN ('pending_payment','cancelled')
+  LIMIT 1
+)
+`
+
+type CheckSpecialistPatientAppointmentExistsParams struct {
+	DoctorID  int64 `json:"doctor_id"`
+	PatientID int64 `json:"patient_id"`
+}
+
+func (q *Queries) CheckSpecialistPatientAppointmentExists(ctx context.Context, arg CheckSpecialistPatientAppointmentExistsParams) (bool, error) {
+	row := q.db.QueryRowContext(ctx, checkSpecialistPatientAppointmentExists, arg.DoctorID, arg.PatientID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createAppointment = `-- name: CreateAppointment :one
 INSERT INTO appointments(patient_id,doctor_id,start_time,end_time, reason) VALUES ($1,$2,$3,$4,$5) RETURNING appointment_id, patient_id, doctor_id, current_status, reason, notes, start_time, end_time, created_at, updated_at
 `
