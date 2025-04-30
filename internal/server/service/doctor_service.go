@@ -47,7 +47,7 @@ func (s *doctorService) IsPatientUnderCare(ctx context.Context, doctorID int64, 
 		DoctorID:  doctorID,
 	})
 	if err != nil {
-		fmt.Printf("Error checking appointment for auth (Doctor %d, Pat %d): %v\n", doctorID, patientID, err)
+		log.Printf("Error checking appointment for auth (Doctor %d, Pat %d): %v\n", doctorID, patientID, err)
 		return false, fmt.Errorf("failed to verify care relationship")
 	}
 	return exists, nil
