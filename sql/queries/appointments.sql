@@ -46,6 +46,14 @@ WHERE current_status = 'completed'
     (params.role = 'patient' AND patient_id = params.id)
   )
 ORDER BY appointment_id;
+-- name: CheckSpecialistPatientAppointmentExists :one
+SELECT EXISTS(
+  SELECT 1
+  FROM appointments 
+  WHERE doctor_id=$1 AND patient_id=$2
+  AND current_status NOT IN ('pending_payment','cancelled')
+  LIMIT 1
+);
 -- name: UpdateAppointmentStatus :exec
 UPDATE appointments SET current_status=$1 WHERE appointment_id=$2;
 

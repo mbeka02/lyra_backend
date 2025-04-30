@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
@@ -44,12 +45,17 @@ type UpdateAppointmentStatusParams struct {
 	AppointmentID int64
 	Status        string
 }
+type CheckAppointmentExistsParams struct {
+	PatientID int64
+	DoctorID  int64
+}
 type AppointmentRepository interface {
 	CreateAppointmentWithPayment(ctx context.Context, params CreateAppointmentWithPaymentParams) (*CreateAppointmentWithPaymentTxResults, error)
 	GetPatientAppointments(ctx context.Context, params GetPatientAppointmentsParams) ([]database.GetPatientAppointmentsRow, error)
 	GetDoctorAppointments(ctx context.Context, params GetDoctorAppointmentsParams) ([]database.GetDoctorAppointmentsRow, error)
 	GetAppointmentIDs(ctx context.Context, params GetAppointmentIDsParams) ([]int64, error)
 	UpdateAppointmentStatus(ctx context.Context, params UpdateAppointmentStatusParams) error
+	CheckAppointmentExists(ctx context.Context, params CheckAppointmentExistsParams) (bool, error)
 }
 
 type appointmentRepository struct {
@@ -60,6 +66,19 @@ func NewAppointmentRepository(store *database.Store) AppointmentRepository {
 	return &appointmentRepository{
 		store,
 	}
+}
+
+func (r *appointmentRepository) CheckAppointmentExists(ctx context.Context, params CheckAppointmentExistsParams) (bool, error) {
+	exists, err := r.store.CheckSpecialistPatientAppointmentExists(ctx,
+		database.CheckSpecialistPatientAppointmentExistsParams{
+			DoctorID:  params.DoctorID,
+			PatientID: params.PatientID,
+		},
+	)
+	if err != nil {
+		return false, fmt.Errorf("failed to check appointment existence: %w", err)
+	}
+	return exists, nil
 }
 
 func (r *appointmentRepository) UpdateAppointmentStatus(ctx context.Context, params UpdateAppointmentStatusParams) error {

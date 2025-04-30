@@ -149,7 +149,6 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 
 		targetPatientID = pID
 	} else if payload.Role == "specialist" {
-		log.Println("ran this specialist block")
 		// Is the specialist viewing documents for a patient under their care?
 		// This requires logic in the specialistService/Repo to check the relationship.
 		if patientIdStr == "" {
@@ -161,8 +160,21 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 			respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId parameter: %v", err))
 			return
 		}
-
-		authorized = true // TODO: Implement proper specialist-patient link check
+		// First, get the DoctorID for the logged-in user
+		doctorID, err := h.doctorService.GetDoctorIdByUserId(r.Context(), payload.UserID)
+		if err != nil {
+			log.Printf("Auth check failed for specialist user %d: %v\n", payload.UserID, err)
+			// Don't authorize if we can't even find the doctors record
+		} else {
+			// Now, check the care relationship using the service method
+			isUnderCare, err := h.doctorService.IsPatientUnderCare(r.Context(), doctorID, targetPatientID)
+			if err != nil {
+				// Log the error from the care check
+				log.Printf("Auth check error for doctor %d viewing patient %d: %v\n", doctorID, targetPatientID, err)
+			} else {
+				authorized = isUnderCare // Authorize if the service confirms care relationship
+			}
+		}
 	}
 
 	if !authorized {

@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	"log"
 
 	"github.com/mbeka02/lyra_backend/internal/database"
@@ -13,14 +14,17 @@ type DoctorService interface {
 	CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (*database.Doctor, error)
 	GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error)
 	GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error)
+	IsPatientUnderCare(ctx context.Context, doctorID int64, patientID int64) (bool, error)
 }
 type doctorService struct {
-	doctorRepo repository.DoctorRepository
+	doctorRepo      repository.DoctorRepository
+	appointmentRepo repository.AppointmentRepository
 }
 
-func NewDoctorService(doctorRepo repository.DoctorRepository) DoctorService {
+func NewDoctorService(doctorRepo repository.DoctorRepository, appointmentRepo repository.AppointmentRepository) DoctorService {
 	return &doctorService{
 		doctorRepo,
+		appointmentRepo,
 	}
 }
 
@@ -34,6 +38,19 @@ func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctor
 		YearsOfExperience: req.YearsOfExperience,
 		UserID:            userId,
 	})
+}
+
+func (s *doctorService) IsPatientUnderCare(ctx context.Context, doctorID int64, patientID int64) (bool, error) {
+	// Call the repository method to check for relevant appointments
+	exists, err := s.appointmentRepo.CheckAppointmentExists(ctx, repository.CheckAppointmentExistsParams{
+		PatientID: patientID,
+		DoctorID:  doctorID,
+	})
+	if err != nil {
+		fmt.Printf("Error checking appointment for auth (Doctor %d, Pat %d): %v\n", doctorID, patientID, err)
+		return false, fmt.Errorf("failed to verify care relationship")
+	}
+	return exists, nil
 }
 
 func (s *doctorService) GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error) {

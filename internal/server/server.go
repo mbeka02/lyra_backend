@@ -76,7 +76,7 @@ func initServices(repos Repositories, maker auth.Maker, imgStorage, fileStorage 
 	return Services{
 		User:              service.NewUserService(repos.User, maker, streamClient, imgStorage, duration),
 		Patient:           service.NewPatientService(repos.Patient, fhirClient, fileStorage),
-		Doctor:            service.NewDoctorService(repos.Doctor),
+		Doctor:            service.NewDoctorService(repos.Doctor, repos.Appointment),
 		Availability:      service.NewAvailabilityService(repos.Availability, repos.Doctor),
 		Appointment:       service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
 		Payment:           service.NewPaymentService(paymentProcessor, repos.Payment),
