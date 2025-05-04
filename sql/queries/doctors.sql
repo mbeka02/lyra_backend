@@ -2,6 +2,24 @@
 INSERT INTO doctors(user_id,specialization,license_number,description , years_of_experience , county , price_per_hour) VALUES ($1,$2,$3,$4,$5,$6,$7)RETURNING *;
 -- name: GetDoctorIdByUserId :one
 SELECT doctor_id FROM doctors WHERE user_id=$1;
+
+-- name: ListPatientsUnderDoctorCare :many 
+WITH DoctorPatientIds AS (
+SELECT DISTINCT a.patient_id
+FROM appointments a 
+WHERE a.doctor_id=$1
+AND a.current_status NOT IN ('cancelled','pending_payment')
+)
+SELECT
+    p.patient_id,
+    u.user_id,
+    u.full_name,
+    u.profile_image_url
+FROM DoctorPatientIDs dp_ids
+JOIN patients p ON dp_ids.patient_id = p.patient_id
+JOIN users u ON p.user_id = u.user_id
+ORDER BY
+    u.full_name ASC;
 -- name: GetDoctors :many
 SELECT 
     users.full_name, 

@@ -162,3 +162,57 @@ func (q *Queries) GetDoctors(ctx context.Context, arg GetDoctorsParams) ([]GetDo
 	}
 	return items, nil
 }
+
+const listPatientsUnderDoctorCare = `-- name: ListPatientsUnderDoctorCare :many
+WITH DoctorPatientIds AS (
+SELECT DISTINCT a.patient_id
+FROM appointments a 
+WHERE a.doctor_id=$1
+AND a.current_status NOT IN ('cancelled','pending_payment')
+)
+SELECT
+    p.patient_id,
+    u.user_id,
+    u.full_name,
+    u.profile_image_url
+FROM DoctorPatientIDs dp_ids
+JOIN patients p ON dp_ids.patient_id = p.patient_id
+JOIN users u ON p.user_id = u.user_id
+ORDER BY
+    u.full_name ASC
+`
+
+type ListPatientsUnderDoctorCareRow struct {
+	PatientID       int64  `json:"patient_id"`
+	UserID          int64  `json:"user_id"`
+	FullName        string `json:"full_name"`
+	ProfileImageUrl string `json:"profile_image_url"`
+}
+
+func (q *Queries) ListPatientsUnderDoctorCare(ctx context.Context, doctorID int64) ([]ListPatientsUnderDoctorCareRow, error) {
+	rows, err := q.db.QueryContext(ctx, listPatientsUnderDoctorCare, doctorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListPatientsUnderDoctorCareRow
+	for rows.Next() {
+		var i ListPatientsUnderDoctorCareRow
+		if err := rows.Scan(
+			&i.PatientID,
+			&i.UserID,
+			&i.FullName,
+			&i.ProfileImageUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
