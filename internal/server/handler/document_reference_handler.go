@@ -36,9 +36,7 @@ func (h *DocumentReferenceHandler) HandleCreateSignedURL(w http.ResponseWriter, 
 		return
 	}
 	// respond with success
-	if err := respondWithJSON(w, http.StatusCreated, signedURL); err != nil {
-		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
-	}
+	respondWithJSON(w, http.StatusCreated, signedURL)
 }
 
 func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.ResponseWriter, r *http.Request) {
@@ -136,10 +134,7 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 	}
 
 	// respond with success
-	if err := respondWithJSON(w, http.StatusCreated, savedFhirDocRef); err != nil {
-		// log this error, as headers might already be sent
-		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
-	}
+	respondWithJSON(w, http.StatusCreated, savedFhirDocRef)
 }
 
 // handleListPatientDocuments handles GET requests for a patient's documents.
@@ -221,7 +216,5 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	// Respond with the FHIR Bundle
 	// Ensure response helpers set Content-Type: application/fhir+json
 	w.Header().Set("Content-Type", "application/fhir+json") // Explicitly set here or in helper
-	if err := respondWithJSON(w, http.StatusOK, bundle); err != nil {
-		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
-	}
+	respondWithJSON(w, http.StatusOK, bundle)
 }

@@ -18,7 +18,7 @@ func NewAppointmentHandler(appointmentService service.AppointmentService) *Appoi
 }
 
 func (h *AppointmentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) {
-	request := model.UpdateAppointmentStatusRequest{}
+	var request model.UpdateAppointmentStatusRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return
@@ -29,10 +29,7 @@ func (h *AppointmentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.R
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, "updated appointment status successfully"); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, "updated appointment status successfully")
 }
 
 func (h *AppointmentHandler) HandleGetCompletedAppointments(w http.ResponseWriter, r *http.Request) {
@@ -41,7 +38,7 @@ func (h *AppointmentHandler) HandleGetCompletedAppointments(w http.ResponseWrite
 	if !ok {
 		return
 	}
-	response, err := h.appointmentService.GetAppointmentIDs(r.Context(), service.GetAppointmentIDsParams{
+	completedAppointments, err := h.appointmentService.GetAppointmentIDs(r.Context(), service.GetAppointmentIDsParams{
 		Role:   payload.Role,
 		UserID: payload.UserID,
 	})
@@ -50,10 +47,7 @@ func (h *AppointmentHandler) HandleGetCompletedAppointments(w http.ResponseWrite
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, completedAppointments)
 }
 
 func (h *AppointmentHandler) HandleGetDoctorAppointments(w http.ResponseWriter, r *http.Request) {
@@ -64,7 +58,7 @@ func (h *AppointmentHandler) HandleGetDoctorAppointments(w http.ResponseWriter, 
 	}
 	params := NewQueryParamExtractor(r)
 	defaultInterval := 21
-	response, err := h.appointmentService.GetDoctorAppointments(r.Context(), service.GetAppointmentsParams{
+	appointments, err := h.appointmentService.GetDoctorAppointments(r.Context(), service.GetAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
 		Interval: params.GetInt32("interval", int32(defaultInterval)),
@@ -73,10 +67,7 @@ func (h *AppointmentHandler) HandleGetDoctorAppointments(w http.ResponseWriter, 
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, appointments)
 }
 
 func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter, r *http.Request) {
@@ -87,7 +78,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 	}
 	params := NewQueryParamExtractor(r)
 	defaultInterval := 21
-	response, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetAppointmentsParams{
+	appointments, err := h.appointmentService.GetPatientAppointments(r.Context(), service.GetAppointmentsParams{
 		UserID:   payload.UserID,
 		Status:   params.GetString("status"),
 		Interval: params.GetInt32("interval", int32(defaultInterval)),
@@ -96,14 +87,11 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, appointments)
 }
 
 func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *http.Request) {
-	request := model.CreateAppointmentRequest{}
+	var request model.CreateAppointmentRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return
@@ -114,13 +102,10 @@ func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *h
 		return
 	}
 
-	response, err := h.appointmentService.CreateAppointmentWithPayment(r.Context(), request, payload.UserID, payload.Email)
+	appointment, err := h.appointmentService.CreateAppointmentWithPayment(r.Context(), request, payload.UserID, payload.Email)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, appointment)
 }

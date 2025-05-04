@@ -15,6 +15,7 @@ type DoctorService interface {
 	GetDoctors(ctx context.Context, county, specialization, minPrice, maxPrice, sortBy, sortOrder string, minExperience, maxExpreinece, limit, offset int32) (model.GetDoctorsResponse, error)
 	GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error)
 	IsPatientUnderCare(ctx context.Context, doctorID int64, patientID int64) (bool, error)
+	ListPatientsUnderCare(ctx context.Context, userId int64) ([]database.ListPatientsUnderDoctorCareRow, error)
 }
 type doctorService struct {
 	doctorRepo      repository.DoctorRepository
@@ -26,6 +27,14 @@ func NewDoctorService(doctorRepo repository.DoctorRepository, appointmentRepo re
 		doctorRepo,
 		appointmentRepo,
 	}
+}
+
+func (s *doctorService) ListPatientsUnderCare(ctx context.Context, userID int64) ([]database.ListPatientsUnderDoctorCareRow, error) {
+	doctorID, err := s.doctorRepo.GetDoctorIdByUserId(ctx, userID)
+	if err != nil {
+		return nil, fmt.Errorf("unable to  get the doctor details for this account ")
+	}
+	return s.doctorRepo.ListPatientsUnderCare(ctx, doctorID)
 }
 
 func (s *doctorService) CreateDoctor(ctx context.Context, req model.CreateDoctorRequest, userId int64) (*database.Doctor, error) {

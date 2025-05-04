@@ -70,6 +70,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			// Doctor endpoints
 			r.Route("/doctors", func(r chi.Router) {
 				r.Get("/", s.handlers.Doctor.HandleGetDoctors)
+				r.Get("/my-patients", s.handlers.Doctor.HandleListMyPatients)
 				r.Post("/", s.handlers.Doctor.HandleCreateDoctor)
 				r.Get("/appointments", s.handlers.Appointment.HandleGetDoctorAppointments)
 
