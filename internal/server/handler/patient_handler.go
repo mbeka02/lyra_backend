@@ -29,13 +29,10 @@ func (h *PatientHandler) HandleCreatePatient(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
-	response, err := h.patientService.CreatePatient(r.Context(), request, payload.UserID)
+	patient, err := h.patientService.CreatePatient(r.Context(), request, payload.UserID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, patient)
 }

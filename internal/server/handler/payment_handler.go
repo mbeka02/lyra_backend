@@ -81,8 +81,5 @@ func (h *PaymentHandler) PaymentWebhook(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var nilValue interface{}
-	if err := respondWithJSON(w, http.StatusOK, nilValue); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, nilValue)
 }
