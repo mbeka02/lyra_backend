@@ -20,23 +20,20 @@ func NewUserHandler(userService service.UserService) *UserHandler {
 }
 
 func (h *UserHandler) HandleCreateUser(w http.ResponseWriter, r *http.Request) {
-	request := model.CreateUserRequest{}
+	var request model.CreateUserRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 
 		return
 	}
 
-	response, err := h.userService.CreateUser(r.Context(), request)
+	user, err := h.userService.CreateUser(r.Context(), request)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, user)
 }
 
 func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
@@ -45,19 +42,16 @@ func (h *UserHandler) HandleGetUser(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	userDetails, err := h.userService.GetUser(r.Context(), payload.UserID)
+	user, err := h.userService.GetUser(r.Context(), payload.UserID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, userDetails); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, user)
 }
 
 func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
-	request := model.UpdateUserRequest{}
+	var request model.UpdateUserRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return
@@ -79,10 +73,7 @@ func (h *UserHandler) HandleUpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, "account updated"); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, "account updated")
 }
 
 func (h *UserHandler) HandleProfilePicture(w http.ResponseWriter, r *http.Request) {
@@ -105,10 +96,7 @@ func (h *UserHandler) HandleProfilePicture(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, "profile picture updated"); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, "profile picture updated")
 }
 
 func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
@@ -124,8 +112,5 @@ func (h *UserHandler) HandleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, response)
 }

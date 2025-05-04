@@ -18,6 +18,20 @@ func NewDoctorHandler(doctorService service.DoctorService) *DoctorHandler {
 	}
 }
 
+func (h *DoctorHandler) HandleListMyPatients(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	patients, err := h.doctorService.ListPatientsUnderCare(r.Context(), payload.UserID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, err)
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, patients)
+}
+
 func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request) {
 	params := NewQueryParamExtractor(r)
 	page := params.GetInt32("page", 0)
@@ -29,9 +43,7 @@ func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusInternalServerError, errors.New("unable to get doctor details"))
 	}
 
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-	}
+	respondWithJSON(w, http.StatusOK, response)
 }
 
 func (h *DoctorHandler) HandleCreateDoctor(w http.ResponseWriter, r *http.Request) {
@@ -50,8 +62,5 @@ func (h *DoctorHandler) HandleCreateDoctor(w http.ResponseWriter, r *http.Reques
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, response)
 }
