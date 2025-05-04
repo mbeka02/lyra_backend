@@ -29,7 +29,7 @@ func (h *DoctorHandler) HandleListMyPatients(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	respondWithJSON(w, http.StatusCreated, patients)
+	respondWithJSON(w, http.StatusOK, patients)
 }
 
 func (h *DoctorHandler) HandleGetDoctors(w http.ResponseWriter, r *http.Request) {
