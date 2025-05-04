@@ -2,6 +2,10 @@ package model
 
 import "mime/multipart"
 
+type GetSignedURLRequest struct {
+	UnsignedURL string `json:"unsigned_url" validate:"required"`
+}
+
 // CreateDocumentReferenceRequest defines the input for creating a DocumentReference.
 // The actual file is passed separately.
 type CreateDocumentReferenceRequest struct {
