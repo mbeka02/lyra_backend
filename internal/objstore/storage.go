@@ -6,13 +6,14 @@ import (
 	"mime/multipart"
 	"net/url"
 	"path"
+	"time"
 )
 
 type Storage interface {
 	Upload(ctx context.Context, objName string, fileHeader *multipart.FileHeader) (string, error)
 	Download(ctx context.Context, objName string) ([]byte, error)
 	Delete(ctx context.Context, objName string) error
-	CreateSignedURL(unsignedURL string) (string, error)
+	CreateSignedURL(unsignedURL string, duration time.Duration) (string, error)
 }
 
 func objectNameFromURL(URL string) (string, error) {
