@@ -93,6 +93,8 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Route("/documents", func(r chi.Router) {
 				r.Get("/", s.handlers.DocumentReference.HandleListPatientDocuments)
 				r.Post("/upload", s.handlers.DocumentReference.HandleCreateDocumentReference)
+				// probably change the naming of this
+				r.Post("/sign", s.handlers.DocumentReference.HandleCreateSignedURL)
 			})
 		})
 	})
