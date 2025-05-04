@@ -18,7 +18,7 @@ func NewAppointmentHandler(appointmentService service.AppointmentService) *Appoi
 }
 
 func (h *AppointmentHandler) HandleUpdateStatus(w http.ResponseWriter, r *http.Request) {
-	request := model.UpdateAppointmentStatusRequest{}
+	var request model.UpdateAppointmentStatusRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return
@@ -91,7 +91,7 @@ func (h *AppointmentHandler) HandleGetPatientAppointments(w http.ResponseWriter,
 }
 
 func (h *AppointmentHandler) HandleCreateAppointment(w http.ResponseWriter, r *http.Request) {
-	request := model.CreateAppointmentRequest{}
+	var request model.CreateAppointmentRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return

@@ -25,21 +25,16 @@ func (h *AvailabilityHandler) HandleGetSlots(w http.ResponseWriter, r *http.Requ
 		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	// log.Println("request=>", request)
-	response, err := h.availabilityService.GetSlots(r.Context(), request)
+	slots, err := h.availabilityService.GetSlots(r.Context(), request)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	// log.Println("response=>", response)
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, slots)
 }
 
 func (h *AvailabilityHandler) HandleCreateAvailability(w http.ResponseWriter, r *http.Request) {
-	request := model.CreateAvailabilityRequest{}
+	var request model.CreateAvailabilityRequest
 	if err := parseAndValidateRequest(r, &request); err != nil {
 		respondWithError(w, http.StatusBadRequest, err)
 		return
@@ -50,15 +45,12 @@ func (h *AvailabilityHandler) HandleCreateAvailability(w http.ResponseWriter, r 
 	if !ok {
 		return
 	}
-	response, err := h.availabilityService.CreateAvailability(r.Context(), request, payload.UserID)
+	availabilitySlot, err := h.availabilityService.CreateAvailability(r.Context(), request, payload.UserID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusCreated, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusCreated, availabilitySlot)
 }
 
 func (h *AvailabilityHandler) HandleDeleteById(w http.ResponseWriter, r *http.Request) {
@@ -78,10 +70,7 @@ func (h *AvailabilityHandler) HandleDeleteById(w http.ResponseWriter, r *http.Re
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, "removed the slot from your schedule"); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, "removed the slot from your schedule")
 }
 
 func (h *AvailabilityHandler) HandleDeleteByDay(w http.ResponseWriter, r *http.Request) {
@@ -101,10 +90,7 @@ func (h *AvailabilityHandler) HandleDeleteByDay(w http.ResponseWriter, r *http.R
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, "removed the slots from your schedule"); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, "removed the slots from your schedule")
 }
 
 func (h *AvailabilityHandler) HandleGetAvailabilityByDoctor(w http.ResponseWriter, r *http.Request) {
@@ -118,8 +104,5 @@ func (h *AvailabilityHandler) HandleGetAvailabilityByDoctor(w http.ResponseWrite
 		respondWithError(w, http.StatusInternalServerError, err)
 		return
 	}
-	if err := respondWithJSON(w, http.StatusOK, response); err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
-		return
-	}
+	respondWithJSON(w, http.StatusOK, response)
 }
