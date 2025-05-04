@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"time"
 
 	"cloud.google.com/go/storage"
 )
@@ -27,6 +28,20 @@ func NewGCStorage(projectId, bucketName string) (Storage, error) {
 		projectId,
 		client,
 	}, nil
+}
+
+func (g *GCStorage) CreateSignedURL(unsignedURL string) (string, error) {
+	objectName, err := objectNameFromURL(unsignedURL)
+	if err != nil {
+		return "", err
+	}
+
+	opts := &storage.SignedURLOptions{
+		Scheme:  storage.SigningSchemeV4,
+		Method:  "GET",
+		Expires: time.Now().Add(60 * time.Minute), // valid for 1 hour
+	}
+	return storage.SignedURL(g.bucketName, objectName, opts)
 }
 
 func (g *GCStorage) Download(ctx context.Context, objName string) ([]byte, error) {
