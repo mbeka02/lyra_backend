@@ -22,6 +22,25 @@ func NewDocumentReferenceHandler(patientService service.PatientService, doctorSe
 	return &DocumentReferenceHandler{patientService, doctorService, documentService}
 }
 
+func (h *DocumentReferenceHandler) HandleCreateSignedURL(w http.ResponseWriter, r *http.Request) {
+	var request model.GetSignedURLRequest
+	if err := parseAndValidateRequest(r, &request); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+	signedURL, err := h.documentService.GetSignedURL(r.Context(), request.UnsignedURL)
+	if err != nil {
+
+		log.Println(err)
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to create a signed URL for this object"))
+		return
+	}
+	// respond with success
+	if err := respondWithJSON(w, http.StatusCreated, signedURL); err != nil {
+		fmt.Printf("ERROR: Failed to write JSON response: %v\n", err)
+	}
+}
+
 func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, err := middleware.GetAuthPayload(r.Context())

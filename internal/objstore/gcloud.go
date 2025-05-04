@@ -5,8 +5,12 @@ import (
 	"fmt"
 	"io"
 	"mime/multipart"
+	"os"
+	"time"
 
 	"cloud.google.com/go/storage"
+	"golang.org/x/oauth2/google"
+	// Import IAM Credentials API client
 )
 
 type GCStorage struct {
@@ -27,6 +31,33 @@ func NewGCStorage(projectId, bucketName string) (Storage, error) {
 		projectId,
 		client,
 	}, nil
+}
+
+func (g *GCStorage) CreateSignedURL(unsignedURL string, duration time.Duration) (string, error) {
+	// access the service account details
+	jsonKey, err := os.ReadFile("./lyra-450221-94be9f4e76ad.json")
+	if err != nil {
+		return "", fmt.Errorf("cannot read the JSON key file, err: %v", err)
+	}
+
+	conf, err := google.JWTConfigFromJSON(jsonKey)
+	if err != nil {
+		return "", fmt.Errorf("google.JWTConfigFromJSON: %v", err)
+	}
+	// get the name of the object
+	objectName, err := objectNameFromURL(unsignedURL)
+	if err != nil {
+		return "", err
+	}
+
+	opts := &storage.SignedURLOptions{
+		Scheme:         storage.SigningSchemeV4,
+		GoogleAccessID: conf.Email,
+		PrivateKey:     conf.PrivateKey,
+		Method:         "GET",
+		Expires:        time.Now().Add(duration), // max duration should be 24 hours
+	}
+	return storage.SignedURL(g.bucketName, objectName, opts)
 }
 
 func (g *GCStorage) Download(ctx context.Context, objName string) ([]byte, error) {

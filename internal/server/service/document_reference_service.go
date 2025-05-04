@@ -18,8 +18,8 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/objstore" // Need storage
 )
 
-const maxDocumentSize = 50 * 1024 * 1024    // 50 MB limit for documents
-var allowedDocumentTypes = map[string]bool{ // Example list, expand significantly
+const maxDocumentSize = 50 * 1024 * 1024 // 50 MB limit for documents
+var allowedDocumentTypes = map[string]bool{
 	"application/pdf":    true,
 	"image/jpeg":         true,
 	"image/png":          true,
@@ -27,13 +27,13 @@ var allowedDocumentTypes = map[string]bool{ // Example list, expand significantl
 	"text/plain":         true,
 	"application/msword": true, // .doc
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": true, // .docx
-	// Add more MIME types as required (e.g., HL7 CDA XML, DICOM etc. if applicable)
 }
 
 type DocumentReferenceService interface {
 	CreateDocumentReference(ctx context.Context, input model.CreateDocumentReferenceServiceInput) (*samplyFhir.DocumentReference, error)
 	// Returns a FHIR Bundle.
 	ListPatientDocuments(ctx context.Context, patientID int64, count int, pageToken string) (*samplyFhir.Bundle, error)
+	GetSignedURL(ctx context.Context, unisgnedURL string) (string, error)
 }
 
 type documentReferenceService struct {
@@ -49,6 +49,11 @@ func NewDocumentReferenceService(fhirClient *fhir.FHIRClient, fileStorage objsto
 	}
 }
 
+func (s *documentReferenceService) GetSignedURL(ctx context.Context, unisgnedURL string) (string, error) {
+	return s.fileStorage.CreateSignedURL(unisgnedURL, time.Hour*72)
+	// return s.fileStorage.GenerateGetObjectSignedURL(ctx, unisgnedURL, "", time.Hour*48)
+}
+
 func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, input model.CreateDocumentReferenceServiceInput) (*samplyFhir.DocumentReference, error) {
 	fileHeader := input.FileHeader
 	metadata := input.Metadata
@@ -61,7 +66,7 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 
 	// Generate unique GCS Object Name
 	fileExt := filepath.Ext(fileHeader.Filename)
-	objectName := fmt.Sprintf("patients/%d/documents/%s%s",
+	objectName := fmt.Sprintf("patients_%d_documents_%s_%s",
 		metadata.PatientID,
 		uuid.NewString(),
 		fileExt,
@@ -100,7 +105,7 @@ func (s *documentReferenceService) CreateDocumentReference(ctx context.Context, 
 	if err != nil {
 		/*TODO:Attempt to clean up GCS file if FHIR creation fails(Could be complex)
 		Consider adding cleanup logic here or documenting that orphans might occur.*/
-		fmt.Printf("Error saving DocRef to FHIR Store, GCS object '%s' might be orphaned: %v\n", objectName, err)
+		fmt.Printf("Error saving DocRef to FHIR Store, GCS object '%s' has likely been orphaned: %v\n", objectName, err)
 		return nil, fmt.Errorf("failed to save DocumentReference in FHIR store: %w", err)
 	}
 

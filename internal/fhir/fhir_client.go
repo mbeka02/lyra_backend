@@ -34,14 +34,14 @@ type FHIRConfig struct {
 
 // NewFHIRClient initializes the Healthcare API client using ADC.
 func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.ClientOption) (*FHIRClient, error) {
-	// 1. Get the default authenticated HTTP client using ADC
+	// Get the default authenticated HTTP client using ADC
 	// Ensure the context has the necessary credentials available (e.g., running on GCP, GOOGLE_APPLICATION_CREDENTIALS env var)
 	httpClient, err := google.DefaultClient(ctx, healthcare.CloudPlatformScope)
 	if err != nil {
 		return nil, fmt.Errorf("google.DefaultClient error: %w", err)
 	}
 
-	// 2. Create the healthcare service, passing the authenticated client
+	// Create the healthcare service, passing the authenticated client
 	// Prepend the authenticated client option to any user-provided options
 	finalOpts := append([]option.ClientOption{option.WithHTTPClient(httpClient)}, opts...)
 	svc, err := healthcare.NewService(ctx, finalOpts...)
@@ -49,13 +49,13 @@ func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.Client
 		return nil, fmt.Errorf("healthcare.NewService error: %w", err)
 	}
 
-	// 3. Construct path segments
+	// Construct path segments
 	basePath := fmt.Sprintf("projects/%s/locations/%s/datasets/%s/fhirStores/%s",
 		config.ProjectID, config.DatasetLocation, config.DatasetID, config.FHIRStoreID)
 	// Base URL for the Healthcare API v1
 	baseApiUrl := "https://healthcare.googleapis.com/v1" // Adjust if using a different endpoint/version
 
-	// 4. Return the client struct containing both service and http client
+	// Return the client struct containing both service and http client
 	return &FHIRClient{
 		svc:        svc,
 		client:     httpClient, // Store the client
@@ -274,64 +274,6 @@ func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams s
 	return &bundle, nil
 }
 
-//OLD FUNCTION
-/*
-func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams string) (*samplyFhir.Bundle, error) {
-	resourceType := "DocumentReference"
-
-	// Prepare the query parameters
-	if queryParams == "" {
-		queryParams = "_type=" + resourceType
-	} else if !strings.Contains(queryParams, "_type=") {
-		queryParams += "&_type=" + resourceType
-	}
-	// Construct the base URL path for DocumentReference resources
-	// Add query parameters to the base path if provided
-	// Construct the URL with the query parameters
-	parentPath := fmt.Sprintf("%s", f.basePath)
-	// Create the search request
-	req := &healthcare.SearchResourcesRequest{
-		ResourceType: resourceType,
-	}
-
-	// Create the search call
-	call := f.svc.Projects.Locations.Datasets.FhirStores.Fhir.SearchType(parentPath, resourceType, req)
-
-	// Set necessary headers
-	call.Header().Set("Accept", "application/fhir+json")
-
-	// Execute the request
-	resp, err := call.Do()
-	if err != nil {
-		// Consider adding retry logic here for transient network errors
-		return nil, fmt.Errorf("search documentreferences API call failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Search usually returns 200 OK
-	if resp.StatusCode != http.StatusOK {
-		return nil, f.readErrorResponse(resp, "search documentreferences")
-	}
-
-	// Decode the response body (should be a Bundle of type searchset)
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("error reading search response body: %w", err)
-	}
-
-	var bundle samplyFhir.Bundle
-	if err := json.Unmarshal(bodyBytes, &bundle); err != nil {
-		return nil, fmt.Errorf("error decoding search result bundle: %w. Body: %s", err, string(bodyBytes))
-	}
-
-	// Validate that it's a searchset bundle
-	if bundle.Type != samplyFhir.BundleTypeSearchset {
-		fmt.Printf("Warning: Expected searchset bundle, got type %v\n", bundle.Type)
-	}
-
-	return &bundle, nil
-}
-*/
 // Helper function to decode response
 func (f *FHIRClient) decodeDocumentReferenceResponse(body io.ReadCloser) (*samplyFhir.DocumentReference, error) {
 	bodyBytes, err := io.ReadAll(body)
