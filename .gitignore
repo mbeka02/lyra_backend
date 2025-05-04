@@ -29,5 +29,7 @@ tmp/
 main
 *templ.go
 
+# for the GCS service account keys 
+*.json
 # OS X generated file
 .DS_Store
