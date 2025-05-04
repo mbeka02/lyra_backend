@@ -30,9 +30,10 @@ type GetDoctorsParams struct {
 }
 
 type DoctorRepository interface {
-	Create(context.Context, CreateDoctorParams) (*database.Doctor, error)
-	GetAllDoctors(context.Context, GetDoctorsParams) ([]database.GetDoctorsRow, error)
-	GetDoctorIdByUserId(context.Context, int64) (int64, error)
+	Create(ctx context.Context, params CreateDoctorParams) (*database.Doctor, error)
+	GetAllDoctors(ctx context.Context, params GetDoctorsParams) ([]database.GetDoctorsRow, error)
+	GetDoctorIdByUserId(ctx context.Context, userId int64) (int64, error)
+	ListPatientsUnderCare(ctx context.Context, doctorId int64) ([]database.ListPatientsUnderDoctorCareRow, error)
 }
 
 type doctorRepository struct {
@@ -43,6 +44,10 @@ func NewDoctorRepository(store *database.Store) DoctorRepository {
 	return &doctorRepository{
 		store,
 	}
+}
+
+func (r *doctorRepository) ListPatientsUnderCare(ctx context.Context, doctorID int64) ([]database.ListPatientsUnderDoctorCareRow, error) {
+	return r.store.ListPatientsUnderDoctorCare(ctx, doctorID)
 }
 
 func (r *doctorRepository) Create(ctx context.Context, params CreateDoctorParams) (*database.Doctor, error) {
