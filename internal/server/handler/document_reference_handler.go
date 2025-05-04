@@ -32,7 +32,7 @@ func (h *DocumentReferenceHandler) HandleCreateSignedURL(w http.ResponseWriter, 
 	if err != nil {
 
 		log.Println(err)
-		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to to create a signed URL for this object"))
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("unable to create a signed URL for this object"))
 		return
 	}
 	// respond with success
