@@ -1,0 +1,95 @@
+package handler
+
+import (
+	"fmt"
+	"log"
+	"net/http"
+	"strconv"
+
+	"github.com/mbeka02/lyra_backend/internal/server/service"
+)
+
+type ObservationHandler struct {
+	patientService     service.PatientService
+	doctorService      service.DoctorService
+	observationService service.ObservationService
+}
+
+func NewObservationHandler(patientService service.PatientService, doctorService service.DoctorService, observationService service.ObservationService) *ObservationHandler {
+	return &ObservationHandler{patientService, doctorService, observationService}
+}
+
+func (h *ObservationHandler) HandleListPatientObservations(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	// Extract Target Patient ID
+	var targetPatientID int64
+	// params
+	params := NewQueryParamExtractor(r)
+	patientIdStr := params.GetString("patientId")
+
+	// Authorization Check
+	// Can the authenticated user (payload.UserID, payload.Role) view observations for targetPatientID?
+	authorized := false
+	if payload.Role == "patient" {
+		// Is the patient viewing their own documents?
+		pID, err := h.patientService.GetPatientIdByUserId(r.Context(), payload.UserID)
+		if err == nil /*&& pID == targetPatientID*/ {
+			authorized = true
+		}
+		targetPatientID = pID
+	} else if payload.Role == "specialist" {
+		// Is the specialist viewing documents for a patient under their care?
+		if patientIdStr == "" {
+			respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing required patientId parameter"))
+			return
+		}
+		targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+		if err != nil {
+			respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId parameter: %v", err))
+			return
+		}
+		// First, get the DoctorID for the logged-in user
+		doctorID, err := h.doctorService.GetDoctorIdByUserId(r.Context(), payload.UserID)
+		if err != nil {
+			log.Printf("Auth check failed for specialist user %d: %v\n", payload.UserID, err)
+			respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve doctor information"))
+			return
+		}
+		// Now, check the care relationship using the service method
+		isUnderCare, err := h.doctorService.IsPatientUnderCare(r.Context(), doctorID, targetPatientID)
+		if err != nil {
+			// Log the error from the care check
+			log.Printf("Auth check error for doctor %d viewing patient %d: %v\n", doctorID, targetPatientID, err)
+		} else {
+			authorized = isUnderCare // Authorize if the service confirms care relationship
+		}
+	}
+	if !authorized {
+		respondWithError(w, http.StatusForbidden, fmt.Errorf("not authorized to view observations for this patient"))
+		return
+	}
+
+	// 4. Get optional query parameters for filtering observations
+	categoryCode := params.GetString("category") // e.g., "notes"
+	codeParam := params.GetString("code")        // e.g., "urn:lyra:codesystem:observation-type|CONSULTATION_NOTE"
+	count := params.GetInt("_count", 0)
+	if count <= 0 || count > 100 { // Apply a reasonable max limit
+		count = 20 // Default page size
+	}
+
+	// 5. Call the Observation Service
+	bundle, err := h.observationService.SearchObservations(r.Context(), targetPatientID, categoryCode, codeParam, count)
+	if err != nil {
+		fmt.Printf("ERROR: ListObservations failed: %v\n", err)
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve observations"))
+		return
+	}
+
+	// 6. Respond with the FHIR Bundle
+	w.Header().Set("Content-Type", "application/fhir+json")
+	respondWithJSON(w, http.StatusOK, bundle)
+}
