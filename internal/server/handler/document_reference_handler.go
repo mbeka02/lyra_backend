@@ -140,9 +140,8 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 // handleListPatientDocuments handles GET requests for a patient's documents.
 func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
-	payload, err := middleware.GetAuthPayload(r.Context())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
 		return
 	}
 	// Extract Target Patient ID
@@ -151,7 +150,6 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	params := NewQueryParamExtractor(r)
 	patientIdStr := params.GetString("patientId")
 
-	// TODO: Authorization Check (CRUCIAL!)
 	// Can the authenticated user (payload.UserID, payload.Role) view documents for targetPatientID?
 	authorized := false
 	if payload.Role == "patient" {
@@ -169,7 +167,7 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 			respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing required patientId parameter"))
 			return
 		}
-		targetPatientID, err = strconv.ParseInt(patientIdStr, 10, 64)
+		targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId parameter: %v", err))
 			return
