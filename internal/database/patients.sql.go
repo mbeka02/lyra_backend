@@ -59,6 +59,32 @@ func (q *Queries) CreatePatient(ctx context.Context, arg CreatePatientParams) (P
 	return i, err
 }
 
+const getPatientById = `-- name: GetPatientById :one
+SELECT patient_id, user_id, address, emergency_contact_name, emergency_contact_phone, allergies, current_medication, past_medical_history, family_medical_history, insurance_provider, insurance_policy_number, fhir_version, created_at, updated_at FROM patients WHERE patient_id=$1
+`
+
+func (q *Queries) GetPatientById(ctx context.Context, patientID int64) (Patient, error) {
+	row := q.db.QueryRowContext(ctx, getPatientById, patientID)
+	var i Patient
+	err := row.Scan(
+		&i.PatientID,
+		&i.UserID,
+		&i.Address,
+		&i.EmergencyContactName,
+		&i.EmergencyContactPhone,
+		&i.Allergies,
+		&i.CurrentMedication,
+		&i.PastMedicalHistory,
+		&i.FamilyMedicalHistory,
+		&i.InsuranceProvider,
+		&i.InsurancePolicyNumber,
+		&i.FhirVersion,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getPatientIdByUserId = `-- name: GetPatientIdByUserId :one
 SELECT patient_id FROM patients WHERE user_id=$1
 `
