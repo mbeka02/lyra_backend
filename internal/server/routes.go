@@ -94,6 +94,11 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Route("/documents", func(r chi.Router) {
 				r.Get("/", s.handlers.DocumentReference.HandleListPatientDocuments)
 				r.Post("/upload", s.handlers.DocumentReference.HandleCreateDocumentReference)
+				// Observation endpoints
+				r.Route("/observations", func(r chi.Router) {
+					r.Get("/", s.handlers.Observation.HandleListPatientObservations)
+					r.Post("/note", s.handlers.Observation.HandleCreateConsultationNote)
+				})
 				// Endpoint to create a signed URL for document operations
 				r.Post("/signed-url", s.handlers.DocumentReference.HandleCreateSignedURL)
 			})
