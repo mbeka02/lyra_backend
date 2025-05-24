@@ -117,7 +117,7 @@ func NewServer(opts ConfigOptions) *http.Server {
 		Addr:         fmt.Sprintf(":%s", NewServer.opts.Port),
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
+		ReadTimeout:  45 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 
