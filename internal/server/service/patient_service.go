@@ -20,6 +20,7 @@ type patientService struct {
 type PatientService interface {
 	CreatePatient(ctx context.Context, req model.CreatePatientRequest, userId int64) (*samplyFhir.Patient, error)
 	GetPatientIdByUserId(ctx context.Context, userId int64) (int64, error)
+	GetPatientAccountDetails(ctx context.Context, patientID int64) (*samplyFhir.Patient, error)
 }
 
 func NewPatientService(patientRepo repository.PatientRepository, fhirClient *fhir.FHIRClient, fileStorage objstore.Storage) PatientService {
@@ -28,6 +29,14 @@ func NewPatientService(patientRepo repository.PatientRepository, fhirClient *fhi
 		fhirClient,
 		fileStorage,
 	}
+}
+
+func (s *patientService) GetPatientAccountDetails(ctx context.Context, patientID int64) (*samplyFhir.Patient, error) {
+	details, err := s.patientRepo.GetPatientAccountDetails(ctx, patientID)
+	if err != nil {
+		return nil, err
+	}
+	return fhir.BuildFHIRPatientFromDB(&details.Patient, &details.User)
 }
 
 func (s *patientService) GetPatientIdByUserId(ctx context.Context, userId int64) (int64, error) {
