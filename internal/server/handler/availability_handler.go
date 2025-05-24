@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -57,7 +58,8 @@ func (h *AvailabilityHandler) HandleDeleteById(w http.ResponseWriter, r *http.Re
 	availabilityParam := chi.URLParam(r, "availabilityId")
 	availabilityId, err := strconv.ParseInt(availabilityParam, 10, 64)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, err)
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf(" error invalid availability id:%w", err))
+
 		return
 	}
 	// ensure auth payload is present

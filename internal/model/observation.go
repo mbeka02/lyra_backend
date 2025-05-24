@@ -18,6 +18,12 @@ type CreateObservationRequest struct {
 	ValueQuantity     *float64   `json:"valueQuantity"`                         // The numeric value
 	ValueUnit         *string    `json:"valueUnit"`                             // e.g., "cm", "kg", "mmHg"
 	ValueSystem       *string    `json:"valueSystem"`                           // e.g., "http://unitsofmeasure.org"
-	ValueCode         *string    `json:"valueCode"`                             // e.g., UCUM code like "cm"
+	ValueCode         *string    `json:"ValueCode"`                             // e.g., UCUM code like "cm"
 	Note              *string    `json:"note"`                                  // Optional text note
+}
+
+type CreateConsultationNoteRequest struct {
+	PatientID int64  `json:"patient_id" validate:"required"` // The ID of the patient this note is for
+	NoteText  string `json:"note_text" validate:"required"`  // The actual text of the consultation note
+	// SpecialistID will be derived from the authenticated user in the handler
 }

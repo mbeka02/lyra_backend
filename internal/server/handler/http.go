@@ -84,6 +84,20 @@ func (q *QueryParamExtractor) GetInt32(key string, defaultVal ...int32) int32 {
 	return int32(result)
 }
 
+// GetInt64 extracts an int64 parameter with an optional default value
+func (q *QueryParamExtractor) GetInt64(key string, defaultVal ...int64) int64 {
+	value := q.query.Get(key)
+	if value == "" && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+
+	result, err := strconv.ParseInt(value, 10, 64)
+	if err != nil && len(defaultVal) > 0 {
+		return defaultVal[0]
+	}
+	return int64(result)
+}
+
 // GetFloat64 extracts a float64 parameter with an optional default value
 func (q *QueryParamExtractor) GetFloat64(key string, defaultVal ...float64) float64 {
 	value := q.query.Get(key)

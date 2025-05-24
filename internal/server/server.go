@@ -41,6 +41,7 @@ type Handlers struct {
 	Appointment       *handler.AppointmentHandler
 	Payment           *handler.PaymentHandler
 	DocumentReference *handler.DocumentReferenceHandler
+	Observation       *handler.ObservationHandler
 }
 type Services struct {
 	User              service.UserService
@@ -94,6 +95,7 @@ func initHandlers(services Services) Handlers {
 		Appointment:       handler.NewAppointmentHandler(services.Appointment),
 		Payment:           handler.NewPaymentHandler(services.Payment),
 		DocumentReference: handler.NewDocumentReferenceHandler(services.Patient, services.Doctor, services.DocumentReference),
+		Observation:       handler.NewObservationHandler(services.Patient, services.Doctor, services.Observation),
 	}
 }
 
@@ -117,7 +119,7 @@ func NewServer(opts ConfigOptions) *http.Server {
 		Addr:         fmt.Sprintf(":%s", NewServer.opts.Port),
 		Handler:      NewServer.RegisterRoutes(),
 		IdleTimeout:  time.Minute,
-		ReadTimeout:  10 * time.Second,
+		ReadTimeout:  45 * time.Second,
 		WriteTimeout: 30 * time.Second,
 	}
 

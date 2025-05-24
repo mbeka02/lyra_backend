@@ -215,11 +215,9 @@ func (f *FHIRClient) UpdateDocumentReference(ctx context.Context, docRef *samply
 	return f.decodeDocumentReferenceResponse(resp.Body)
 }
 
-// This method performs a search for DocumentReference resources based on query parameters.
+// This method performs a search for FHIR resources based on query parameters.
 // NOTE: It uses a http client to make requests instead of the google package
-func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams string) (*samplyFhir.Bundle, error) {
-	resourceType := "DocumentReference"
-
+func (f *FHIRClient) SearchForResorces(ctx context.Context, resourceType, queryParams string) (*samplyFhir.Bundle, error) {
 	// Construct the full API endpoint URL for the GET search
 	// Example: https://healthcare.googleapis.com/v1/projects/p/locations/l/datasets/d/fhirStores/f/fhir/DocumentReference?subject=Patient/123
 	fullApiPath := fmt.Sprintf("%s/%s/fhir/%s", f.baseApiUrl, f.basePath, resourceType)
@@ -244,14 +242,14 @@ func (f *FHIRClient) SearchDocumentReferences(ctx context.Context, queryParams s
 	//  Execute the request using the stored authenticated client
 	resp, err := f.client.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("search documentreferences (GET %s) API call failed: %w", fullApiPath, err)
+		return nil, fmt.Errorf("search %s (GET %s) API call failed: %w", resourceType, fullApiPath, err)
 	}
 	defer resp.Body.Close()
 
 	//  Handle the response (status check)
 	if resp.StatusCode != http.StatusOK {
 		// Use the existing helper, passing the operation description
-		return nil, f.readErrorResponse(resp, fmt.Sprintf("search documentreferences (GET %s)", fullApiPath))
+		return nil, f.readErrorResponse(resp, fmt.Sprintf("search %s (GET %s)", resourceType, fullApiPath))
 	}
 
 	//  Decode the response body (should be a Bundle)

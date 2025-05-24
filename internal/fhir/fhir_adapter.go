@@ -13,6 +13,86 @@ import (
 	"github.com/mbeka02/lyra_backend/internal/model"
 )
 
+// BuildFHIRObservationFromNote constructs an Observation FHIR resource for a consultation note.
+func BuildFHIRObservationFromNote(
+	patientID int64, // The FHIR Patient ID (e.g., "25" which becomes "Patient/25")
+	specialistID int64, // The FHIR Practitioner ID (e.g., "10" which becomes "Practitioner/10")
+	noteText string,
+	effectiveTime time.Time, // The time the observation (note) was made or is effective
+) (*samplyFhir.Observation, error) {
+	if noteText == "" {
+		return nil, fmt.Errorf("noteText cannot be empty")
+	}
+
+	obs := &samplyFhir.Observation{}
+
+	// Identifier (Optional but Recommended for resource instance uniqueness)
+	obs.Identifier = []samplyFhir.Identifier{{
+		System: stringPtr("urn:ietf:rfc:3986"), // UUID URN
+		Value:  stringPtr("urn:uuid:" + uuid.NewString()),
+	}}
+
+	// Status (Required)
+	// For a finalized note, 'final' is appropriate.
+	obs.Status = samplyFhir.ObservationStatusFinal
+
+	// Category (Optional, but useful for grouping)
+	obs.Category = []samplyFhir.CodeableConcept{
+		{
+			Coding: []samplyFhir.Coding{
+				{
+					System:  stringPtr("http://terminology.hl7.org/CodeSystem/observation-category"),
+					Code:    stringPtr("notes"), // Standard category for notes
+					Display: stringPtr("Notes"),
+				},
+			},
+			Text: stringPtr("Clinical Notes"),
+		},
+	}
+
+	// Code (Required - What kind of observation is this?)
+	// Use a consistent code for "Consultation Note" within your Lyra system.
+	obs.Code = samplyFhir.CodeableConcept{
+		Coding: []samplyFhir.Coding{
+			{
+				System:  stringPtr("urn:lyra:codesystem:observation-type"), // Your custom system URI
+				Code:    stringPtr("CONSULTATION_NOTE"),
+				Display: stringPtr("Consultation Note"),
+			},
+		},
+		Text: stringPtr("Consultation Note"),
+	}
+
+	// Subject (Required - Who is this observation about?)
+	obs.Subject = &samplyFhir.Reference{
+		Reference: stringPtr(fmt.Sprintf("Patient/%d", patientID)),
+		Type:      stringPtr("Patient"),
+	}
+
+	// EffectiveDateTime (Required - When was this observation made or relevant?)
+	effectiveDateTimeStr := effectiveTime.Format(time.RFC3339Nano) // FHIR instant format
+	obs.EffectiveDateTime = &effectiveDateTimeStr
+
+	// Issued (Optional - When was this version of the observation created?)
+	// The FHIR server often sets meta.lastUpdated.
+	// issuedTimeStr := time.Now().Format(time.RFC3339Nano)
+	// obs.Issued = &issuedTimeStr
+
+	// Performer (Optional but Recommended - Who made the observation/note?)
+	obs.Performer = []samplyFhir.Reference{
+		{
+			Reference: stringPtr(fmt.Sprintf("Practitioner/%d", specialistID)), // Assuming specialistID is the Practitioner ID
+			Type:      stringPtr("Practitioner"),
+		},
+	}
+
+	// Value[x] (Required - The actual observation content)
+	// For a textual note, we use valueString.
+	obs.ValueString = stringPtr(noteText)
+
+	return obs, nil
+}
+
 func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFhir.Patient, error) {
 	if p == nil || user == nil {
 		return nil, fmt.Errorf("Cannot use nil pointers to build the resource")

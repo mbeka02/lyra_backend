@@ -22,10 +22,15 @@ type CreatePatientTxResult struct {
 	User    database.User
 	Patient database.Patient
 }
+type GetPatientAccountDetailsTxResult struct {
+	User    database.User
+	Patient database.Patient
+}
 type PatientRepository interface {
 	Create(context.Context, CreatePatientParams) (*CreatePatientTxResult, error)
 	GetPatientIdByUserId(context.Context, int64) (int64, error)
 	UpdateFHIRVersion(ctx context.Context, patientID int64, version string) error
+	GetPatientAccountDetails(ctx context.Context, patientID int64) (*GetPatientAccountDetailsTxResult, error)
 }
 
 type patientRepository struct {
@@ -36,6 +41,34 @@ func NewPatientRepository(store *database.Store) PatientRepository {
 	return &patientRepository{
 		store,
 	}
+}
+
+func (r *patientRepository) GetPatientById(ctx context.Context, patientID int64) (*database.Patient, error) {
+	patient, err := r.store.GetPatientById(ctx, patientID)
+	if err != nil {
+		return nil, err
+	}
+	return &patient, nil
+}
+
+func (r *patientRepository) GetPatientAccountDetails(ctx context.Context, patientID int64) (*GetPatientAccountDetailsTxResult, error) {
+	var result GetPatientAccountDetailsTxResult
+	// transaction
+	err := r.store.ExecTx(ctx, func(q *database.Queries) error {
+		var err error
+		// get the patient details
+		result.Patient, err = q.GetPatientById(ctx, patientID)
+		if err != nil {
+			return err
+		}
+		// get the user details
+		result.User, err = q.GetUserById(ctx, result.Patient.UserID)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	return &result, err
 }
 
 func (r *patientRepository) Create(ctx context.Context, params CreatePatientParams) (*CreatePatientTxResult, error) {

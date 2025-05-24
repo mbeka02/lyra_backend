@@ -13,8 +13,9 @@ AND a.current_status NOT IN ('cancelled','pending_payment')
 SELECT
     p.patient_id,
     u.user_id,
+    u.date_of_birth,
     u.full_name,
-    u.profile_image_url
+    u.profile_image_url as profile_picture
 FROM DoctorPatientIDs dp_ids
 JOIN patients p ON dp_ids.patient_id = p.patient_id
 JOIN users u ON p.user_id = u.user_id

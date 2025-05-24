@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"time"
 )
 
 const createDoctor = `-- name: CreateDoctor :one
@@ -173,8 +174,9 @@ AND a.current_status NOT IN ('cancelled','pending_payment')
 SELECT
     p.patient_id,
     u.user_id,
+    u.date_of_birth,
     u.full_name,
-    u.profile_image_url
+    u.profile_image_url as profile_picture
 FROM DoctorPatientIDs dp_ids
 JOIN patients p ON dp_ids.patient_id = p.patient_id
 JOIN users u ON p.user_id = u.user_id
@@ -183,10 +185,11 @@ ORDER BY
 `
 
 type ListPatientsUnderDoctorCareRow struct {
-	PatientID       int64  `json:"patient_id"`
-	UserID          int64  `json:"user_id"`
-	FullName        string `json:"full_name"`
-	ProfileImageUrl string `json:"profile_image_url"`
+	PatientID      int64     `json:"patient_id"`
+	UserID         int64     `json:"user_id"`
+	DateOfBirth    time.Time `json:"date_of_birth"`
+	FullName       string    `json:"full_name"`
+	ProfilePicture string    `json:"profile_picture"`
 }
 
 func (q *Queries) ListPatientsUnderDoctorCare(ctx context.Context, doctorID int64) ([]ListPatientsUnderDoctorCareRow, error) {
@@ -201,8 +204,9 @@ func (q *Queries) ListPatientsUnderDoctorCare(ctx context.Context, doctorID int6
 		if err := rows.Scan(
 			&i.PatientID,
 			&i.UserID,
+			&i.DateOfBirth,
 			&i.FullName,
-			&i.ProfileImageUrl,
+			&i.ProfilePicture,
 		); err != nil {
 			return nil, err
 		}

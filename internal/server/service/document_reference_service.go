@@ -140,7 +140,7 @@ func (s *documentReferenceService) ListPatientDocuments(ctx context.Context, pat
 	queryString := queryValues.Encode()
 
 	// Call FHIR Client Search
-	bundle, err := s.fhirClient.SearchDocumentReferences(ctx, queryString)
+	bundle, err := s.fhirClient.SearchForResorces(ctx, "DocumentReference", queryString)
 	if err != nil {
 		return nil, fmt.Errorf("failed to search document references in FHIR store: %w", err)
 	}
