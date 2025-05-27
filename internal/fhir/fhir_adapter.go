@@ -97,30 +97,30 @@ func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFh
 	if p == nil || user == nil {
 		return nil, fmt.Errorf("Cannot use nil pointers to build the resource")
 	}
-	patientID := fmt.Sprintf("%d", p.PatientID)
+	patientIDStr := fmt.Sprintf("%d", p.PatientID) // Changed from p.PatientID to patientIDStr for consistency
 
 	// Create enum values as pointers
 	homeAddressUse := samplyFhir.AddressUseHome
-	phoneSystem := samplyFhir.ContactPointSystemPhone
-	homeUse := samplyFhir.ContactPointUseHome
-	// seealsoLinkType := samplyFhir.LinkTypeSeealso
 	contactPointSystemPhone := samplyFhir.ContactPointSystemPhone
 	contactPointSystemEmail := samplyFhir.ContactPointSystemEmail
 	contactPointUseMobile := samplyFhir.ContactPointUseMobile
-	// Create base patient with ID and meta information
+	// Emergency contact specifics
+	emergencyPhoneSystem := samplyFhir.ContactPointSystemPhone
+	emergencyContactUse := samplyFhir.ContactPointUseHome
+
 	patient := &samplyFhir.Patient{
-		Id: &patientID,
+		Id: &patientIDStr,
 		Identifier: []samplyFhir.Identifier{{
 			System: stringPtr("http://lyra.com/fhir/Patient/id"),
-			Value:  &patientID,
+			Value:  &patientIDStr,
 		}},
 		Meta: &samplyFhir.Meta{
-			// TODO: Add Version ID
-			// VersionId: stringPtr(p.FhirVersion),
+			// VersionId: stringPtr(p.FhirVersion), // Assuming p has FhirVersion
 			Profile: []string{"http://hl7.org/fhir/StructureDefinition/Patient"},
-			// LastUpdated: &p.UpdatedAt,
+			// LastUpdated: stringPtr(user.UpdatedAt.Format(time.RFC3339Nano)), // Example
 		},
 		Name: []samplyFhir.HumanName{{
+			Text:  stringPtr(user.FullName),
 			Given: []string{user.FullName},
 		}},
 		Telecom: []samplyFhir.ContactPoint{
@@ -134,24 +134,22 @@ func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFh
 				Value:  stringPtr(user.Email),
 			},
 		},
-		// Address information
 		Address: []samplyFhir.Address{
 			{
-				Text: &p.Address,
+				Text: stringPtr(p.Address),
 				Use:  &homeAddressUse,
 			},
 		},
-		// Emergency contact information
 		Contact: []samplyFhir.PatientContact{
 			{
 				Name: &samplyFhir.HumanName{
-					Text: &p.EmergencyContactName,
+					Text: stringPtr(p.EmergencyContactName),
 				},
 				Telecom: []samplyFhir.ContactPoint{
 					{
-						System: &phoneSystem,
-						Value:  &p.EmergencyContactPhone,
-						Use:    &homeUse,
+						System: &emergencyPhoneSystem,
+						Value:  stringPtr(p.EmergencyContactPhone),
+						Use:    &emergencyContactUse,
 					},
 				},
 				Relationship: []samplyFhir.CodeableConcept{
@@ -161,36 +159,64 @@ func BuildFHIRPatientFromDB(p *database.Patient, user *database.User) (*samplyFh
 				},
 			},
 		},
+		Photo: []samplyFhir.Attachment{},
+	}
+
+	// --- CONDITIONALLY ADD PROFILE PICTURE ---
+	// Only add the photo entry if user.ProfileImageUrl is not empty.
+	if user.ProfileImageUrl != "" {
+		patient.Photo = append(patient.Photo, samplyFhir.Attachment{
+			Url: stringPtr(user.ProfileImageUrl), // Use the URL directly
+			// Title: stringPtr(fmt.Sprintf("Profile picture for %s", user.FullName)), // Optional title
+			// ContentType can be omitted if the URL itself resolves to the correct content type
+		})
 	}
 
 	// Add extension elements for medical and insurance information
+	// (Keeping your existing extension structure)
 	patient.Extension = []samplyFhir.Extension{
 		{
 			Url:         "http://lyra.com/fhir/StructureDefinition/allergies",
-			ValueString: &p.Allergies,
+			ValueString: stringPtr(p.Allergies),
 		},
 		{
 			Url:         "http://lyra.com/fhir/StructureDefinition/currentMedication",
-			ValueString: &p.CurrentMedication,
+			ValueString: stringPtr(p.CurrentMedication),
 		},
 		{
 			Url:         "http://lyra.com/fhir/StructureDefinition/pastMedicalHistory",
-			ValueString: &p.PastMedicalHistory,
+			ValueString: stringPtr(p.PastMedicalHistory),
 		},
 		{
 			Url:         "http://lyra.com/fhir/StructureDefinition/familyMedicalHistory",
-			ValueString: &p.FamilyMedicalHistory,
+			ValueString: stringPtr(p.FamilyMedicalHistory),
 		},
 	}
-
-	// Add insurance information as coverage reference
+	// Add insurance as extension (from your existing code)
 	if p.InsuranceProvider != "" || p.InsurancePolicyNumber != "" {
 		insuranceText := fmt.Sprintf("Provider: %s, Policy: %s", p.InsuranceProvider, p.InsurancePolicyNumber)
 		patient.Extension = append(patient.Extension, samplyFhir.Extension{
 			Url:         "http://lyra.com/fhir/StructureDefinition/insuranceInformation",
-			ValueString: &insuranceText,
+			ValueString: stringPtr(insuranceText),
 		})
 	}
+
+	// Adding BirthDate
+	if !user.DateOfBirth.IsZero() { // Check if DateOfBirth is a valid, non-zero date
+		patient.BirthDate = stringPtr(user.DateOfBirth.Format("2006-01-02")) // FHIR date format
+	}
+
+	// if user.GenderField != "" { // Example if you add a GenderField to your user table
+	// switch user.GenderField {
+	// case "male":
+	// patient.Gender = samplyFhir.AdministrativeGenderMale.Enum()
+	// case "female":
+	// patient.Gender = samplyFhir.AdministrativeGenderFemale.Enum()
+	// default:
+	// patient.Gender = samplyFhir.AdministrativeGenderUnknown.Enum()
+	// }
+	// }
+
 	return patient, nil
 }
 
