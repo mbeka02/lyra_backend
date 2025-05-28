@@ -19,7 +19,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 	r.Use(httprate.LimitByIP(100, time.Minute))
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"https://*", "http://*"},
-		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: false,
@@ -65,6 +65,7 @@ func (s *Server) RegisterRoutes() http.Handler {
 			r.Route("/patients", func(r chi.Router) {
 				r.Post("/", s.handlers.Patient.HandleCreatePatient)
 				r.Get("/appointments", s.handlers.Appointment.HandleGetPatientAppointments)
+				r.Get("/{patientId}", s.handlers.Patient.HandleGetPatient)
 			})
 
 			// Doctor endpoints

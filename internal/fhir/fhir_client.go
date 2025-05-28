@@ -35,7 +35,6 @@ type FHIRConfig struct {
 // NewFHIRClient initializes the Healthcare API client using ADC.
 func NewFHIRClient(ctx context.Context, config FHIRConfig, opts ...option.ClientOption) (*FHIRClient, error) {
 	// Get the default authenticated HTTP client using ADC
-	// Ensure the context has the necessary credentials available (e.g., running on GCP, GOOGLE_APPLICATION_CREDENTIALS env var)
 	httpClient, err := google.DefaultClient(ctx, healthcare.CloudPlatformScope)
 	if err != nil {
 		return nil, fmt.Errorf("google.DefaultClient error: %w", err)
