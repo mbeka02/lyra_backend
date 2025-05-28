@@ -127,7 +127,7 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 	savedFhirDocRef, err := h.documentService.CreateDocumentReference(r.Context(), serviceInput)
 	if err != nil {
 		// log the internal error for debugging
-		fmt.Printf("ERROR: CreateDocumentReference failed: %v\n", err)
+		log.Printf("ERROR: CreateDocumentReference failed: %v\n", err)
 		// respond with a generic server error
 		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to create document reference"))
 		return
@@ -139,6 +139,7 @@ func (h *DocumentReferenceHandler) HandleCreateDocumentReference(w http.Response
 
 // handleListPatientDocuments handles GET requests for a patient's documents.
 func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWriter, r *http.Request) {
+	var blockTracker string
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -155,23 +156,26 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	if payload.Role == "patient" {
 		// Is the patient viewing their own documents?
 		pID, err := h.patientService.GetPatientIdByUserId(r.Context(), payload.UserID)
-		if err == nil /*&& pID == targetPatientID*/ {
+		if err == nil {
 			authorized = true
 		}
-
+		blockTracker = "patient block"
 		targetPatientID = pID
 	} else if payload.Role == "specialist" {
+		blockTracker = "specialist block"
 		// Is the specialist viewing documents for a patient under their care?
 		// This requires logic in the specialistService/Repo to check the relationship.
 		if patientIdStr == "" {
 			respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing required patientId parameter"))
 			return
 		}
-		targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+
+		pID, err := strconv.ParseInt(patientIdStr, 10, 64)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId parameter: %v", err))
 			return
 		}
+		targetPatientID = pID
 		// First, get the DoctorID for the logged-in user
 		doctorID, err := h.doctorService.GetDoctorIdByUserId(r.Context(), payload.UserID)
 		if err != nil {
@@ -202,9 +206,10 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	}
 
 	pageToken := params.GetString("_page_token") // Or other token param if used
-
+	log.Printf("%s:%v", blockTracker, targetPatientID)
 	// Call the Service
 	bundle, err := h.documentService.ListPatientDocuments(r.Context(), targetPatientID, count, pageToken)
+	log.Printf("...outputing the bundle fo the %s , bundle:%v", blockTracker, bundle)
 	if err != nil {
 		log.Printf("ERROR: ListPatientDocuments failed: %v\n", err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve documents"))

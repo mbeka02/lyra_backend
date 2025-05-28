@@ -26,7 +26,7 @@ func BuildFHIRObservationFromNote(
 
 	obs := &samplyFhir.Observation{}
 
-	// Identifier (Optional but Recommended for resource instance uniqueness)
+	// Identifier ( Recommended for resource instance uniqueness)
 	obs.Identifier = []samplyFhir.Identifier{{
 		System: stringPtr("urn:ietf:rfc:3986"), // UUID URN
 		Value:  stringPtr("urn:uuid:" + uuid.NewString()),
