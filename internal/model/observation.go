@@ -2,12 +2,36 @@ package model
 
 import "time"
 
+// internal/model/ehr_observation.go
+
+// CreateObservationRequest for creating a new observation (note).
+// Assumes patient_id will be populated by the service/handler based on context or request.
+type CreateObservationRequestForDB struct {
+	PatientID         int64     `json:"patient_id"`                    // Required if admin/doctor is creating for a patient
+	Status            string    `json:"status" validate:"required"`    // e.g., "final", "amended"
+	CodeText          string    `json:"code_text" validate:"required"` // Description (e.g., "Consultation Note")
+	EffectiveDateTime time.Time `json:"effective_date_time" validate:"required"`
+	ValueString       string    `json:"value_string" validate:"required"` // The actual note content
+	// SpecialistID   *int64     `json:"specialist_id"` // Optional: if explicitly passing from frontend
+}
+
+// UpdateObservationRequest for updating an existing observation.
+type UpdateObservationRequest struct {
+	Status            string    `json:"status" validate:"required"`
+	CodeText          string    `json:"code_text" validate:"required"`
+	EffectiveDateTime time.Time `json:"effective_date_time" validate:"required"`
+	ValueString       string    `json:"value_string" validate:"required"`
+	// SpecialistID   *int64    `json:"specialist_id"`
+}
+
+// ObservationResponse can be your database.Observation struct directly if it aligns well.
+// type ObservationResponse database.Observation
 // CreateObservationRequest defines the input for creating an Observation.
 // Example structure for a simple vital sign or quantitative result.
 type CreateObservationRequest struct {
 	PatientID         int64      `json:"patientId" validate:"required"` // Subject
 	SpecialistID      *int64     `json:"specialistId"`                  // Optional Performer (using your ID name)
-	Status            int        `json:"status" binding:"required"`     // e.g., "final", "preliminary" (FHIR ObservationStatus code)
+	Status            int        `json:"status" validate:"required"`    // e.g., "final", "preliminary" (FHIR ObservationStatus code)
 	CategoryCode      *string    `json:"categoryCode"`                  // e.g., "vital-signs"
 	CategorySystem    *string    `json:"categorySystem"`                // e.g., "http://terminology.hl7.org/CodeSystem/observation-category"
 	CategoryDisplay   *string    `json:"categoryDisplay"`

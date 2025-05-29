@@ -209,7 +209,7 @@ func (h *DocumentReferenceHandler) HandleListPatientDocuments(w http.ResponseWri
 	log.Printf("%s:%v", blockTracker, targetPatientID)
 	// Call the Service
 	bundle, err := h.documentService.ListPatientDocuments(r.Context(), targetPatientID, count, pageToken)
-	log.Printf("...outputing the bundle fo the %s , bundle:%v", blockTracker, bundle)
+	// log.Printf("...outputing the bundle fo the %s , bundle:%v", blockTracker, bundle)
 	if err != nil {
 		log.Printf("ERROR: ListPatientDocuments failed: %v\n", err)
 		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to retrieve documents"))
