@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/sqlc-dev/pqtype"
 )
 
@@ -143,6 +144,20 @@ func (ns NullRole) Value() (driver.Value, error) {
 	return string(ns.Role), nil
 }
 
+type AllergyIntolerance struct {
+	ID                        uuid.UUID      `json:"id"`
+	PatientID                 int64          `json:"patient_id"`
+	ClinicalStatusCode        string         `json:"clinical_status_code"`
+	ClinicalStatusDisplay     sql.NullString `json:"clinical_status_display"`
+	CodeSystem                sql.NullString `json:"code_system"`
+	CodeCode                  string         `json:"code_code"`
+	CodeDisplay               string         `json:"code_display"`
+	Criticality               sql.NullString `json:"criticality"`
+	ReactionManifestationText sql.NullString `json:"reaction_manifestation_text"`
+	CreatedAt                 time.Time      `json:"created_at"`
+	UpdatedAt                 time.Time      `json:"updated_at"`
+}
+
 type Appointment struct {
 	AppointmentID int64             `json:"appointment_id"`
 	PatientID     int64             `json:"patient_id"`
@@ -179,6 +194,30 @@ type Doctor struct {
 	LicenseNumber     string       `json:"license_number"`
 	CreatedAt         time.Time    `json:"created_at"`
 	UpdatedAt         sql.NullTime `json:"updated_at"`
+}
+
+type MedicationStatement struct {
+	ID                    uuid.UUID      `json:"id"`
+	PatientID             int64          `json:"patient_id"`
+	Status                string         `json:"status"`
+	MedicationCodeSystem  sql.NullString `json:"medication_code_system"`
+	MedicationCodeCode    string         `json:"medication_code_code"`
+	MedicationCodeDisplay string         `json:"medication_code_display"`
+	DosageText            sql.NullString `json:"dosage_text"`
+	EffectiveDateTime     sql.NullTime   `json:"effective_date_time"`
+	CreatedAt             time.Time      `json:"created_at"`
+	UpdatedAt             time.Time      `json:"updated_at"`
+}
+
+type Observation struct {
+	ID                uuid.UUID `json:"id"`
+	PatientID         int64     `json:"patient_id"`
+	Status            string    `json:"status"`
+	CodeText          string    `json:"code_text"`
+	EffectiveDateTime time.Time `json:"effective_date_time"`
+	ValueString       string    `json:"value_string"`
+	CreatedAt         time.Time `json:"created_at"`
+	UpdatedAt         time.Time `json:"updated_at"`
 }
 
 type Patient struct {
