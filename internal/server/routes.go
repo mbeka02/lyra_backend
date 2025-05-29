@@ -86,15 +86,15 @@ func (s *Server) RegisterRoutes() http.Handler {
 						r.Delete("/", s.handlers.MedicationStatement.HandleDeleteMedication)
 					})
 				})
-			})
-			// Observations
-			r.Route("/{patientId}/observations", func(r chi.Router) {
-				r.Post("/", s.handlers.Observation.HandleCreateObservationInDB)
-				r.Get("/", s.handlers.Observation.HandleListObservations)
-				r.Route("/{observationId}", func(r chi.Router) {
-					r.Get("/", s.handlers.Observation.HandleGetObservation)
-					r.Put("/", s.handlers.Observation.HandleUpdateObservation)
-					r.Delete("/", s.handlers.Observation.HandleDeleteObservation)
+				// Observations
+				r.Route("/{patientId}/observations", func(r chi.Router) {
+					r.Post("/", s.handlers.Observation.HandleCreateObservationInDB)
+					r.Get("/", s.handlers.Observation.HandleListObservations)
+					r.Route("/{observationId}", func(r chi.Router) {
+						r.Get("/", s.handlers.Observation.HandleGetObservation)
+						r.Put("/", s.handlers.Observation.HandleUpdateObservation)
+						r.Delete("/", s.handlers.Observation.HandleDeleteObservation)
+					})
 				})
 			})
 			// Doctor endpoints

@@ -79,6 +79,7 @@ func initRepositories(store *database.Store) Repositories {
 		Payment:             repository.NewPaymentRepository(store),
 		Allergy:             repository.NewSQLAllergyIntoleranceRepository(store),
 		MedicationStatement: repository.NewSQLMedicationStatementRepository(store),
+		Observation:         repository.NewSQLObservationRepository(store),
 	}
 }
 
