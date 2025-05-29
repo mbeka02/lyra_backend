@@ -22,7 +22,7 @@ func NewMedicationHandler(ms service.MedicationService) *MedicationHandler {
 	}
 }
 
-func (h *MedicationHandler) handleCreateMedication(w http.ResponseWriter, r *http.Request) {
+func (h *MedicationHandler) HandleCreateMedication(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -56,7 +56,7 @@ func (h *MedicationHandler) handleCreateMedication(w http.ResponseWriter, r *htt
 	respondWithJSON(w, http.StatusCreated, med)
 }
 
-func (h *MedicationHandler) handleListMedications(w http.ResponseWriter, r *http.Request) {
+func (h *MedicationHandler) HandleListMedications(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -79,7 +79,7 @@ func (h *MedicationHandler) handleListMedications(w http.ResponseWriter, r *http
 	respondWithJSON(w, http.StatusOK, meds)
 }
 
-func (h *MedicationHandler) handleGetMedication(w http.ResponseWriter, r *http.Request) {
+func (h *MedicationHandler) HandleGetMedication(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -110,7 +110,7 @@ func (h *MedicationHandler) handleGetMedication(w http.ResponseWriter, r *http.R
 	respondWithJSON(w, http.StatusOK, med)
 }
 
-func (h *MedicationHandler) handleUpdateMedication(w http.ResponseWriter, r *http.Request) {
+func (h *MedicationHandler) HandleUpdateMedication(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -148,7 +148,7 @@ func (h *MedicationHandler) handleUpdateMedication(w http.ResponseWriter, r *htt
 	respondWithJSON(w, http.StatusOK, updatedMed)
 }
 
-func (h *MedicationHandler) handleDeleteMedication(w http.ResponseWriter, r *http.Request) {
+func (h *MedicationHandler) HandleDeleteMedication(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {

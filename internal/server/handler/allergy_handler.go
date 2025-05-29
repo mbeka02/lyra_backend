@@ -22,7 +22,7 @@ func NewAllergyHandler(as service.AllergyService, ps service.PatientService) *Al
 	return &AllergyHandler{allergyService: as, patientService: ps}
 }
 
-func (h *AllergyHandler) handleCreateAllergy(w http.ResponseWriter, r *http.Request) {
+func (h *AllergyHandler) HandleCreateAllergy(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -53,7 +53,7 @@ func (h *AllergyHandler) handleCreateAllergy(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusCreated, allergy)
 }
 
-func (h *AllergyHandler) handleListAllergies(w http.ResponseWriter, r *http.Request) {
+func (h *AllergyHandler) HandleListAllergies(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -74,7 +74,7 @@ func (h *AllergyHandler) handleListAllergies(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusOK, allergies)
 }
 
-func (h *AllergyHandler) handleGetAllergy(w http.ResponseWriter, r *http.Request) {
+func (h *AllergyHandler) HandleGetAllergy(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -106,7 +106,7 @@ func (h *AllergyHandler) handleGetAllergy(w http.ResponseWriter, r *http.Request
 	respondWithJSON(w, http.StatusOK, allergy)
 }
 
-func (h *AllergyHandler) handleUpdateAllergy(w http.ResponseWriter, r *http.Request) {
+func (h *AllergyHandler) HandleUpdateAllergy(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
@@ -145,7 +145,7 @@ func (h *AllergyHandler) handleUpdateAllergy(w http.ResponseWriter, r *http.Requ
 	respondWithJSON(w, http.StatusOK, allergy)
 }
 
-func (h *AllergyHandler) handleDeleteAllergy(w http.ResponseWriter, r *http.Request) {
+func (h *AllergyHandler) HandleDeleteAllergy(w http.ResponseWriter, r *http.Request) {
 	// ensure auth payload is present
 	payload, ok := getAuthPayload(w, r)
 	if !ok {
