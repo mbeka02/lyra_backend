@@ -24,7 +24,3 @@ type UpdateAllergyIntoleranceRequest struct {
 	Criticality               *string `json:"criticality"`
 	ReactionManifestationText *string `json:"reaction_manifestation_text"`
 }
-
-// AllergyIntoleranceResponse (could be your database.AllergyIntolerance struct directly if fields align)
-// For now, let's assume it's the same as database.AllergyIntolerance
-// type AllergyIntoleranceResponse database.AllergyIntolerance

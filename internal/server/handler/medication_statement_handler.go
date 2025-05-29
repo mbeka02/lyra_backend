@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -37,11 +36,10 @@ func (h *MedicationHandler) HandleCreateMedication(w http.ResponseWriter, r *htt
 	}
 
 	var req model.CreateMedicationStatementRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	defer r.Body.Close()
 
 	// TODO: Add validation for req fields (e.g., status value from enum)
 
@@ -132,12 +130,10 @@ func (h *MedicationHandler) HandleUpdateMedication(w http.ResponseWriter, r *htt
 	}
 
 	var req model.UpdateMedicationStatementRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	defer r.Body.Close()
-
 	// TODO: Authorization check
 
 	updatedMed, err := h.medicationService.UpdateMedication(r.Context(), medicationID, req, payload.UserID, targetPatientID)

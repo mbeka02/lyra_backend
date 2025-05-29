@@ -2,7 +2,6 @@ package handler
 
 import (
 	"database/sql"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv" // For patientId from path
@@ -37,14 +36,11 @@ func (h *AllergyHandler) HandleCreateAllergy(w http.ResponseWriter, r *http.Requ
 	}
 
 	var req model.CreateAllergyIntoleranceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	defer r.Body.Close()
-
-	// TODO: More robust validation of req fields
-
 	allergy, err := h.allergyService.CreateAllergy(r.Context(), req, payload.UserID, targetPatientID)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err) // Or more specific errors
@@ -127,12 +123,10 @@ func (h *AllergyHandler) HandleUpdateAllergy(w http.ResponseWriter, r *http.Requ
 	}
 
 	var req model.UpdateAllergyIntoleranceRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid request body: %w", err))
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
 		return
 	}
-	defer r.Body.Close()
-
 	allergy, err := h.allergyService.UpdateAllergy(r.Context(), allergyID, req, payload.UserID, targetPatientID)
 	if err != nil {
 		if err == sql.ErrNoRows { // Or custom error

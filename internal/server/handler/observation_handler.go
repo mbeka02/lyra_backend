@@ -1,11 +1,14 @@
 package handler
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/go-chi/chi/v5"
+	"github.com/google/uuid"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/server/service"
 )
@@ -148,4 +151,157 @@ func (h *ObservationHandler) HandleListPatientObservations(w http.ResponseWriter
 	// 6. Respond with the FHIR Bundle
 	w.Header().Set("Content-Type", "application/fhir+json")
 	respondWithJSON(w, http.StatusOK, bundle)
+}
+
+func (h *ObservationHandler) HandleCreateObservationInDB(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	patientIdStr := chi.URLParam(r, "patientId")
+	targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId in path: %w", err))
+		return
+	}
+
+	var req model.CreateObservationRequestForDB
+
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	observation, err := h.observationService.CreateObservationInDB(r.Context(), req, payload.UserID, targetPatientID /*, specialistIDForDB */)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to create observation: %w", err))
+		return
+	}
+	respondWithJSON(w, http.StatusCreated, observation)
+}
+
+func (h *ObservationHandler) HandleListObservations(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+
+	patientIdStr := chi.URLParam(r, "patientId")
+	targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId in path: %w", err))
+		return
+	}
+
+	observations, err := h.observationService.ListObservationsForPatient(r.Context(), payload.UserID, targetPatientID)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to list observations: %w", err))
+		return
+	}
+	respondWithJSON(w, http.StatusOK, observations)
+}
+
+func (h *ObservationHandler) HandleGetObservation(w http.ResponseWriter, r *http.Request) {
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	patientIdStr := chi.URLParam(r, "patientId")
+	targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId in path: %w", err))
+		return
+	}
+
+	observationIdStr := chi.URLParam(r, "observationId")
+	observationID, err := uuid.Parse(observationIdStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid observationId in path: %w", err))
+		return
+	}
+
+	observation, err := h.observationService.GetObservation(r.Context(), observationID, payload.UserID, targetPatientID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, fmt.Errorf("observation not found"))
+		} else {
+			respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to get observation: %w", err))
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, observation)
+}
+
+func (h *ObservationHandler) HandleUpdateObservation(w http.ResponseWriter, r *http.Request) {
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+	patientIdStr := chi.URLParam(r, "patientId")
+	targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId in path: %w", err))
+		return
+	}
+
+	observationIdStr := chi.URLParam(r, "observationId")
+	observationID, err := uuid.Parse(observationIdStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid observationId in path: %w", err))
+		return
+	}
+
+	var req model.UpdateObservationRequest
+	if err := parseAndValidateRequest(r, &req); err != nil {
+		respondWithError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	updatedObservation, err := h.observationService.UpdateObservation(r.Context(), observationID, req, payload.UserID, targetPatientID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, fmt.Errorf("observation not found or not authorized to update"))
+		} else {
+			respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to update observation: %w", err))
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, updatedObservation)
+}
+
+func (h *ObservationHandler) HandleDeleteObservation(w http.ResponseWriter, r *http.Request) {
+	// ensure auth payload is present
+	payload, ok := getAuthPayload(w, r)
+	if !ok {
+		return
+	}
+
+	patientIdStr := chi.URLParam(r, "patientId")
+	targetPatientID, err := strconv.ParseInt(patientIdStr, 10, 64)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid patientId in path: %w", err))
+		return
+	}
+
+	observationIdStr := chi.URLParam(r, "observationId")
+	observationID, err := uuid.Parse(observationIdStr)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("invalid observationId in path: %w", err))
+		return
+	}
+
+	// TODO: Authorization check
+
+	err = h.observationService.DeleteObservation(r.Context(), observationID, payload.UserID, targetPatientID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			respondWithError(w, http.StatusNotFound, fmt.Errorf("observation not found or not authorized to delete"))
+		} else {
+			respondWithError(w, http.StatusInternalServerError, fmt.Errorf("failed to delete observation: %w", err))
+		}
+		return
+	}
+	respondWithJSON(w, http.StatusOK, map[string]string{"message": "Observation record deleted successfully"})
 }

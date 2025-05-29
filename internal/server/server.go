@@ -66,6 +66,7 @@ type Repositories struct {
 	Payment             repository.PaymentRepository
 	Allergy             repository.AllergyIntoleranceRepository
 	MedicationStatement repository.MedicationStatementRepository
+	Observation         repository.ObservationRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
@@ -90,7 +91,7 @@ func initServices(repos Repositories, maker auth.Maker, imgStorage, fileStorage 
 		Appointment:         service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
 		Payment:             service.NewPaymentService(paymentProcessor, repos.Payment),
 		DocumentReference:   service.NewDocumentReferenceService(fhirClient, fileStorage),
-		Observation:         service.NewObservationService(fhirClient),
+		Observation:         service.NewObservationService(repos.Observation, fhirClient),
 		Allergy:             service.NewAllergyService(repos.Allergy),
 		MedicationStatement: service.NewMedicationService(repos.MedicationStatement),
 	}
