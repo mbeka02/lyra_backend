@@ -34,68 +34,80 @@ type Server struct {
 	handlers Handlers
 }
 type Handlers struct {
-	User              *handler.UserHandler
-	Patient           *handler.PatientHandler
-	Doctor            *handler.DoctorHandler
-	Availability      *handler.AvailabilityHandler
-	Appointment       *handler.AppointmentHandler
-	Payment           *handler.PaymentHandler
-	DocumentReference *handler.DocumentReferenceHandler
-	Observation       *handler.ObservationHandler
+	User                *handler.UserHandler
+	Patient             *handler.PatientHandler
+	Doctor              *handler.DoctorHandler
+	Availability        *handler.AvailabilityHandler
+	Appointment         *handler.AppointmentHandler
+	Payment             *handler.PaymentHandler
+	DocumentReference   *handler.DocumentReferenceHandler
+	Observation         *handler.ObservationHandler
+	Allergy             *handler.AllergyHandler
+	MedicationStatement *handler.MedicationHandler
 }
 type Services struct {
-	User              service.UserService
-	Patient           service.PatientService
-	Doctor            service.DoctorService
-	Availability      service.AvailabilityService
-	Appointment       service.AppointmentService
-	Payment           service.PaymentService
-	DocumentReference service.DocumentReferenceService
-	Observation       service.ObservationService
+	User                service.UserService
+	Patient             service.PatientService
+	Doctor              service.DoctorService
+	Availability        service.AvailabilityService
+	Appointment         service.AppointmentService
+	Payment             service.PaymentService
+	DocumentReference   service.DocumentReferenceService
+	Observation         service.ObservationService
+	Allergy             service.AllergyService
+	MedicationStatement service.MedicationService
 }
 type Repositories struct {
-	User         repository.UserRepository
-	Patient      repository.PatientRepository
-	Doctor       repository.DoctorRepository
-	Availability repository.AvailabilityRepository
-	Appointment  repository.AppointmentRepository
-	Payment      repository.PaymentRepository
+	User                repository.UserRepository
+	Patient             repository.PatientRepository
+	Doctor              repository.DoctorRepository
+	Availability        repository.AvailabilityRepository
+	Appointment         repository.AppointmentRepository
+	Payment             repository.PaymentRepository
+	Allergy             repository.AllergyIntoleranceRepository
+	MedicationStatement repository.MedicationStatementRepository
 }
 
 func initRepositories(store *database.Store) Repositories {
 	return Repositories{
-		User:         repository.NewUserRepository(store),
-		Patient:      repository.NewPatientRepository(store),
-		Doctor:       repository.NewDoctorRepository(store),
-		Availability: repository.NewAvailabilityRepository(store),
-		Appointment:  repository.NewAppointmentRepository(store),
-		Payment:      repository.NewPaymentRepository(store),
+		User:                repository.NewUserRepository(store),
+		Patient:             repository.NewPatientRepository(store),
+		Doctor:              repository.NewDoctorRepository(store),
+		Availability:        repository.NewAvailabilityRepository(store),
+		Appointment:         repository.NewAppointmentRepository(store),
+		Payment:             repository.NewPaymentRepository(store),
+		Allergy:             repository.NewSQLAllergyIntoleranceRepository(store),
+		MedicationStatement: repository.NewSQLMedicationStatementRepository(store),
 	}
 }
 
 func initServices(repos Repositories, maker auth.Maker, imgStorage, fileStorage objstore.Storage, duration time.Duration, paymentProcessor *payment.PaymentProcessor, streamClient *streamsdk.StreamClient, fhirClient *fhir.FHIRClient) Services {
 	return Services{
-		User:              service.NewUserService(repos.User, maker, streamClient, imgStorage, duration),
-		Patient:           service.NewPatientService(repos.Patient, fhirClient, fileStorage),
-		Doctor:            service.NewDoctorService(repos.Doctor, repos.Appointment),
-		Availability:      service.NewAvailabilityService(repos.Availability, repos.Doctor),
-		Appointment:       service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
-		Payment:           service.NewPaymentService(paymentProcessor, repos.Payment),
-		DocumentReference: service.NewDocumentReferenceService(fhirClient, fileStorage),
-		Observation:       service.NewObservationService(fhirClient),
+		User:                service.NewUserService(repos.User, maker, streamClient, imgStorage, duration),
+		Patient:             service.NewPatientService(repos.Patient, fhirClient, fileStorage),
+		Doctor:              service.NewDoctorService(repos.Doctor, repos.Appointment),
+		Availability:        service.NewAvailabilityService(repos.Availability, repos.Doctor),
+		Appointment:         service.NewAppointmentService(repos.Appointment, repos.Patient, repos.Doctor, paymentProcessor),
+		Payment:             service.NewPaymentService(paymentProcessor, repos.Payment),
+		DocumentReference:   service.NewDocumentReferenceService(fhirClient, fileStorage),
+		Observation:         service.NewObservationService(fhirClient),
+		Allergy:             service.NewAllergyService(repos.Allergy),
+		MedicationStatement: service.NewMedicationService(repos.MedicationStatement),
 	}
 }
 
 func initHandlers(services Services) Handlers {
 	return Handlers{
-		User:              handler.NewUserHandler(services.User),
-		Patient:           handler.NewPatientHandler(services.Patient),
-		Doctor:            handler.NewDoctorHandler(services.Doctor),
-		Availability:      handler.NewAvailabilityHandler(services.Availability),
-		Appointment:       handler.NewAppointmentHandler(services.Appointment),
-		Payment:           handler.NewPaymentHandler(services.Payment),
-		DocumentReference: handler.NewDocumentReferenceHandler(services.Patient, services.Doctor, services.DocumentReference),
-		Observation:       handler.NewObservationHandler(services.Patient, services.Doctor, services.Observation),
+		User:                handler.NewUserHandler(services.User),
+		Patient:             handler.NewPatientHandler(services.Patient),
+		Doctor:              handler.NewDoctorHandler(services.Doctor),
+		Availability:        handler.NewAvailabilityHandler(services.Availability),
+		Appointment:         handler.NewAppointmentHandler(services.Appointment),
+		Payment:             handler.NewPaymentHandler(services.Payment),
+		DocumentReference:   handler.NewDocumentReferenceHandler(services.Patient, services.Doctor, services.DocumentReference),
+		Observation:         handler.NewObservationHandler(services.Patient, services.Doctor, services.Observation),
+		Allergy:             handler.NewAllergyHandler(services.Allergy, services.Patient),
+		MedicationStatement: handler.NewMedicationHandler(services.MedicationStatement),
 	}
 }
 

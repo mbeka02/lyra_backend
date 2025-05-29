@@ -66,8 +66,26 @@ func (s *Server) RegisterRoutes() http.Handler {
 				r.Post("/", s.handlers.Patient.HandleCreatePatient)
 				r.Get("/appointments", s.handlers.Appointment.HandleGetPatientAppointments)
 				r.Get("/{patientId}", s.handlers.Patient.HandleGetPatient)
-			})
+				r.Route("/{patientId}/allergies", func(r chi.Router) {
+					r.Post("/", s.handlers.Allergy.HandleCreateAllergy)
+					r.Get("/", s.handlers.Allergy.HandleListAllergies)
+					r.Route("/{allergyId}", func(r chi.Router) {
+						r.Get("/", s.handlers.Allergy.HandleGetAllergy)
+						r.Put("/", s.handlers.Allergy.HandleUpdateAllergy)
+						r.Delete("/", s.handlers.Allergy.HandleDeleteAllergy)
+					})
+				})
 
+				r.Route("/{patientId}/medications", func(r chi.Router) {
+					r.Post("/", s.handlers.MedicationStatement.HandleCreateMedication)
+					r.Get("/", s.handlers.MedicationStatement.HandleListMedications)
+					r.Route("/{medicationId}", func(r chi.Router) {
+						r.Get("/", s.handlers.MedicationStatement.HandleGetMedication)
+						r.Put("/", s.handlers.MedicationStatement.HandleUpdateMedication)
+						r.Delete("/", s.handlers.MedicationStatement.HandleDeleteMedication)
+					})
+				})
+			})
 			// Doctor endpoints
 			r.Route("/doctors", func(r chi.Router) {
 				r.Get("/", s.handlers.Doctor.HandleGetDoctors)
