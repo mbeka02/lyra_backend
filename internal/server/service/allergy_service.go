@@ -3,7 +3,7 @@ package service
 
 import (
 	"context"
-	"database/sql" // For sql.NullString and handling optional fields
+	"database/sql"
 
 	"github.com/google/uuid"
 	"github.com/mbeka02/lyra_backend/internal/database"
