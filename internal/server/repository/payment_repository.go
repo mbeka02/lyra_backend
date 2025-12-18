@@ -16,10 +16,19 @@ type UpdatePaymentAndAppointmentStatusParams struct {
 }
 type PaymentRepository interface {
 	UpdatePaymentAndAppointmentStatus(ctx context.Context, params UpdatePaymentAndAppointmentStatusParams) error
+	GetPaymentByReference(ctx context.Context, reference string) (*database.Payment, error)
 }
 
 func NewPaymentRepository(store *database.Store) PaymentRepository {
 	return &paymentRepository{store}
+}
+
+func (r *paymentRepository) GetPaymentByReference(ctx context.Context, reference string) (*database.Payment, error) {
+	payment, err := r.store.GetPaymentByReference(ctx, reference)
+	if err != nil {
+		return nil, err
+	}
+	return &payment, nil
 }
 
 func (r *paymentRepository) UpdatePaymentAndAppointmentStatus(ctx context.Context, params UpdatePaymentAndAppointmentStatusParams) error {

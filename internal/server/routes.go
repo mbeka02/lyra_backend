@@ -120,6 +120,10 @@ func (s *Server) RegisterRoutes() http.Handler {
 				r.Get("/completed", s.handlers.Appointment.HandleGetCompletedAppointments)
 				r.Post("/", s.handlers.Appointment.HandleCreateAppointment)
 			})
+			// protected payments endpoints
+			r.Route("/payments", func(r chi.Router) {
+				r.Get("/status", s.handlers.Payment.GetPaymentStatus)
+			})
 			// Document endpoints
 			r.Route("/documents", func(r chi.Router) {
 				r.Get("/", s.handlers.DocumentReference.HandleListPatientDocuments)

@@ -107,7 +107,6 @@ func main() {
 	go gracefulShutdown(server, done)
 
 	log.Println("the server is listening on port" + server.Addr)
-	// mailer.SendEmail()
 	err = server.ListenAndServe()
 	if err != nil && err != http.ErrServerClosed {
 		panic(fmt.Sprintf("http server error: %s", err))
