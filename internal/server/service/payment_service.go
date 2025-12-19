@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/mbeka02/lyra_backend/internal/database"
 	"github.com/mbeka02/lyra_backend/internal/model"
 	"github.com/mbeka02/lyra_backend/internal/payment"
 	"github.com/mbeka02/lyra_backend/internal/server/repository"
@@ -13,6 +14,7 @@ import (
 type PaymentService interface {
 	UpdateStatusWebhook(ctx context.Context, req model.PaystackWebhookPayload) error
 	UpdateStatusCallback(ctx context.Context, reference string) (currentStatus string, err error)
+	GetPaymentByReference(ctx context.Context, reference string) (*database.Payment, error)
 }
 
 type paymentService struct {
@@ -22,6 +24,10 @@ type paymentService struct {
 
 func NewPaymentService(paymentProcessor *payment.PaymentProcessor, repo repository.PaymentRepository) PaymentService {
 	return &paymentService{paymentProcessor, repo}
+}
+
+func (s *paymentService) GetPaymentByReference(ctx context.Context, reference string) (*database.Payment, error) {
+	return s.paymentRepo.GetPaymentByReference(ctx, reference)
 }
 
 // updateStatus is a helper to update both payment and appointment statuses.

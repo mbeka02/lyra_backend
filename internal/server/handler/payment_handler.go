@@ -31,25 +31,29 @@ func (h *PaymentHandler) PaymentCallback(w http.ResponseWriter, r *http.Request)
 		respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing payment reference"))
 		return
 	}
-	status, err := h.paymentService.UpdateStatusCallback(r.Context(), reference)
-	if err != nil {
-		http.Redirect(w, r, "lyra://payment?status=failed&reference="+reference, http.StatusSeeOther)
+	redirectURL := fmt.Sprintf("lyra://payment?reference=%s", reference)
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+}
+
+func (h *PaymentHandler) GetPaymentStatus(w http.ResponseWriter, r *http.Request) {
+	params := NewQueryParamExtractor(r)
+	reference := params.GetString("reference")
+	if reference == "" {
+		respondWithError(w, http.StatusBadRequest, fmt.Errorf("missing payment reference"))
 		return
 	}
 
-	// Redirect the user back to lyra  via deep link.
-	// Determine the redirect URL based on status.
-	var redirectURL string
-	switch status {
-	case "completed":
-		redirectURL = "lyra://payment?status=success&reference=" + reference
-	case "pending":
-		redirectURL = "lyra://payment?status=pending&reference=" + reference
-	default:
-		redirectURL = "lyra://payment?status=failed&reference=" + reference
+	payment, err := h.paymentService.GetPaymentByReference(r.Context(), reference)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, fmt.Errorf("payment not found"))
+		return
 	}
 
-	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
+	respondWithJSON(w, http.StatusOK, map[string]interface{}{
+		"reference":      payment.Reference,
+		"current_status": payment.CurrentStatus,
+		"amount":         payment.Amount,
+	})
 }
 
 // this is the webhook endpoint that paystack will use
